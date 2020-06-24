@@ -1,10 +1,7 @@
 from glossary import *
 import helper_functions as f
 from types import SimpleNamespace
-
-class MT():
-    def __init__(self):
-        pass
+from feats import feats
 
 class Info:
     def __init__(self):
@@ -15,11 +12,21 @@ class Info:
         self.size = SimpleNamespace(temp = None)
         self.speed = SimpleNamespace(mod = None)
 
+class Profficiencies: 
+    def __init__(self):
+        self.languages = SimpleNamespace()
+        self.armor = SimpleNamespace()
+        self.weapon = SimpleNamespace()
+
 class Bio:
     def __init__(self):
         self.faith = None
-        self.languages = SimpleNamespace()
 
+class Stats:
+    def __init__(self):
+        self.max_hp = None
+        self.current_hp = None
+        self.armor_class = SimpleNamespace(worn = None)
 
 class Attributes:
 
@@ -29,9 +36,8 @@ class Attributes:
             self.override = None
 
     def __init__(self):
-        for atr in stats_str:
-            setattr(self, atr, self.Attribute())
-
+        for attr in attrs.keys():
+            setattr(self, attr, self.Attribute())
 
 class skills:
     class skill:
@@ -47,32 +53,52 @@ class skills:
 def Race(self, race_name):
 
     if race_name == "Human":
+
+        # Base Traits
         self.info.size.base = "Medium"
         self.info.speed.base = 30
-        self.attributes.race = [(STR, +1), (DEX, +1), (CON, +1), (INT, +1), (WIS, +1), (CHA, +1)]
-        languages = ["Common"]
-        second_language = f.choose_language("Choose second language: ", languages)
-        self.bio.languages.race = languages + second_language
+
+        # +1 to all attributes
+        for attr in attrs.keys():
+            f.rsetattr(self.attributes, attr+".race", +1)
+
+        # Common + 1 language
+        languages = "Common"
+        second_language = f.choose_language("Choose second language,", languages)
+        self.profficiencies.languages.race = languages, second_language
 
     elif race_name == "Human Variant":
+
+        # Base Traits
         self.info.size.base = "Medium"
         self.info.speed.base = 30
-        score_1 = f.choose_stat("Choose first ability score to increase (STR, DEX, etc.): ")
-        score_2 = f.choose_stat("Choose second ability score to increase (STR, DEX, etc.): ", [score_1])
-        self.attributes.race = [(score_1, +1),(score_2,+1)]
-        languages = ["Common"]
-        second_language = f.choose_language("Choose second language: ", languages)
-        self.bio.languages.race = languages + second_language
-        
-    elif race_name == "Test":
-        race_skill = f.choose_skill("Choose skill profficiency: ", self.skills)
-        print(race_skill)
+
+        # +1 to 2 attributes
+        score_1 = f.choose_stat("Choose first ability score to increase,")
+        score_2 = f.choose_stat("Choose second ability score to increase,", [score_1])
+        f.rsetattr(self.attributes, score_1+".race", +1)
+        f.rsetattr(self.attributes, score_2+".race", +1)        
+
+        # Common + 1 language
+        languages = "Common"
+        second_language = f.choose_language("Choose second language,", languages)
+        self.profficiencies.languages.race = languages,  second_language
+
+        # 1 skill profficiency
+        race_skill = f.choose_skill("Choose skill profficiency,", self.skills)
+        f.rsetattr(self.skills, race_skill+".prof", True)
+
+        # 1 Feat
+
         
 class PC:
 
     def __init__(self):
+        
         self.info = Info()
         self.bio = Bio()
+        self.profficiencies = Profficiencies()
+        self.stats = Stats()
         self.attributes = Attributes()
         self.skills = skills()
         Race(self, "Test")
@@ -81,4 +107,24 @@ class PC:
 
 char = PC()
 
+char.profficiencies.armor.race = "Heavy", "Medium"
+char.profficiencies.armor.p_class = "Light", "Medium", "Heavy"
+
+def add_feat(self, origin, name):
+    name = name.lower().replace(" ", "_")
+    if feats[name].prereq == False:
+        f.rsetattr(self, origin, feats[name])
+    else:
+        req_type = feats[name].prereq[0]
+        req_val =  feats[name].prereq[1]
+        if req_type == "armor":
+            groups = (vars(char.profficiencies.armor).values())
+            armors = set([armor for group in groups for armor in group])
+            if req_val in armors:
+                f.rsetattr(self, origin, feats[name])
+
+    return self
+
+add_feat(char, "race", "heavily_armored")
+print("Test")
 print("Done")

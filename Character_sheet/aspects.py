@@ -3,6 +3,10 @@ import helper_functions as f
 from types import SimpleNamespace
 from feats import feats
 
+class Empty:
+    def __init__(self):
+        pass
+
 class Info:
     def __init__(self):
         self.name = None
@@ -21,6 +25,10 @@ class Profficiencies:
 class Bio:
     def __init__(self):
         self.faith = None
+
+class Feats:
+    def __init__(self):
+        pass
 
 class Stats:
     def __init__(self):
@@ -45,6 +53,7 @@ class skills:
             self.name = name
             self.attr = attr
             self.prof = False
+            self.note = SimpleNamespace()
 
     def __init__(self):
         for key in skills_dict:
@@ -89,7 +98,9 @@ def Race(self, race_name):
         f.rsetattr(self.skills, race_skill+".prof", True)
 
         # 1 Feat
-
+        new_feat = f.choose_feat("Choose a new feat,", self)
+        f.add_feat(char, "race", new_feat)
+        
         
 class PC:
 
@@ -98,20 +109,24 @@ class PC:
         self.info = Info()
         self.bio = Bio()
         self.profficiencies = Profficiencies()
+        self.feats = Feats()
+        self.role_play = Empty()
+
         self.stats = Stats()
         self.attributes = Attributes()
         self.skills = skills()
-        Race(self, "Test")
-
+        Race(self, "Human Variant")
+        
 
 
 char = PC()
 
-char.profficiencies.armor.race = "Heavy", "Medium"
-char.profficiencies.armor.p_class = "Light", "Medium", "Heavy"
+# char.profficiencies.armor.race = "Heavy", "Medium"
+# char.profficiencies.armor.p_class = "Light", "Medium", "Heavy"
 
 
 
-f.add_feat(char, "race", "heavily_armored")
-print("Test")
+
+
+
 print("Done")

@@ -13,10 +13,3 @@ class Feature:
         def __init__(self, aspect, item):
                 self.aspect = aspect
                 self.item = item
-
-def add_Modifier(modifier_name):
-    pass
-def add_Note(note_name):
-    pass
-def add_Feature(feature_name):
-    pass

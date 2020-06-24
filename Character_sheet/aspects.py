@@ -110,6 +110,8 @@ char = PC()
 char.profficiencies.armor.race = "Heavy", "Medium"
 char.profficiencies.armor.p_class = "Light", "Medium", "Heavy"
 
+
+
 f.add_feat(char, "race", "heavily_armored")
 print("Test")
 print("Done")

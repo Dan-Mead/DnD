@@ -1,7 +1,10 @@
 from glossary import *
 import textwrap
 import functools
+<<<<<<< HEAD
 from feats import feats
+=======
+>>>>>>> 86e044b9dc0a20cab769dd256b0563de2aa80c0e
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')

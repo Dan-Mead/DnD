@@ -1,17 +1,9 @@
-STR = 0
-DEX = 1
-CON = 2
-INT = 3
-WIS = 4
-CHA = 5
-
-stats = {STR : 0,
-         DEX : 1, 
-         CON : 2, 
-         INT : 3, 
-         WIS : 4, 
-         CHA : 5}
-stats_str = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
+attrs = {"STR" : 0,
+         "DEX" : 1, 
+         "CON" : 2, 
+         "INT" : 3, 
+         "WIS" : 4, 
+         "CHA" : 5}
 
 common_languages = ["Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orcish"]
 exotic_languages = ["Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal", "Primordial", "Sylvan", "Undercommon"]

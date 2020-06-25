@@ -26,15 +26,19 @@ class Bio:
     def __init__(self):
         self.faith = None
 
-class Feats:
-    def __init__(self):
-        pass
-
 class Stats:
     def __init__(self):
         self.max_hp = None
         self.current_hp = None
         self.armor_class = SimpleNamespace(worn = None)
+
+class Actions:
+    def __init__(self):
+        self.actions = SimpleNamespace()
+        self.bonus = SimpleNamespace()
+        self.attack = SimpleNamespace()
+        self.reaction = SimpleNamespace()
+        ## Note will probably want flags for limited use and combat actions
 
 class Attributes:
 
@@ -46,6 +50,11 @@ class Attributes:
     def __init__(self):
         for attr in attrs.keys():
             setattr(self, attr, self.Attribute())
+
+class Saving_Throws:
+    def __init__(self):
+        for attr in attrs.keys():
+            setattr(self, attr, SimpleNamespace(prof = False, note = SimpleNamespace()))
 
 class skills:
     class skill:
@@ -99,8 +108,13 @@ def Race(self, race_name):
 
         # 1 Feat
         new_feat = f.choose_feat("Choose a new feat,", self)
-        f.add_feat(char, "race", new_feat)
+        f.add_feat(self, "race", new_feat)
         
+    elif race_name == "Test":
+
+        new_feat = f.choose_feat("Choose a new feat,", self)
+        f.add_feat(self, "race", new_feat)
+
         
 class PC:
 
@@ -109,13 +123,14 @@ class PC:
         self.info = Info()
         self.bio = Bio()
         self.profficiencies = Profficiencies()
-        self.feats = Feats()
-        self.role_play = Empty()
-
+        self.saving_throws = Saving_Throws()
+        self.feats = Empty()
+        self.actions = Actions()
+        self.role_play = Empty()        
         self.stats = Stats()
         self.attributes = Attributes()
         self.skills = skills()
-        Race(self, "Human Variant")
+        Race(self, "Test")
         
 
 
@@ -123,10 +138,5 @@ char = PC()
 
 # char.profficiencies.armor.race = "Heavy", "Medium"
 # char.profficiencies.armor.p_class = "Light", "Medium", "Heavy"
-
-
-
-
-
 
 print("Done")

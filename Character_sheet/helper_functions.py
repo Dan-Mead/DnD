@@ -90,10 +90,32 @@ def choose_skill(msg, skills_list):
 
 def choose_feat(msg, self):
 
+    valid = []
+    for feat in feats:
+        if feats[feat].prereq == False:
+            valid.append(feats[feat].name)
+        else:
+            req_type = feats[feat].prereq[0]
+            req_val =  feats[feat].prereq[1]
+            if req_type == "armor":
+                groups = (vars(self.profficiencies.armor).values())
+                armors = set([armor for group in groups for armor in group])
+                if req_val in armors:
+                    valid.append(feats[feat].name)
+            elif req_type == "race":
+                pass
+            elif req_type == "size":
+                pass
+            elif req_type == "spell":
+                pass
+            elif req_type == "stat":
+                pass
+
+
     feats_chosen = self.feats
 
     chosen = [origin.name for origin in vars(feats_chosen).values()]
-    options = [feats[feat].name for feat in feats if feats[feat].name not in chosen]
+    options = [feats[feat].name for feat in feats if feats[feat].name not in chosen and feats[feat].name in valid]
 
     print("\n", msg, "valid choices are:")
     print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
@@ -120,7 +142,11 @@ def add_Modifier(self, modifier):
 def add_Note(self, note):
     aspect = vars(note)['aspect']
     note = vars(note)['note']
+    print(aspect)
+    if rgetattr(self, aspect):
+        print(rgetattr(self, aspect))
     rsetattr(self, aspect, note)
+    # exec("self." + aspect + " = " + (rgetattr(self, aspect))
 
 def add_Feature(self, feature):
     aspect = vars(feature)['aspect']
@@ -130,23 +156,10 @@ def add_Feature(self, feature):
 
 def add_feat(self, origin, name):
     name = name.lower().replace(" ", "_")
+    rsetattr(self.feats, origin, feats[name])
     
-    if feats[name].prereq == False:
-        rsetattr(self.feats, origin, feats[name])
-        add_feat_features(self, feats[name])
-    else:
-        req_type = feats[name].prereq[0]
-        req_val =  feats[name].prereq[1]
-        if req_type == "armor":
-            groups = (vars(self.profficiencies.armor).values())
-            armors = set([armor for group in groups for armor in group])
-            if req_val in armors:
-                rsetattr(self.feats, origin, feats[name])
-    return self
+    ## Add effects
 
-### Add prereq to feat choosing
-
-def add_feat_features(self, feat):
     for effect in self.feats.race.effects:
         effect_type = type(effect).__name__
         if effect_type == "Modifier":
@@ -155,3 +168,5 @@ def add_feat_features(self, feat):
             add_Note(self, effect)
         elif effect_type == "Feature":
             add_Feature(self, effect)
+
+    return self

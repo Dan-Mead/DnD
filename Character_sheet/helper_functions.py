@@ -61,4 +61,45 @@ def choose_stat(msg, invalid = []):
     
     return choice
 
-# def choose_skill
+def choose_feat(msg, feats_chosen):
+
+    chosen = [origin.name for origin in vars(feats_chosen).values()]
+    options = [feats[feat].name for feat in feats if feats[feat].name not in chosen]
+
+    print("\n", msg, "valid choices are:")
+    print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
+
+    valid_choice = False
+
+    while not valid_choice:    
+        choice = input().lower()
+        if choice in [option.lower() for option in options]:
+                valid_choice = True 
+        else:
+            print("Invalid Choice, valid choices are:")
+            print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
+    
+    choice = choice.replace(" ", "_")
+
+    return feats[choice].name
+
+def add_feat(self, origin, name):
+    
+    name = name.lower().replace(" ", "_")
+    
+    if feats[name].prereq == False:
+        rsetattr(self.feats, origin, feats[name])
+        # add_feat_features(self, feats[name])
+    else:
+        req_type = feats[name].prereq[0]
+        req_val =  feats[name].prereq[1]
+        if req_type == "armor":
+            groups = (vars(self.profficiencies.armor).values())
+            armors = set([armor for group in groups for armor in group])
+            if req_val in armors:
+                rsetattr(self.feats, origin, feats[name])
+
+    return self
+
+def add_feat_features(self, feat):
+    print(feat.effects)

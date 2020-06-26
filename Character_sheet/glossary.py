@@ -1,12 +1,9 @@
-attrs = {"STR" : 0,
-         "DEX" : 1, 
-         "CON" : 2, 
-         "INT" : 3, 
-         "WIS" : 4, 
-         "CHA" : 5}
+attrs = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
 
 common_languages = ["Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orcish"]
 exotic_languages = ["Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal", "Primordial", "Sylvan", "Undercommon"]
+
+ordinals = ["First", "Second", "Third", "Next"]
 
 skills_dict = {"acrobatics"      : ["Acrobatics", "DEX"],
         "animal_handling"   : ["Animal Handling", "WIS"],

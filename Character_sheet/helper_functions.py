@@ -15,13 +15,13 @@ def LDK(dic, string_list):
 
 def choose_language(msg, known, base_options = common_languages + exotic_languages):
     
-    print_options = [option for option in base_options if option not in known.values()]
+    print_options = [option for option in base_options if option not in known]
     true_options = [option.lower() for option in print_options]
 
 
     valid_choice = False
 
-    print("\n", msg, "valid choices are:")
+    print(msg, "valid choices are:")
     print(textwrap.fill(", ".join(print_options), width = 80, initial_indent = '    ', subsequent_indent='    '), "or 'none'.")
     
     while not valid_choice:
@@ -42,12 +42,12 @@ def choose_stat(msg, invalid = []):
 
 
     
-    print_options = [option for option in attrs.keys() if option not in invalid]
+    print_options = [option for option in attrs if option not in invalid]
     true_options = print_options.copy()
 
     valid_choice = False
 
-    print("\n", msg, "valid choices are:")
+    print(msg, "valid choices are:")
     print(textwrap.fill(", ".join(print_options), width = 80, initial_indent = '    ', subsequent_indent='    '))
     
     while not valid_choice:
@@ -66,7 +66,7 @@ def choose_feat(msg, feats_chosen):
     chosen = [origin.name for origin in vars(feats_chosen).values()]
     options = [feats[feat].name for feat in feats if feats[feat].name not in chosen]
 
-    print("\n", msg, "valid choices are:")
+    print(msg, "valid choices are:")
     print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
 
     valid_choice = False

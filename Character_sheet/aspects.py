@@ -54,16 +54,20 @@ def create_character():
 
         return self
 
-def choose_race(char, race_name):
-        ## If Race already exists, remove Modifiers
-        ## Delete Race Object
-        race = get_race(race_name)
-        race.add_race_modifiers(char)
+def choose_race(character, race_name):
+        
+        # if old race:
+        # old_race.remove_modifiers
+
+        race = get_race(character, race_name)
+        # race.add_race_modifiers(char)
         
         return race
 
 char = create_character()
 
-race = choose_race(char, "Human")
+race = choose_race(char, "Human Variant")
+
+print(race.languages)
 
 print("Done!")

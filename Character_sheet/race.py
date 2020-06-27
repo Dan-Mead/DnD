@@ -3,8 +3,8 @@ from glossary import *
 
 class Race():
 
-    def __init__(self, race_choice):
-        self.traits = race_choice
+    # def __init__(self):
+        # pass
 
     def add_race_modifiers(self, character):
         
@@ -19,53 +19,67 @@ class Race():
 
         
 
-        for key in self.traits:
-            value = (self.traits[key])
+        # for key in self.traits:
+            # value = (self.traits[key])
             # print(race_key[key])
-            # print(value)
+            # print(value) 
 
-            f.LDK(character, race_key[key]))
+            # f.LDK(character, race_key[key]))
 
 
     def remove_race_modifiers(self):
         pass
 
-def get_race(race_name):
+def get_race(char, race_choice):
 
-    # Get information from dictionary
+    race_list = {'Human' : Human,
+                'Human Variant' : Human_variant}
 
-    race_choice = race_list[race_name]
-
-    race = Race(race_choice) ## must fully create here
-
+    race = race_list[race_choice](char)
+    
     return race
 
-def add_language(self, default, num_lang):
-    if default:
-            self.languages += default
-    for n in range(num_lang):                
-            new_lang = f.choose_language("Choose " + ordinals[n+1].lower() + " language,", self.profficiencies.languages)
-            if new_lang:
-                    self.profficiencies.languages.race += [new_lang]
+def add_language(char, default, num_lang):
 
-human = {
-        'race_name' : "Human",
-        'size' : 'Medium',
-        'speed' : 30,
-        'languages' : ['Common', 'choose'],
-        'attributes' : [(attr, 1) for attr in attrs]}
+    lang_list = []
+    lang_list.append(default)
+    for n in range(num_lang):
+        new_lang = f.choose_language("Choose " + ordinals[len(lang_list)].lower() + " language,", [default] + list(char.profficiencies.languages.values()))
+        lang_list.append(new_lang)
 
-human_variant = {
-        'race_name' : "Human",
-        'size' : 'Medium',
-        'speed' : 30,
-        'languages' : ['Common', 'choose'],
-        'attributes' : [('choose', 1), ('choose', 1)],
-        'skills' : ['choose'],
-        'feats' : ['choose']}
+    return list(filter(None, lang_list))
 
-race_list = {"Human" : human, 
-            "Human Variant" : human_variant}
+def add_attributes(allowed, num_attr):
+
+    attrs_list = []
+
+    for n in range(num_attr):
+        attrs_list.append(f.choose_stat("Choose " + ordinals[n].lower() + " ability score to increase,", attrs_list))
+
+    return attrs_list, [1] * len(attrs_list)
+    
+
+class Human(Race):
+        def __init__(self, char):
+            self.race_name = "Human"
+            self.size = 'Medium'
+            self.speed = 30
+            self.languages = add_language(char, 'Common', 1)
+            self.attributes = [(attr, 1) for attr in attrs]
+
+class Human_variant(Race):
+        def __init__(self, char):
+            self.race_name = "Human"
+            self.size = 'Medium'
+            self.speed = 30
+            self.languages = add_language(char, 'Common', 1)
+            self.attributes = list(zip(add_attributes(attrs, 2)))
+            self.skills = ['choose']
+            self.feats = ['choose']
+
+# class Race_list:
+
+
 
 # def Race(self, race_name):
 

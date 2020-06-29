@@ -1,6 +1,7 @@
 from glossary import *
 import textwrap
 
+
 def LDK(dic, string_list):
     """ List Dictionary Key
     Parses a list to get a location, used in place of dot notation"""
@@ -40,8 +41,6 @@ def choose_language(msg, known, base_options = common_languages + exotic_languag
 
 def choose_stat(msg, invalid = []):
 
-
-    
     print_options = [option for option in attrs if option not in invalid]
     true_options = print_options.copy()
 
@@ -52,8 +51,8 @@ def choose_stat(msg, invalid = []):
     
     while not valid_choice:
 
-        choice = input()
-        if choice.upper() in true_options:
+        choice = input().upper()
+        if choice in true_options:
             valid_choice = True
         else:
             print("Invalid Choice, valid choices are:")
@@ -61,45 +60,57 @@ def choose_stat(msg, invalid = []):
     
     return choice
 
-def choose_feat(msg, feats_chosen):
 
-    chosen = [origin.name for origin in vars(feats_chosen).values()]
-    options = [feats[feat].name for feat in feats if feats[feat].name not in chosen]
+def choose_skill(msg, invalid = []):
 
-    print(msg, "valid choices are:")
-    print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
+    print_options = [skills_dict[option][0] for option in skills_dict if option not in invalid]
+
+    true_options = [option for option in skills_dict if option not in invalid]
 
     valid_choice = False
 
-    while not valid_choice:    
-        choice = input().lower()
-        if choice in [option.lower() for option in options]:
-                valid_choice = True 
+    print(msg, "valid choices are:")
+    print(textwrap.fill(", ".join(print_options), width = 80, initial_indent = '    ', subsequent_indent='    '))
+    
+    while not valid_choice:
+
+        choice = input().lower().replace(" ", "_")
+        if choice in true_options:
+            valid_choice = True
         else:
             print("Invalid Choice, valid choices are:")
-            print(textwrap.fill(", ".join(options), width = 80, initial_indent = '    ', subsequent_indent='    '))
+            print(textwrap.fill(", ".join(print_options), width=80, initial_indent='    ', subsequent_indent='    '))
     
-    choice = choice.replace(" ", "_")
+    return choice
 
-    return feats[choice].name
+def choose_feat(msg, char):
 
-def add_feat(self, origin, name):
-    
-    name = name.lower().replace(" ", "_")
-    
-    if feats[name].prereq == False:
-        rsetattr(self.feats, origin, feats[name])
-        # add_feat_features(self, feats[name])
+    from feats import get_valid_feats, get_feats_list 
+    valid_feats = get_valid_feats(char)
+    feats_list = get_feats_list()
+
+    # from feats import Shield_Master
+    # char.feats['race'] = Shield_Master()
+
+    if char.feats:
+        chosen = [feat.name.lower().replace(" ", "_") for feat in char.feats.values()]
     else:
-        req_type = feats[name].prereq[0]
-        req_val =  feats[name].prereq[1]
-        if req_type == "armor":
-            groups = (vars(self.profficiencies.armor).values())
-            armors = set([armor for group in groups for armor in group])
-            if req_val in armors:
-                rsetattr(self.feats, origin, feats[name])
+        chosen = []
 
-    return self
+    print_options = [feats_list[feat][0] for feat in valid_feats if feat not in chosen]
+    true_options = [feat for feat in valid_feats if feat not in chosen]
+    valid_choice = False
+    
+    print(msg, "valid choices are:")
+    print(textwrap.fill(", ".join(print_options), width = 80, initial_indent = '    ', subsequent_indent='    '))
 
-def add_feat_features(self, feat):
-    print(feat.effects)
+    while not valid_choice:
+
+        choice = input().lower().replace(" ", "_")
+        if choice in true_options:
+            valid_choice = True
+        else:
+            print("Invalid Choice, valid choices are:")
+            print(textwrap.fill(", ".join(print_options), width=80, initial_indent='    ', subsequent_indent='    '))
+    
+    return choice

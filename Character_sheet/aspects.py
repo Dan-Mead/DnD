@@ -59,6 +59,11 @@ def choose_race(character, race_name):
         # if old race:
         # old_race.remove_modifiers
 
+        character.profficiencies.armor = Dict({'class' : ["Heavy", "Medium"],
+                                                'General' : ['Light']})
+
+        
+
         race = get_race(character, race_name)
         # race.add_race_modifiers(char)
         
@@ -67,7 +72,5 @@ def choose_race(character, race_name):
 char = create_character()
 
 race = choose_race(char, "Human Variant")
-
-print(race.languages)
 
 print("Done!")

@@ -1,15 +1,32 @@
-class Modifier:
-        def __init__(self, aspect, value):
+from addict import Dict
+from helper_functions import LDK
+
+class Effect():
+
+    ### Need to be able to remove as well
+
+    def add_effect(self, char):
+
+        path_string = self.aspect.split(".")
+        path = LDK(char, path_string)
+        path[self.origin] += [self.value]
+
+class Modifier(Effect):
+        def __init__(self, origin, aspect, value):
+                self.origin = origin
+                self.aspect = aspect
+                self.value = value
+            
+
+class Note(Effect):
+        def __init__(self, origin, aspect, value):
+                self.origin = origin
                 self.aspect = aspect
                 self.value = value
 
 
-class Note:
-        def __init__(self, aspect, note):
+class Feature(Effect):
+        def __init__(self, origin, aspect, value):
+                self.origin = origin
                 self.aspect = aspect
-                self.note = note
-
-class Feature:
-        def __init__(self, aspect, item):
-                self.aspect = aspect
-                self.item = item
+                self.value = value

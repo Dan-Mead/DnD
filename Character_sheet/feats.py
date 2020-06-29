@@ -7,7 +7,11 @@ class Feat:
                 self.prereq = prereq
                 self.effects = effects
 
-        ### Add method to add / remove features
+        def add_feat_modifiers(self, char):
+                for effect in self.effects:
+                        effect.add_effect(char)
+                
+                
 
 def get_feats_list():
         feats_list = {"actor" : ['Actor', Actor, False],
@@ -15,6 +19,14 @@ def get_feats_list():
                         "shield_master" : ['Shield Master', Shield_Master, False]}
 
         return feats_list
+
+def get_feat(feat_name):
+
+        feat_list = get_feats_list()
+
+        feat = feat_list[feat_name][1]()
+
+        return feat
 
 def get_valid_feats(char):
 
@@ -38,23 +50,23 @@ class Actor(Feat):
         def __init__(self):
                 self.name = "Actor"
                 self.desc = "Skilled at mimicry and dramatics, you gain the following benefits:"
-                self.effects = [Modifier("attributes.CHA.feat", +1), 
-                                Note("skills.deception.note.feat", "Advantage when pretending to be someone else."), 
-                                Note("skills.performance.note.feat", "Advantage when pretending to be someone else."),
-                                Feature("role_play.feat", "You can mimic the speech of another person or the sounds made by other creatures. You must have heard the person speaking, or heard the creature make the sound, for at least 1 minute. A successful Wisdom (Insight) check contested by your Charisma (Deception) check allows a listener to determine that the effect is faked.")]
+                self.effects = [Modifier("feat", "attributes.CHA", +1), 
+                                Note("feat", "skills.deception.notes", "Advantage when pretending to be someone else."), 
+                                Note("feat", "skills.performance.notes", "Advantage when pretending to be someone else."),
+                                Feature("feat", "role_play", "You can mimic the speech of another person or the sounds made by other creatures. You must have heard the person speaking, or heard the creature make the sound, for at least 1 minute. A successful Wisdom (Insight) check contested by your Charisma (Deception) check allows a listener to determine that the effect is faked.")]
 
 class Heavily_Armored(Feat):
         def __init__(self):
                 self.name = "Heavily Armored"
                 self.desc = "You have trained to master the use of heavy armor, gaining the following benefits:"
-                self.effect = [Modifier("attributes.STR.feat", +1),
-                               Modifier("profficiencies.armor.feat", "Heavy")]
+                self.effect = [Modifier("feat", "attributes.STR", +1),
+                               Modifier("feat", "profficiencies.armor", "Heavy")]
 
 class Shield_Master(Feat):
         def __init__(self): 
                 self.name = "Shield Master"
                 self.desc = "You use shields not just for protection but also for offense. You gain the following benefits while you are wielding a shield:",
                 self.prereq = False
-                self.effects = [Feature("actions.bonus.feat", "If you take the Attack action on your turn, you can use a bonus action to try to shove a creature within 5 feet of you with your shield."),
-                                Note("saving_throws.DEX.note.feat", "Add shield's AC bonus if only you are targeted by spell or harmful effect, and if not incapacitated."),
-                                Note("saving_throws.DEX.note.feat", "You can use your reaction to take no damage, if successful on a saving throw to take half damage from an effect.")]
+                self.effects = [Feature("feat", "actions.bonus", "If you take the Attack action on your turn, you can use a bonus action to try to shove a creature within 5 feet of you with your shield."),
+                                Note("feat", "saving_throws.DEX.notes", "Add shield's AC bonus if only you are targeted by spell or harmful effect, and if not incapacitated."),
+                                Note("feat", "saving_throws.DEX.notes", "You can use your reaction to take no damage, if successful on a saving throw to take half damage from an effect.")]

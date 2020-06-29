@@ -9,10 +9,10 @@ def LDK(dic, string_list):
     value = dic
 
     for item in string_list:
-        print(item)
         value = value[item]
 
     return value
+
 
 def choose_language(msg, known, base_options = common_languages + exotic_languages):
     

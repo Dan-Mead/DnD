@@ -3,10 +3,7 @@ from glossary import *
 
 class Race():
 
-    # def __init__(self):
-        # pass
-
-    def add_race_modifiers(self, character):
+    def add_race_modifiers(self, char):
         
         race_key = {
             'race_name' : ['info'],
@@ -17,9 +14,31 @@ class Race():
             'skills' : ['skills'],
             'feats' : ['feats']}
 
-        
+        for trait in vars(self).keys():
+            if trait in ['race_name', 'size', 'speed', 'languages']:
+                path = f.LDK(char, race_key[trait])
+                path['race'] = (getattr(self, trait))
+            elif trait == 'attributes':
+                for attr in self.attributes:
+                    char.attributes[attr[0]]['race'] = attr[1]
+            elif trait == 'skills':
+                for skill in self.skills:
+                    char.skills[skill].prof = True
+            elif trait == 'feats':
+                from feats import get_feat
+                
+                for feat in self.feats:
+                    char.feats.race = get_feat(feat)
+                    new_feat = char.feats.race
+                    new_feat.add_feat_modifiers(char)
+                    
+                    # char.feats.race.add_feat_modifiers(char)
+            # name, size, speed, languages, add to list
+            # loop through attributes and add
+            # skills, go to and change to True
+            # feats, add object and trigger
 
-        # for key in self.traits:
+
             # value = (self.traits[key])
             # print(race_key[key])
             # print(value) 
@@ -83,8 +102,6 @@ def add_feat(char, num_feats):
         feats_list.append(f.choose_feat("Choose a feat,", char))
 
     return feats_list
-
-
 
 class Human(Race):
         def __init__(self, char):

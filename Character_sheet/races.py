@@ -58,54 +58,12 @@ def get_race(char, race_choice):
     
     return race
 
-def add_language(char_languages, default, num_lang):
-
-    lang_list = []
-    lang_list.append(default)
-    for n in range(num_lang):
-        new_lang = f.choose_language("Choose " + ordinals[len(lang_list)].lower() + " language,", [default] + list(char_languages.values()))
-        lang_list.append(new_lang)
-
-    return list(filter(None, lang_list))
-
-def add_attributes(allowed, num_attr):
-
-    ## TODO: Possibly need to include adding scores other than 1.
-
-    attrs_list = []
-    for n in range(num_attr):
-        attrs_list.append(f.choose_stat("Choose " + ordinals[n].lower() + " ability score to increase,", attrs_list))
-
-    return list(zip(attrs_list, [1] * len(attrs_list)))
-
-def add_skill(char_skills, allowed, num_skills):
-
-    skills_list = []
-    
-    profficient = [skill for skill in char_skills if char_skills[skill]['prof'] == True]
-
-    ## TODO: If only allowed some, list here
-
-    for n in range(num_skills):
-        skills_list.append(f.choose_skill("Choose " + ordinals[n].lower() + " skill to gain profficiency in,", profficient))
-
-    return skills_list
-
-def add_feat(char, num_feats):
-
-    feats_list = []
-
-    for n in range(num_feats):
-        feats_list.append(f.choose_feat("Choose a feat,", char))
-
-    return feats_list
-
 class Human(Race):
     def __init__(self, char):
         self.race_name = "Human"
         self.size = 'Medium'
         self.speed = 30
-        self.languages = add_language(char.profficiencies.languages, 'Common', 1)
+        self.languages = f.add_language(char.profficiencies.languages, 'Common', 1)
 
 class Human_Base(Human):
     def __init__(self, char):
@@ -115,9 +73,8 @@ class Human_Base(Human):
 class Human_Variant(Human):
     def __init__(self, char):
         super().__init__(char)
-        self.attributes = add_attributes(attrs, 2)
-        self.skills = add_skill(char.skills, skills_dict.keys(), 1)
-        self.feats = add_feat(char, 1)
+        self.attributes = f.add_attributes(attrs, 2)
+        self.feats = f.add_feat(char, 1)
 
 class Half_Orc(Race):
     def __init__(self,char):
@@ -130,5 +87,5 @@ class Half_Orc(Race):
         self.languages = ["Common", "Orc"]
 
 class Test(Race):
-        def __init__(self, char):
-            self.feats = add_feat(char, 1)
+    def __init__(self, char):
+        self.skills = f.add_skill(char.skills, skills_dict.keys(), 2)

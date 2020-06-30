@@ -2,6 +2,7 @@ from addict import Dict
 from glossary import *
 import helper_functions as f
 from races import get_race
+from classes import get_class
 
 def create_character():
 
@@ -19,7 +20,7 @@ def create_character():
 
         self.profficiencies.update({'languages' : Dict(), 
                         'armor' : Dict(),
-                        'weapons' : Dict(),
+                        'weapons' : Dict({"Base" : ["Unarmed"]}),
                         'tools' : Dict(),
                         'other' : Dict()
                         })
@@ -29,7 +30,9 @@ def create_character():
 
         self.stats.update({'max_hp' : None,
                         'current_hp' : None,
-                        'armour_class' : None})
+                        'armour_class' : None,
+                        'defences' : None,
+                        'conditions' : None})
 
         self.actions.update({'actions' : Dict(),
                         'bonus' : Dict(),
@@ -70,6 +73,9 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-char.race = choose_race(char, "Half-Orc")
+class_name = get_class(char, "Paladin")
+
+char.race = choose_race(char, "Test")
+
 
 print("Done!")

@@ -13,6 +13,28 @@ def LDK(dic, string_list):
 
     return value
 
+##########################################################################
+
+def simple_choice(options_list):
+
+    print("Choose from:")
+    for n, option in enumerate(options_list):
+        print(n, ":", option)
+
+    valid_choice = False
+
+    choice = int(input("Please enter number:"))
+
+    while not valid_choice:
+        if choice in range(len(options_list)):
+            return choice
+            valid_choice = True
+        else:
+            print("Invalid choice! Please choose from list.")
+            choice = int(input())
+
+    return choice
+
 
 def choose_language(msg, known, base_options = common_languages + exotic_languages):
     
@@ -111,3 +133,48 @@ def choose_feat(msg, char):
             print(textwrap.fill(", ".join(print_options), width=80, initial_indent='    ', subsequent_indent='    '))
     
     return choice
+
+##########################################################################
+
+def add_language(char_languages, default, num_lang):
+
+    lang_list = []
+    lang_list.append(default)
+    for n in range(num_lang):
+        new_lang = choose_language("Choose " + ordinals[len(lang_list)].lower() + " language,", [default] + list(char_languages.values()))
+        lang_list.append(new_lang)
+
+    return list(filter(None, lang_list))
+
+def add_attributes(allowed, num_attr):
+
+    ## TODO: Possibly need to include adding scores other than 1.
+
+    attrs_list = []
+    for n in range(num_attr):
+        attrs_list.append(choose_stat("Choose " + ordinals[n].lower() + " ability score to increase,", attrs_list))
+
+    return list(zip(attrs_list, [1] * len(attrs_list)))
+
+def add_skill(char_skills, allowed, num_skills):
+
+    skills_list = []
+
+    invalids = [skill for skill in char_skills if char_skills[skill]['prof'] == True]
+
+    invalids += [skill for skill in char_skills.keys() if skill not in allowed ]
+
+    for n in range(num_skills):
+        skills_list.append(choose_skill("Choose " + ordinals[n].lower() + " skill to gain profficiency in,", invalids))
+        invalids += skills_list
+    return skills_list
+
+def add_feat(char, num_feats):
+
+    feats_list = []
+
+    for n in range(num_feats):
+        feats_list.append(choose_feat("Choose a feat,", char))
+
+    return feats_list
+    

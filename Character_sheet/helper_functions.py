@@ -89,9 +89,6 @@ def choose_feat(msg, char):
     valid_feats = get_valid_feats(char)
     feats_list = get_feats_list()
 
-    # from feats import Shield_Master
-    # char.feats['race'] = Shield_Master()
-
     if char.feats:
         chosen = [feat.name.lower().replace(" ", "_") for feat in char.feats.values()]
     else:

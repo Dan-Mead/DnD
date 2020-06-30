@@ -1,7 +1,7 @@
 from addict import Dict
 from glossary import *
 import helper_functions as f
-from race import get_race
+from races import get_race
 
 def create_character():
 
@@ -19,7 +19,9 @@ def create_character():
 
         self.profficiencies.update({'languages' : Dict(), 
                         'armor' : Dict(),
-                        'weapons' : Dict()
+                        'weapons' : Dict(),
+                        'tools' : Dict(),
+                        'other' : Dict()
                         })
 
         self.bio.update({'faith' : None
@@ -52,14 +54,15 @@ def create_character():
 
         self.feats.update(Dict())
 
+        self.features.update(Dict())
+
         return self
+
+def choose_class(character, class_choice):
+        pass
 
 def choose_race(character, race_name):
         
-        # if old race:
-        # old_race.remove_modifiers
-
-
         race = get_race(character, race_name)
         race.add_race_modifiers(char)
         
@@ -67,8 +70,6 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-race = choose_race(char, "Test")
-
-print(char.saving_throws.DEX.notes.feat)
+char.race = choose_race(char, "Half-Orc")
 
 print("Done!")

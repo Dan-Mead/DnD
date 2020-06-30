@@ -3,7 +3,7 @@ from helper_functions import LDK
 
 class Effect():
 
-    ### Need to be able to remove as well
+    ## TODO: Need to be able to remove as well
 
     def add_effect(self, char):
 

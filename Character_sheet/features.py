@@ -1,7 +1,23 @@
-class Feature():
-    pass
+import inspect, sys
 
-## TODO: Add triggers and actual effects
+def get_features():
+
+    features = {}
+    for feature in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+
+        if feature[1] != sys.modules[__name__].Feature:
+            features[feature[0].replace("_", " ")] = feature[1]
+
+    return features
+
+def get_feature(feature_name):
+
+    features = get_features()
+
+    return features[feature_name]
+
+class Feature():
+    pass ## TODO: Add triggers and actual effects
 
 class Darkvision(Feature):
     def __init__(self):
@@ -18,8 +34,4 @@ class Savage_Attacks(Feature):
         self.desc = "When you score a critical hit with a melee weapon Attack, you can roll one of the weapon’s damage dice one additional time and add it to the extra damage of the critical hit."
         self.trigger = ["Critical Hit"] ### WIP
 
-
-feature_list = {"Darkvision" : Darkvision,
-                "Relentless Endurance" : Relentless_Endurance, 
-                "Savage Attacks" : Savage_Attacks
-                }
+get_features()

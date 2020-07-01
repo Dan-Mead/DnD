@@ -37,10 +37,10 @@ class Race():
                     new_feat.add_feat_modifiers(char)
             
             elif trait == 'features':
-                from features import feature_list
+                from features import get_feature
                 for feature in self.features:
-                    # char.features['race'] += [feature]
-                    char.features['race'].update({feature : feature_list[feature]()})
+                    # char.feature['race'] += [get_feature(feature)()] # Only add object, probably not as good.
+                    char.features['race'][feature] = get_feature(feature)()
 
     def remove_race_modifiers(self):
         pass

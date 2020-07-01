@@ -73,9 +73,9 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-class_name = get_class(char, "Paladin")
+# class_name = get_class(char, "Paladin")
 
-char.race = choose_race(char, "Test")
+char.race = choose_race(char, "Half-Orc")
 
 
 print("Done!")

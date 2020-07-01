@@ -49,9 +49,11 @@ class Weapon(Item):
     def __init__(self, num):
         self.equippable = True, 'Hand'
         self.type = 'Weapon'
+        self.weapon_type = self.get_weapon_type()
         self.dmg_type = self.dmg_type[self.dmg[2]]
         self.dmg = self.dmg[0], self.dmg[1]
         self.silvered = False
+
         super().__init__(num)
     
     def attack(self):
@@ -80,104 +82,124 @@ class Misc_Object(Item):
 
 class Club(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 4, 'b'
         self.properties = 'Light'
         self.cost = '1 s'
         self.weight = 2
-        super().__init__(num)
+        super().__init__(num) 
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Dagger(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 4, 'p'
         self.properties = 'Finesse', 'Light', 'Thrown 20/60'
         self.cost = '2 g'
         self.weight = 1
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Greatclub(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 8, 'b'
         self.properties = 'Two-handed'
         self.cost = '2 s'
         self.weight = 10
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Handaxe(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 6, 's'
         self.properties = 'Light', 'Thrown, 20/60'
         self.cost = '5 g'
         self.weight = 2
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Javelin(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 6, 'p'
         self.properties = 'Thrown, 30/120'
         self.cost = '5 s'
         self.weight = 2
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Light_Hammer(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 4, 'b'
         self.properties = 'Light', 'Thrown 20/60'
         self.cost = '2 g'
         self.weight = 2
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Mace(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 6, 'b'
         self.properties = None
         self.cost = '5 g'
         self.weight = 4
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Quarterstaff(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 6, 'b'
         self.properties = 'Versatile 1d8'
         self.cost = '2 s'
         self.weight = 4
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Sickle(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 4, 's'
         self.properties = 'Light'
         self.cost = '1 g'
         self.weight = 2
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Spear(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Simple', 'Melee'
         self.dmg = 1, 6, 'p'
         self.properties = 'Thrown 20/60', 'Versatile 1d8'
         self.cost = '1 g'
         self.weight = 3
         super().__init__(num)
-
-
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Melee'
 
 class Warhammer(Weapon):
     def __init__(self, num):
-        self.weapon_type = 'Martial', 'Melee'
         self.dmg = 1, 8, 'b'
         self.properties = 'Versatile, 1d10'
         self.cost = '15 g'
         self.weight = 2
         super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
 
   
 

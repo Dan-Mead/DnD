@@ -1,7 +1,8 @@
 import helper_functions as f
 from glossary import *
+import inspect, sys
 
-class Race():
+class Race:
 
     def add_race_modifiers(self, char):
         
@@ -39,7 +40,6 @@ class Race():
             elif trait == 'features':
                 from features import get_feature
                 for feature in self.features:
-                    # char.feature['race'] += [get_feature(feature)()] # Only add object, probably not as good.
                     char.features['race'][feature] = get_feature(feature)()
 
     def remove_race_modifiers(self):
@@ -47,33 +47,33 @@ class Race():
 
 def get_race(char, race_choice):
 
-    ## TODO: Make this input at some point
+    races = {}
 
-    race_list = {'Human' : Human_Base,
-                'Human Variant' : Human_Variant,
-                'Half-Orc' : Half_Orc,
-                'Test' : Test}
+    for race in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+            if not race[1].__subclasses__():
+                races[race[0].replace("_", " ")] = race[1]
 
-    race = race_list[race_choice](char)
+    race = races[race_choice](char)
     
     return race
 
-class Human(Race):
+class Human_Base(Race):
     def __init__(self, char):
         self.race_name = "Human"
         self.size = 'Medium'
         self.speed = 30
         self.languages = f.add_language(char.profficiencies.languages, 'Common', 1)
 
-class Human_Base(Human):
+class Human(Human_Base):
     def __init__(self, char):
         super().__init__(char)
         self.attributes = [(attr, 1) for attr in attrs]
  
-class Human_Variant(Human):
+class Human_Variant(Human_Base):
     def __init__(self, char):
         super().__init__(char)
         self.attributes = f.add_attributes(attrs, 2)
+        self.skills = f.add_skill(char.skills, skills_dict.keys(), 1)
         self.feats = f.add_feat(char, 1)
 
 class Half_Orc(Race):
@@ -88,4 +88,4 @@ class Half_Orc(Race):
 
 class Test(Race):
     def __init__(self, char):
-        self.skills = f.add_skill(char.skills, skills_dict.keys(), 2)
+        self.feats = f.add_feat(char, 1)

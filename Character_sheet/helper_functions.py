@@ -107,17 +107,16 @@ def choose_skill(msg, invalid = []):
 
 def choose_feat(msg, char):
 
-    from feats import get_valid_feats, get_feats_list 
+    from feats import get_valid_feats, get_feats 
     valid_feats = get_valid_feats(char)
-    feats_list = get_feats_list()
 
     if char.feats:
-        chosen = [feat.name.lower().replace(" ", "_") for feat in char.feats.values()]
+        chosen = [feat.name for feat in char.feats.values()]
     else:
         chosen = []
 
-    print_options = [feats_list[feat][0] for feat in valid_feats if feat not in chosen]
-    true_options = [feat for feat in valid_feats if feat not in chosen]
+    print_options = [feat for feat in valid_feats if feat not in chosen]
+    true_options = [feat.lower().replace(" ", "_") for feat in print_options]
     valid_choice = False
     
     print(msg, "valid choices are:")
@@ -132,6 +131,8 @@ def choose_feat(msg, char):
             print("Invalid Choice, valid choices are:")
             print(textwrap.fill(", ".join(print_options), width=80, initial_indent='    ', subsequent_indent='    '))
     
+    choice = dict(zip(true_options, print_options))[choice]
+
     return choice
 
 ##########################################################################
@@ -178,3 +179,23 @@ def add_feat(char, num_feats):
 
     return feats_list
     
+def choose_weapons(equipment_list):
+
+    from items import get_items
+
+    weapon_list = {}
+    for weapon in get_items('Weapon').items():
+        weapon_list[weapon[0]] = weapon[1].get_weapon_type()
+
+    for n, item in enumerate(equipment_list):
+        if item[0] == 'Weapon':
+            choices = []
+            for weapon in weapon_list.keys():
+                if item[2] in ['Any',  weapon_list[weapon][0]]:
+                    if item[3] in ['Any',  weapon_list[weapon][1]]:
+                        choices.append(weapon)
+            choice = choices[simple_choice(choices)]
+            equipment_list[n] = (choice, item[1])
+
+    return equipment_list
+                                

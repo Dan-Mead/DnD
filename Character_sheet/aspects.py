@@ -62,20 +62,19 @@ def create_character():
         return self
 
 def choose_class(character, class_choice):
-        pass
+
+        starting_class = get_class(char, class_choice)
+        starting_class.add_class_features(character)
 
 def choose_race(character, race_name):
         
-        race = get_race(character, race_name)
-        race.add_race_modifiers(char)
-        
-        return race
+        race = get_race(character, race_name)    ## TODO: Make this input at some point
+        race.add_race_modifiers(character)
 
 char = create_character()
 
-# class_name = get_class(char, "Paladin")
+choose_class(char, "Paladin")
 
-char.race = choose_race(char, "Half-Orc")
-
+choose_race(char, "Half Orc")
 
 print("Done!")

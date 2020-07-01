@@ -4,8 +4,7 @@ def get_features():
 
     features = {}
     for feature in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-
-        if feature[1] != sys.modules[__name__].Feature:
+        if sys.modules[__name__].Feature in feature[1].__bases__:
             features[feature[0].replace("_", " ")] = feature[1]
 
     return features

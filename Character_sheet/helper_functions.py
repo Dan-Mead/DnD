@@ -1,6 +1,6 @@
 from glossary import *
 import textwrap
-
+import inspect
 
 def LDK(dic, string_list):
     """ List Dictionary Key

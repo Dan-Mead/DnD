@@ -25,8 +25,8 @@ def get_item(item_name, num):
     item = items[item_name](num)
 
 
-    if Pack in type(item).__bases__:
-        item = item.contents ### TODO: Probably put this in some unpacking code.
+    # if Pack in type(item).__bases__:
+        # item = [item.contents] ### TODO: Probably put this in some unpacking code.
 
     return item
 
@@ -37,7 +37,7 @@ class Item:
         cost = self.cost
         self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[1]+"p"
 
-    def add_item(self, num):
+    def add_number(self, num):
         self.num += num
 
 class Weapon(Item):
@@ -52,10 +52,16 @@ class Weapon(Item):
         self.weapon_type = self.get_weapon_type()
         self.dmg_type = self.dmg_type[self.dmg[2]]
         self.dmg = self.dmg[0], self.dmg[1]
-        self.silvered = False
-
         super().__init__(num)
     
+    def silver(self):
+        print(type(self.properties))
+        if type(self.properties) == str:
+            self.properties = (self.properties,) + ('Silvered',)
+        else:
+            self.properties += ('Silvered',)
+
+
     def attack(self):
         pass ## TODO Remember Profficiencies
 
@@ -69,6 +75,9 @@ class Armor(Item):
 class Pack:
     def __init__(self):
         pass
+    
+    def unpack(self):
+        pass
 
 class Other(Item):
     def __init__(self, num):
@@ -78,6 +87,7 @@ class Misc_Object(Item):
     def __init__(self, num):
         self.num = num
         self.cost = None
+
 ############################################################ Weapons
 
 class Club(Weapon):
@@ -160,7 +170,7 @@ class Mace(Weapon):
 class Quarterstaff(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 'b'
-        self.properties = 'Versatile 1d8'
+        self.properties = 'Versatile 8'
         self.cost = '2 s'
         self.weight = 4
         super().__init__(num)
@@ -182,7 +192,7 @@ class Sickle(Weapon):
 class Spear(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 'p'
-        self.properties = 'Thrown 20/60', 'Versatile 1d8'
+        self.properties = 'Thrown 20/60', 'Versatile 8'
         self.cost = '1 g'
         self.weight = 3
         super().__init__(num)
@@ -190,10 +200,201 @@ class Spear(Weapon):
     def get_weapon_type():
         return 'Simple', 'Melee'
 
+##################### Martial Melee
+
+class Battleaxe(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 1, 8, 's'
+        self.weight = 4
+        self.properties = 'Versatile 10'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Flail(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 1, 8, 'b'
+        self.weight = 2
+        self.properties = None
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Glaive(Weapon):
+    def __init__(self, num):
+        self.cost = '20 g'
+        self.dmg = 1, 10, 's'
+        self.weight = 6
+        self.properties = 'Heavy', 'Reach', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Greataxe(Weapon):
+    def __init__(self, num):
+        self.cost = '30 g'
+        self.dmg = 1, 12, 's'
+        self.weight = 7
+        self.properties = 'Heavy', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Greatsword(Weapon):
+    def __init__(self, num):
+        self.cost = '50 g'
+        self.dmg = 2, 6, 's'
+        self.weight = 6
+        self.properties = 'Heavy', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Halberd(Weapon):
+    def __init__(self, num):
+        self.cost = '20 g'
+        self.dmg = 1, 10, 's'
+        self.weight = 6
+        self.properties = 'Heavy', 'Reach', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Halberd(Weapon):
+    def __init__(self, num):
+        self.cost = '20 g'
+        self.dmg = 1, 10, 's'
+        self.weight = 6
+        self.properties = 'Heavy', 'Reach', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Lance(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 1, 12, 'p'
+        self.weight = 6
+        self.properties = 'Reach', 'Special'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Longsword(Weapon):
+    def __init__(self, num):
+        self.cost = '15 g'
+        self.dmg = 1, 8, 's'
+        self.weight = 3
+        self.properties = 'Versatile 10'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+  
+class Maul(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 2, 6, 'b'
+        self.weight = 10
+        self.properties = 'Heavy', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+
+class Morningstar(Weapon):
+    def __init__(self, num):
+        self.cost = '15 g'
+        self.dmg = 1, 8, 'p'
+        self.weight = 4
+        self.properties = None
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+
+class Pike(Weapon):
+    def __init__(self, num):
+        self.cost = '5 g'
+        self.dmg = 1, 10, 'p'
+        self.weight = 18
+        self.properties = 'Heavy', 'Reach', 'Two-handed'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Rapier(Weapon):
+    def __init__(self, num):
+        self.cost = '25 g'
+        self.dmg = 1, 8, 'p'
+        self.weight = 2
+        self.properties = 'Finesse'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Scimitar(Weapon):
+    def __init__(self, num):
+        self.cost = '25 g'
+        self.dmg = 1, 6, 's'
+        self.weight = 3
+        self.properties = 'Finesse', 'Light'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Shortsword(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 1, 6, 'p'
+        self.weight = 2
+        self.properties = 'Finesse', 'Light'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class Trident(Weapon):
+    def __init__(self, num):
+        self.cost = '5 g'
+        self.dmg = 1, 6, 'p'
+        self.weight = 4
+        self.properties = 'Thrown 20/60', 'Versatile 8'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+class War_Pick(Weapon):
+    def __init__(self, num):
+        self.cost = '5 g'
+        self.dmg = 1, 8, 'p'
+        self.weight = 2
+        self.properties = None
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
 class Warhammer(Weapon):
     def __init__(self, num):
         self.dmg = 1, 8, 'b'
-        self.properties = 'Versatile, 1d10'
+        self.properties = 'Versatile 10'
         self.cost = '15 g'
         self.weight = 2
         super().__init__(num)
@@ -201,7 +402,18 @@ class Warhammer(Weapon):
     def get_weapon_type():
         return 'Martial', 'Melee'
 
-  
+class Whip(Weapon):
+    def __init__(self, num):
+        self.cost = '2 g'
+        self.dmg = 1, 4, 's'
+        self.weight = 3
+        self.properties = 'Finesse', 'Reach'
+        super().__init__(num)
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Melee'
+
+
 
 ############################################################ Armor
 
@@ -362,6 +574,20 @@ class Explorer_Pack(Pack):
             "Rations" : Misc_Object(10),
             "Waterskin" : Misc_Object(1),
             "Rope" : Misc_Object(1)
+        }
+class Priest_Pack(Pack):
+    def __init__(self,num):
+        self.contents = {
+            "Backpack" : Misc_Object(1),
+            "Blanket" : Misc_Object(1),
+            "Candles" : Misc_Object(10),
+            "Tinderbox" : Misc_Object(1),
+            "Alms Box" : Misc_Object(1),
+            "Incense Block" : Misc_Object(2),
+            "Censer" : Misc_Object(1),
+            "Vestments" : Misc_Object(1),
+            "Rations" : Misc_Object(2),
+            "Waterskin" : Misc_Object(1)
         }
 
 ############################################################ Misc

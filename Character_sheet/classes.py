@@ -23,9 +23,13 @@ class Class:
                     char.profficiencies.tools[self.class_name + '_origin'] = self.prof_tools 
                 
                 elif trait == 'equipment':
+                    self.equipment = f.choose_weapons(self.equipment) ## Choose weapons only when adding
                     for item in self.equipment:
                         from items import get_item
-                        char.equipment.update({item[0] : get_item(item[0], item[1])})
+                        if item[0] in char.equipment:
+                            char.equipment[item[0]].add_number(item[1])
+                        else:
+                            char.equipment.update({item[0] : get_item(item[0], item[1])})
              
 
         char.classes.update(Dict({self.class_name : {'level' : 1,
@@ -60,7 +64,7 @@ class Paladin(Class):
 
         choice = f.simple_choice(['One martial weapon and a shield', 'Two martial weapons'])
         inv = {0 : [('Weapon', 1, 'Martial', 'Any'), ('Shield', 1)],
-                1 : [('Weapon', 1, 'Martial', 'Any'), ('Weapon', 1, 'Martial', 'Any')]} ### TODO: Add as actual objects
+                1 : [('Weapon', 1, 'Martial', 'Any'), ('Weapon', 1, 'Martial', 'Any')]}
         self.equipment += inv[choice]
 
         choice = f.simple_choice(['Five javelins', 'One simple melee weapon'])
@@ -73,9 +77,6 @@ class Paladin(Class):
                 1 : [('Explorer Pack', 1)]}
         self.equipment += inv[choice]
         self.equipment += [('Chain Mail', 1), ('Holy Symbol', 1)]
-
-        self.equipment = f.choose_weapons(self.equipment)
-
         
 
 class Test(Class):
@@ -86,8 +87,6 @@ class Test(Class):
         self.prof_armor = ["Light", "Medium", "Heavy", "Shields"]
         self.prof_weapons = ["Simple", "Martial"]
         self.saves = ["WIS", "CHA"]
-        self.equipment = [('Chain Mail', 1), ('Weapon', 1, 'Simple', 'Melee')]
-
-        self.equipment = f.choose_weapons(self.equipment)
+        self.equipment = [('Weapon', 1, 'Martial', 'Melee'), ('Weapon', 1, 'Simple', 'Melee')]
 
         print(self.equipment)

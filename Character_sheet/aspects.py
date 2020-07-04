@@ -1,4 +1,4 @@
-from addicted import Dict
+from addict import Dict
 
 from glossary import skills_dict, attrs
 from races import get_race
@@ -74,8 +74,8 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-choose_class(char, "Paladin")
+choose_class(char, "Test")
 
-choose_race(char, "Human Variant")
+choose_race(char, "Half Orc")
 
 print("Done!")

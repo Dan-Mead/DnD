@@ -109,7 +109,6 @@ def choose_skill(msg, invalid=None):
     return choice
 
 
-# noinspection PyUnboundLocalVariable
 def choose_feat(msg, char):
     from feats import get_valid_feats, get_feats
     valid_feats = get_valid_feats(char)

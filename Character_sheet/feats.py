@@ -1,5 +1,7 @@
-from helper_classes import *
-import inspect, sys
+import inspect
+import sys
+
+from helper_classes import modifier, note, flavour
 
 
 class feat:
@@ -18,7 +20,7 @@ def get_feats():
     feats = {}
 
     for feat in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-        if sys.modules[__name__].Feat in feat[1].__bases__:
+        if sys.modules[__name__].feat in feat[1].__bases__:
             feats[feat[0].replace("_", " ")] = feat[1]
 
     return feats
@@ -55,7 +57,7 @@ class Actor(feat):
         self.effects = [modifier("feat", "attributes.CHA", +1),
                         note("feat", "skills.deception.notes", "Advantage when pretending to be someone else."),
                         note("feat", "skills.performance.notes", "Advantage when pretending to be someone else."),
-                        feature("feat", "role_play",
+                        flavour("feat", "role_play",
                                 "You can mimic the speech of another person or the sounds made by other creatures. "
                                 "You must have heard the person speaking, or heard the creature make the sound, "
                                 "for at least 1 minute. A successful Wisdom (Insight) check contested by your "
@@ -69,7 +71,7 @@ class Actor(feat):
 class Heavily_Armored(feat):
     def __init__(self):
         self.desc = "You have trained to master the use of heavy armor, gaining the following benefits:"
-        self.effect = [modifier("feat", "attributes.STR", +1),
+        self.effects = [modifier("feat", "attributes.STR", +1),
                        modifier("feat", "profficiencies.armor", "Heavy")]
 
     @staticmethod
@@ -81,7 +83,7 @@ class Shield_Master(feat):
     def __init__(self):
         self.desc = "You use shields not just for protection but also for offense. You gain the following benefits " \
                     "while you are wielding a shield:",
-        self.effects = [feature("feat", "actions.bonus",
+        self.effects = [flavour("feat", "actions.bonus", # TODO: Action type
                                 "If you take the Attack action on your turn, you can use a bonus action to try to "
                                 "shove a creature within 5 feet of you with your shield."),
                         note("feat", "saving_throws.DEX.notes",

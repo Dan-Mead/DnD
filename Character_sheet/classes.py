@@ -89,6 +89,4 @@ class Test(Class):
         self.prof_armor = ["Light", "Medium", "Heavy", "Shields"]
         self.prof_weapons = ["Simple", "Martial"]
         self.saves = ["WIS", "CHA"]
-        self.equipment = [('Weapon', 1, 'Martial', 'Melee'), ('Weapon', 1, 'Simple', 'Melee')]
-
-        print(self.equipment)
+        self.equipment = [('Chain Mail', 1), ('Holy Symbol', 1)]

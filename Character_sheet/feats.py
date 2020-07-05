@@ -1,7 +1,7 @@
 import inspect
 import sys
 
-from helper_classes import modifier, note, flavour
+from effects import modifier, note, flavour
 
 
 class feat:

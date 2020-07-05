@@ -1,5 +1,23 @@
 from helper_functions import LDK
 
+"""Effects 
+
+
+All features have effects. Are added by classes, races, or backgrounds.
+Feats are basically identical to Features. 
+Effects can have other origins. 
+Some feats simply produce
+
+Effects
+* Notes - Conditional modifiers for skills and saving throws.
+* Modifier - Stat effects or changes.
+* Action - An effect that is manually activated, can be in or out of combat
+. Can have limited uses.
+    * Optional actions. Can list when checking available actions.
+* Triggered Effect - An effect that triggers automatically on an event.
+    * These will still be optional, but heavily recommended.
+* Passive Effect - An ongoing, constant effect, or one which has no specific
+ trigger, or general flavour."""
 
 class effect:
 

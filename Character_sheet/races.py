@@ -11,8 +11,8 @@ class race:
 
         race_key = {
             'race_name': ['info'],
-            'size': ['info', 'size'],
-            'speed': ['info', 'speed'],
+            'size': ['stats', 'size'],
+            'speed': ['stats', 'speed'],
             'languages': ['profficiencies', 'languages'],
             'attributes': ['attributes'],
             'skills': ['skills'],

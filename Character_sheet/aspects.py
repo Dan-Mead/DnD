@@ -13,17 +13,8 @@ def create_character():
                       'fore_name': None,
                       'middle_name': None,
                       'family_name': None,
-                      'race': None,
-                      'size': Dict({'race': None, 'temp': None}),
-                      'speed': Dict({'race': None, 'mod': None})
+                      'race': None
                       })
-
-    self.profficiencies.update({'languages': Dict(),
-                                'armor': Dict(),
-                                'weapons': Dict({"Base": ["Unarmed"]}),
-                                'tools': Dict(),
-                                'other': Dict()
-                                })
 
     self.bio.update({'faith': None
                      })
@@ -32,28 +23,36 @@ def create_character():
                        'current_hp': None,
                        'armour_class': None,
                        'defences': None,
-                       'conditions': None})
-
-    self.actions.update({'actions': Dict(),
-                         'bonus': Dict(),
-                         'attack': Dict(),
-                         'reaction': Dict()})
+                       'conditions': None,
+                       'size': Dict({'race': None, 'temp': None}),
+                       'speed': Dict({'race': None, 'mod': None})
+                       })
 
     self.attributes.update({attr: Dict({'base': None,
                                         'override': None})
                             for attr in attrs})
-
-    self.saving_throws.update({attr: Dict({'mod': None,
-                                           'override': None,
-                                           'prof': False})
-                               for attr in attrs})
 
     self.skills.update({skill: Dict({'name': skills_dict[skill][0],
                                      'attr': skills_dict[skill][1],
                                      'prof': False})
                         for skill in skills_dict})
 
-    self.role_play.update(Dict())
+    self.saving_throws.update({attr: Dict({'mod': None,
+                                           'override': None,
+                                           'prof': False})
+                               for attr in attrs})
+
+    self.profficiencies.update({'languages': Dict(),
+                                'armor': Dict(),
+                                'weapons': Dict({"Base": ["Unarmed"]}),
+                                'tools': Dict(),
+                                'other': Dict()
+                                })
+
+    self.actions.update({'actions': Dict(),
+                         'bonus': Dict(),
+                         'attack': Dict(),
+                         'reaction': Dict()})
 
     self.feats.update(Dict())
 
@@ -74,8 +73,8 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-choose_class(char, "Test")
+choose_class(char, "Paladin")
 
-choose_race(char, "Half Orc")
+choose_race(char, "Human Variant")
 
 print("Done!")

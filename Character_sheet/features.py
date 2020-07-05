@@ -1,7 +1,7 @@
 import inspect
 import sys
 
-from helper_classes import passive_effect, trigger_passive, active_effect
+from effects import passive_effect, trigger_passive, active_effect
 
 def get_features():
     features = {}

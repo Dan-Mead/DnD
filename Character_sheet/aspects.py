@@ -73,8 +73,8 @@ def choose_race(character, race_name):
 
 char = create_character()
 
-choose_class(char, "Paladin")
+choose_class(char, "Test")
 
-choose_race(char, "Human Variant")
+choose_race(char, "Test")
 
 print("Done!")

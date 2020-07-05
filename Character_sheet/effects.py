@@ -21,42 +21,55 @@ Can have limited uses.
 
 class effect:
 
-    def __init__(self, origin, aspect, value):
+    def __init__(self, origin, aspect):
         self.origin = origin
         self.aspect = aspect
-        self.value = value
 
 
     def add_effect(self, char):
         path_string = self.aspect.split(".")
         path = LDK(char, path_string)
-        path[self.origin] += [self.value]
+
+        if isinstance(self, modifier):
+            value = self.value
+        else:
+            value = self.desc
+        path[self.origin] += [value]
+
 
 
 class modifier(effect):
     """Adds a single stat, usually a single modifier"""
     def __init__(self, origin, aspect, value):
-        super().__init__(origin, aspect, value)
+        self.value = value
+        super().__init__(origin, aspect)
 
 
 class note(effect):
     """Add a note. Currently on saving throws and skills"""
-    def __init__(self, origin, aspect, value):
-        super().__init__(origin, aspect, value)
+    def __init__(self, origin, aspect, desc):
+        self.desc = desc
+        super().__init__(origin, aspect)
 
 
 class passive_effect(effect):
     """Add a single effect for something that is purely a description."""
-    def __init__(self, origin, aspect, value):
-        super().__init__(origin, aspect, value)
+    def __init__(self, origin, aspect, desc):
+        self.desc = desc
+        super().__init__(origin, aspect)
 
 
 class trigger_passive(effect):
     """Add a single effect which can be triggered by a notable event."""
-    pass
+    def __init__(self, origin, aspect, desc, trigger, limit):
+        self.desc = desc
+        super().__init__(origin, aspect)
+        # TODO: Finish this!
 
 
 class action(effect):
     """Adds an action and type"""
-    def __init__(self, origin: object, aspect: object, value: object) -> object:
-        super().__init__(origin, aspect, value)
+    def __init__(self, origin, aspect, desc):
+        self.desc = desc
+        super().__init__(origin, aspect)
+        # TODO: Finish this

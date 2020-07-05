@@ -6,11 +6,24 @@ from addict import Dict
 import helper_functions as f
 
 
+class character_class:
+    def __init__(self, level, hit_dice, lvl_up_hp):
+        self.level = level
+        self.hit_dice = hit_dice
+        self.lvl_up_hp = lvl_up_hp
+
+    def level_up(self, class_name):
+        self.level += 1
+
+        level_table = getattr(sys.modules[__name__], class_name).levels()
+
+        print(level_table[self.level])
+
+        ### Add new level features
+
 class Class:
 
     def add_class_features(self, char):
-        ## If first class do stuff like HP, saves
-        ## Multiclass profficiencies are listed in table
         if not char.classes:
             for trait in vars(self).keys():
 
@@ -19,30 +32,35 @@ class Class:
                         char.saving_throws[save].prof = True
 
                 elif trait == 'prof_weapons':
-                    char.profficiencies.weapons[self.class_name + '_origin'] = self.prof_weapons
+                    char.profficiencies.weapons[
+                        self.class_name + '_origin'] = self.prof_weapons
                 elif trait == 'prof_armor':
-                    char.profficiencies.armor[self.class_name + '_origin'] = self.prof_armor
+                    char.profficiencies.armor[
+                        self.class_name + '_origin'] = self.prof_armor
                 elif trait == 'prof_tools':
-                    char.profficiencies.tools[self.class_name + '_origin'] = self.prof_tools
+                    char.profficiencies.tools[
+                        self.class_name + '_origin'] = self.prof_tools
 
                 elif trait == 'equipment':
-                    self.equipment = f.choose_weapons(self.equipment)  ## Choose weapons only when adding
+                    self.equipment = f.choose_weapons(
+                        self.equipment)
                     for item in self.equipment:
                         from items import get_item
                         if item[0] in char.equipment:
                             char.equipment[item[0]].add_number(item[1])
                         else:
-                            char.equipment.update({item[0]: get_item(item[0], item[1])})
+                            char.equipment.update(
+                                {item[0]: get_item(item[0], item[1])})
 
-        char.classes.update(Dict({self.class_name: {'level': 1,
-                                                    'hit_dice': 10,
-                                                    'lvl_up_hp': 6}}))
+        char.classes[self.class_name] = character_class(1, self.hit_dice,
+                                                        self.hit_points)
 
 
 def get_class(char, choice):
     classes = {}
 
-    for class_name in inspect.getmembers(sys.modules[__name__], inspect.isclass):
+    for class_name in inspect.getmembers(sys.modules[__name__],
+                                         inspect.isclass):
         if not class_name[1].__subclasses__():
             classes[class_name[0].replace("_", " ")] = class_name[1]
 
@@ -60,13 +78,16 @@ class Paladin(Class):
         self.prof_weapons = ["Simple", "Martial"]
         self.prof_tools = None
         self.saves = ["WIS", "CHA"]
-        allowed_skills = ["athletics", "insight", "intimidation", "medicine", "persuasion", "religion"]
+        allowed_skills = ["athletics", "insight", "intimidation", "medicine",
+                          "persuasion", "religion"]
         self.skills = f.add_skill(char.skills, allowed_skills, 2)
         self.equipment = []
 
-        choice = f.simple_choice(['One martial weapon and a shield', 'Two martial weapons'])
+        choice = f.simple_choice(
+            ['One martial weapon and a shield', 'Two martial weapons'])
         inv = {0: [('Weapon', 1, 'Martial', 'Any'), ('Shield', 1)],
-               1: [('Weapon', 1, 'Martial', 'Any'), ('Weapon', 1, 'Martial', 'Any')]}
+               1: [('Weapon', 1, 'Martial', 'Any'),
+                   ('Weapon', 1, 'Martial', 'Any')]}
         self.equipment += inv[choice]
 
         choice = f.simple_choice(['Five javelins', 'One simple melee weapon'])
@@ -80,6 +101,9 @@ class Paladin(Class):
         self.equipment += inv[choice]
         self.equipment += [('Chain Mail', 1), ('Holy Symbol', 1)]
 
+        self.levels = {1 : ['Divine Sense', 'Lay on Hands'],
+                       2 : ['Divine Smite', 'Fighting Style', 'Spellcasting']}
+
 
 class Test(Class):
     def __init__(self, char):
@@ -90,3 +114,11 @@ class Test(Class):
         self.prof_weapons = ["Simple", "Martial"]
         self.saves = ["WIS", "CHA"]
         self.equipment = [('Chain Mail', 1), ('Holy Symbol', 1)]
+
+
+
+    @staticmethod
+    def levels():
+        levels = {1: ['Divine Sense', 'Lay on Hands'],
+                  2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
+        return levels

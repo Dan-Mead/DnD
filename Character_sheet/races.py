@@ -4,7 +4,6 @@ import sys
 import helper_functions as f
 from glossary import attrs, skills_dict
 
-
 class race:
 
     def add_race_modifiers(self, char):
@@ -36,14 +35,16 @@ class race:
             elif trait == 'feats':
                 from feats import get_feat
                 for feat in self.feats:
-                    char.feats.race = get_feat(feat)
-                    new_feat = char.feats.race
+                    new_feat = get_feat(feat)
+                    char.feats.race = new_feat
                     new_feat.add_feat_modifiers(char)
 
             elif trait == 'features':
                 from features import get_feature
                 for feature in self.features:
-                    char.features['race'][feature] = get_feature(feature)()
+                    char.features[self.race_name][feature] = get_feature(feature)(self.race_name)
+
+
 
     def remove_race_modifiers(self):
         pass

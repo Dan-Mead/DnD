@@ -64,7 +64,7 @@ def create_character():
 def choose_class(character, class_choice):
     starting_class = get_class(char, class_choice)
     starting_class.add_class_features(character)
-
+    char.classes[class_choice]
 
 def choose_race(character, race_name):
     race = get_race(character, race_name)  # TODO: Make this input at some point
@@ -75,6 +75,10 @@ char = create_character()
 
 choose_class(char, "Test")
 
-choose_race(char, "Test")
+choose_race(char, "Half Orc")
+
+class_ = char.classes.Test
+
+class_.level_up("Test")
 
 print("Done!")

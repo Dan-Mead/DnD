@@ -92,7 +92,7 @@ class Shield_Master(feat):
         desc = "You use shields not just for protection but also for offense. " \
                "You gain the following benefits while you are wielding a " \
                "shield:",
-        effects = [action("feat", "actions.bonus",  # TODO: Action type
+        effects = [action("feat", "actions.bonus",
                           "If you take the Attack action on your turn, "
                           "you can use a bonus action to try to shove a "
                           "creature within 5 feet of you with your shield."),

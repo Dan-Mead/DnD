@@ -6,59 +6,58 @@ from classes import get_class
 
 
 def create_character():
-    self = Dict()
 
-    self.info.update({'alignment': None,
-                      'level': None,
-                      'fore_name': None,
-                      'middle_name': None,
-                      'family_name': None,
-                      'race': None
-                      })
+    def __init__(self):
 
-    self.bio.update({'faith': None
-                     })
+        self.info = Dict({'alignment': None,
+                          'level': None,
+                          'fore_name': None,
+                          'middle_name': None,
+                          'family_name': None,
+                          'race': None
+                          })
 
-    self.stats.update({'max_hp': None,
-                       'current_hp': None,
-                       'armour_class': None,
-                       'defences': None,
-                       'conditions': None,
-                       'size': Dict({'race': None, 'temp': None}),
-                       'speed': Dict({'race': None, 'mod': None})
-                       })
+        self.bio = Dict({'faith': None
+                         })
 
-    self.attributes.update({attr: Dict({'base': None,
-                                        'override': None})
-                            for attr in attrs})
+        self.stats = Dict({'max_hp': None,
+                           'current_hp': None,
+                           'armour_class': None,
+                           'defences': None,
+                           'conditions': None,
+                           'size': Dict({'race': None, 'temp': None}),
+                           'speed': Dict({'race': None, 'mod': None})
+                           })
 
-    self.skills.update({skill: Dict({'name': skills_dict[skill][0],
-                                     'attr': skills_dict[skill][1],
-                                     'prof': False})
-                        for skill in skills_dict})
+        self.attributes = Dict({attr: Dict({'base': None,
+                                            'override': None})
+                                for attr in attrs})
 
-    self.saving_throws.update({attr: Dict({'mod': None,
-                                           'override': None,
-                                           'prof': False})
-                               for attr in attrs})
+        self.skills = Dict({skill: Dict({'name': skills_dict[skill][0],
+                                         'attr': skills_dict[skill][1],
+                                         'prof': False})
+                            for skill in skills_dict})
 
-    self.profficiencies.update({'languages': Dict(),
-                                'armor': Dict(),
-                                'weapons': Dict({"Base": ["Unarmed"]}),
-                                'tools': Dict(),
-                                'other': Dict()
-                                })
+        self.saving_throws = Dict({attr: Dict({'mod': None,
+                                               'override': None,
+                                               'prof': False})
+                                   for attr in attrs})
 
-    self.actions.update({'actions': Dict(),
-                         'bonus': Dict(),
-                         'attack': Dict(),
-                         'reaction': Dict()})
+        self.profficiencies = Dict({'languages': Dict(),
+                                    'armor': Dict(),
+                                    'weapons': Dict({"Base": ["Unarmed"]}),
+                                    'tools': Dict(),
+                                    'other': Dict()
+                                    })
 
-    self.feats.update(Dict())
+        self.actions = Dict({'actions': Dict(),
+                             'bonus': Dict(),
+                             'attack': Dict(),
+                             'reaction': Dict()})
 
-    self.features.update(Dict())
+        self.feats = Dict()
 
-    return self
+        self.features = Dict()
 
 
 def choose_class(character, class_choice):

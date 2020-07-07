@@ -4,6 +4,7 @@ import sys
 import helper_functions as f
 from glossary import attrs, skills_dict
 
+
 class race:
 
     def add_race_modifiers(self, char):
@@ -19,10 +20,13 @@ class race:
             'features': ['features']}
 
         for trait in vars(self).keys():
-
             if trait in ['race_name', 'size', 'speed', 'languages']:
-                path = f.LDK(char, race_key[trait])
-                path['race'] = (getattr(self, trait))
+                path = getattr(char, race_key[trait][0])
+                if len(race_key[trait]) > 1:
+                    path = f.LDK(path, race_key[trait][1:])
+
+                path['race'] = getattr(self, trait)
+
 
             elif trait == 'attributes':
                 for attr in self.attributes:
@@ -42,9 +46,8 @@ class race:
             elif trait == 'features':
                 from features import get_feature
                 for feature in self.features:
-                    char.features[self.race_name][feature] = get_feature(feature)(self.race_name)
-
-
+                    char.features[self.race_name][feature] = get_feature(
+                        feature)(self.race_name)
 
     def remove_race_modifiers(self):
         pass
@@ -67,7 +70,8 @@ class Human_Base(race):
         self.race_name = "Human"
         self.size = 'Medium'
         self.speed = 30
-        self.languages = f.add_language(char.profficiencies.languages, 'Common', 1)
+        self.languages = f.add_language(char.profficiencies.languages, 'Common',
+                                        1)
 
 
 class Human(Human_Base):

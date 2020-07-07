@@ -5,79 +5,75 @@ from glossary import skills_dict, attrs
 from races import get_race
 from classes import get_class
 
+
 class character:
 
     def __init__(self):
-        self.sheet = Dict()
 
-    def create_character(self):
-        sheet = Dict()
-
-        sheet.info = Dict({'alignment': None,
+        self.info = Dict({'alignment': None,
                           'level': None,
                           'fore_name': None,
                           'middle_name': None,
                           'family_name': None,
                           'race': None
-                           })
-
-        sheet.bio = Dict({'faith': None
                           })
 
-        sheet.stats = Dict({'max_hp': None,
+        self.bio = Dict({'faith': None
+                         })
+
+        self.stats = Dict({'max_hp': None,
                            'current_hp': None,
                            'armour_class': None,
                            'defences': None,
                            'conditions': None,
                            'size': Dict({'race': None, 'temp': None}),
                            'speed': Dict({'race': None, 'mod': None})
-                            })
+                           })
 
-        sheet.attributes = Dict({attr: Dict({'base': None,
+        self.attributes = Dict({attr: Dict({'base': 10,
                                             'override': None})
-                                 for attr in attrs})
+                                for attr in attrs})
 
-        sheet.skills = Dict({skill: Dict({'name': skills_dict[skill][0],
+        self.skills = Dict({skill: Dict({'name': skills_dict[skill][0],
                                          'attr': skills_dict[skill][1],
                                          'prof': False})
-                             for skill in skills_dict})
+                            for skill in skills_dict})
 
-        sheet.saving_throws = Dict({attr: Dict({'mod': None,
+        self.saving_throws = Dict({attr: Dict({'mod': None,
                                                'override': None,
                                                'prof': False})
-                                    for attr in attrs})
+                                   for attr in attrs})
 
-        sheet.profficiencies = Dict({'languages': Dict(),
+        self.profficiencies = Dict({'languages': Dict(),
                                     'armor': Dict(),
                                     'weapons': Dict({"Base": ["Unarmed"]}),
                                     'tools': Dict(),
                                     'other': Dict()
-                                     })
+                                    })
 
-        sheet.actions = Dict({'actions': Dict(),
+        self.actions = Dict({'actions': Dict(),
                              'bonus': Dict(),
                              'attack': Dict(),
                              'reaction': Dict()})
 
-        sheet.feats = Dict()
+        self.feats = Dict()
 
-        sheet.features = Dict()
+        self.features = Dict()
 
-        self.sheet = sheet
-
+        self.equipment = Dict()
 
     def choose_class(self, class_choice):
         starting_class = get_class(char, class_choice)
-        starting_class.add_class_features(self.sheet)
+        starting_class.add_class_features(self)
 
     def choose_race(self, race_name):
-        race = get_race(self.sheet, race_name)  # TODO: Make this input at
+        race = get_race(self, race_name)  # TODO: Make this input at
         # some point
-        race.add_race_modifiers(self.sheet)
+        race.add_race_modifiers(self)
 
     def update(self):
         ### Modifiers
-        attrs = self.sheet.attributes
+        attrs = self.attributes
         for attr_name, attr in attrs.items():
 
             if attr.override:
@@ -85,24 +81,36 @@ class character:
                 break
             else:
                 total = sum([attr[val] for val in attr if type(attr[val]) ==
-                           int])
+                             int])
                 if total < 0:
                     total = 0
                 attrs[attr_name].stat = total
-                attrs[attr_name].mod = mod_calc(total)
+            attrs[attr_name].mod = mod_calc(total)
 
+        ### HP and Level calculation
 
-        ### HP calculation
+        classes = self.classes
 
-        classes = self.sheet.classes
+        level = 0
+        HP = 0
 
+        for class_name, class_obj in classes.items():
+            level += class_obj.level
+            if class_obj.base_class == True:
+                HP += class_obj.hit_dice
+            else:
+                HP += class_obj.lvl_up_hp
+
+        self.info.level = level
+
+        HP += (level * attrs.CON.mod)
+        self.stats.max_hp = int(HP)
 
 
 char = character()
-char.create_character()
-char.choose_class("Test") # automatically run these on creating a character
+
+char.choose_class("Test")  # automatically run these on creating a character
 char.choose_race("Half Orc")
 char.update()
-
 
 print("Done!")

@@ -13,7 +13,7 @@ class race:
             'race_name': ['info'],
             'size': ['stats', 'size'],
             'speed': ['stats', 'speed'],
-            'languages': ['profficiencies', 'languages'],
+            'languages': ['proficiencies', 'languages'],
             'attributes': ['attributes'],
             'skills': ['skills'],
             'feats': ['feats'],
@@ -70,7 +70,7 @@ class Human_Base(race):
         self.race_name = "Human"
         self.size = 'Medium'
         self.speed = 30
-        self.languages = f.add_language(char.profficiencies.languages, 'Common',
+        self.languages = f.add_language(char.proficiencies.languages, 'Common',
                                         1)
 
 

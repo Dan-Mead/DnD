@@ -129,7 +129,7 @@ def choose_skill(msg, invalid=None):
 
 
 def choose_feat(msg, char):
-    from feats import get_valid_feats, get_feats
+    from feats import get_valid_feats
     valid_feats = get_valid_feats(char)
 
     if char.feats:

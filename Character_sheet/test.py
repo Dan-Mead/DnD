@@ -1,1 +1,2 @@
 
+print(False * 2)

@@ -41,7 +41,7 @@ def get_valid_feats(char):
         if not prereq:
             valid_feats.append(feat)
         elif prereq[0] == 'armor':
-            groups = char.profficiencies.armor.values()
+            groups = char.proficiencies.armor.values()
             armors = [armor for group in groups for armor in group]
             if prereq[1] in armors:
                 valid_feats.append(feat)

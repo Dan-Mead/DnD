@@ -35,13 +35,13 @@ class Class:
                         char.saving_throws[save].prof = True
 
                 elif trait == 'prof_weapons':
-                    char.profficiencies.weapons[
+                    char.proficiencies.weapons[
                         self.class_name + '_origin'] = self.prof_weapons
                 elif trait == 'prof_armor':
-                    char.profficiencies.armor[
+                    char.proficiencies.armor[
                         self.class_name + '_origin'] = self.prof_armor
                 elif trait == 'prof_tools':
-                    char.profficiencies.tools[
+                    char.proficiencies.tools[
                         self.class_name + '_origin'] = self.prof_tools
 
                 elif trait == 'equipment':

@@ -1,6 +1,6 @@
 import textwrap
+import numpy as np
 
-# from glossary import
 from glossary import common_languages, attrs, skills_dict, exotic_languages, ordinals
 
 
@@ -15,7 +15,9 @@ def LDK(dic, string_list):
 
     return value
 
+def mod_calc(num):
 
+    return np.floor((num - 10) / 2)
 ##########################################################################
 
 def simple_choice(options_list):

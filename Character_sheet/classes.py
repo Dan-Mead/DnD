@@ -7,24 +7,25 @@ import helper_functions as f
 
 
 class character_class:
-    def __init__(self, level, hit_dice, lvl_up_hp):
+    def __init__(self, level, hit_dice, lvl_up_hp, first):
         self.level = level
         self.hit_dice = hit_dice
         self.lvl_up_hp = lvl_up_hp
+        self.base_class = first
 
     def level_up(self, class_name):
         self.level += 1
 
         level_table = getattr(sys.modules[__name__], class_name).levels()
 
-        print(level_table[self.level])
-
         ### Add new level features
 
 class Class:
 
     def add_class_features(self, char):
+
         if not char.classes:
+            char.classes[self.class_name].base_class = True
             for trait in vars(self).keys():
 
                 if trait == 'saves':
@@ -52,9 +53,13 @@ class Class:
                             char.equipment.update(
                                 {item[0]: get_item(item[0], item[1])})
 
-        char.classes[self.class_name] = character_class(1, self.hit_dice,
-                                                        self.hit_points)
-
+            char.classes[self.class_name] = character_class(1, self.hit_dice,
+                                                            self.hit_points,
+                                                            True)
+        else:
+            char.classes[self.class_name] = character_class(1, self.hit_dice,
+                                                            self.hit_points,
+                                                            False)
 
 def get_class(char, choice):
     classes = {}
@@ -108,8 +113,8 @@ class Paladin(Class):
 class Test(Class):
     def __init__(self, char):
         self.class_name = 'Test'
-        self.hit_dice = 0
-        self.hit_points = 0
+        self.hit_dice = 10
+        self.hit_points = 6
         self.prof_armor = ["Light", "Medium", "Heavy", "Shields"]
         self.prof_weapons = ["Simple", "Martial"]
         self.saves = ["WIS", "CHA"]

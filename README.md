@@ -1,6 +1,6 @@
 # DnD
 
-Repo for DnD work, mainly just character stuff at the moment.
+Repo for DnD work, mainly just self stuff at the moment.
 Slightly abused PEP 8 stylistic on a lot of Class names but just seemed to
  make it a lot more readable.
 
@@ -11,9 +11,9 @@ This is a general guide to the structure of this work, as well as a brief
 
 ## Aspects
 
-Aspects is concerned with character creation, and building a 'character
-' object. The character object contains all the information required for the
- character sheet to build an object. And will [TBD] be exportable.
+Aspects is concerned with self creation, and building a 'self
+' object. The self object contains all the information required for the
+ self sheet to build an object. And will [TBD] be exportable.
  
  Stats currently included are:
  

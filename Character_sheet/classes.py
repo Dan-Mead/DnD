@@ -4,6 +4,7 @@ import sys
 from addict import Dict
 
 import helper_functions as f
+from items import get_item
 
 
 class character_class:
@@ -28,6 +29,8 @@ class Class:
 
             char.classes = Dict()
 
+            origin = 'origin : ' + self.class_name
+
             for trait in vars(self).keys():
 
                 if trait == 'saves':
@@ -35,20 +38,16 @@ class Class:
                         char.saving_throws[save].prof = True
 
                 elif trait == 'prof_weapons':
-                    char.proficiencies.weapons[
-                        self.class_name + '_origin'] = self.prof_weapons
+                    char.proficiencies.weapons[origin] = self.prof_weapons
                 elif trait == 'prof_armor':
-                    char.proficiencies.armor[
-                        self.class_name + '_origin'] = self.prof_armor
+                    char.proficiencies.armor[origin] = self.prof_armor
                 elif trait == 'prof_tools':
-                    char.proficiencies.tools[
-                        self.class_name + '_origin'] = self.prof_tools
+                    char.proficiencies.tools[origin] = self.prof_tools
 
                 elif trait == 'equipment':
                     self.equipment = f.choose_weapons(
                         self.equipment)
                     for item in self.equipment:
-                        from items import get_item
                         if item[0] in char.equipment:
                             char.equipment[item[0]].add_number(item[1])
                         else:
@@ -120,25 +119,11 @@ class Test(Class):
         self.prof_armor = ["Light", "Medium", "Heavy", "Shields"]
         self.prof_weapons = ["Simple", "Martial"]
         self.saves = ["WIS", "CHA"]
-        self.equipment = [('Chain Mail', 1), ('Holy Symbol', 1)]
-
-
-
-    @staticmethod
-    def levels():
-        levels = {1: ['Divine Sense', 'Lay on Hands'],
-                  2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
-        return levels
-
-class Test2(Class):
-    def __init__(self, char):
-        self.class_name = 'Test2'
-        self.hit_dice = 10
-        self.hit_points = 6
-        self.prof_armor = ["Light", "Medium", "Heavy", "Shields"]
-        self.prof_weapons = ["Simple", "Martial"]
-        self.saves = ["WIS", "CHA"]
-        self.equipment = [('Chain Mail', 1), ('Holy Symbol', 1)]
+        self.equipment = [('Chain Mail', 1),
+                          ('Holy Symbol', 1),
+                          ('Shield', 1),
+                          ('Warhammer', 1),
+                          ('Handaxe', 1)]
 
 
 

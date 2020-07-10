@@ -1,6 +1,15 @@
 import inspect
 import sys
 
+from effects import modifier, note, passive_effect, action
+
+### Weapons
+### Armor
+### Packs
+### Misc
+### Magic
+from glossary import attrs
+
 
 def get_items(type_filter=None):
     item_types = Item.__subclasses__()
@@ -20,7 +29,7 @@ def get_items(type_filter=None):
     return items
 
 
-def get_item(item_name, num):
+def get_item(item_name, num = 1):
     items = get_items()
 
     item = items[item_name](num)
@@ -32,7 +41,6 @@ class Item:
 
     def __init__(self, num):
         self.num = num
-        cost = self.cost
         self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[1] + "p"
 
     def add_number(self, num):
@@ -45,7 +53,7 @@ class Weapon(Item):
                 'p': 'Piercing'}
 
     def __init__(self, num):
-        self.equippable = True, 'Hand'
+        self.equippable = 'Hand'
         self.type = 'Weapon'
         self.weapon_type = self.get_weapon_type()
         self.dmg_type = self.dmg_type[self.dmg[2]]
@@ -66,7 +74,7 @@ class Weapon(Item):
 class Armor(Item):
 
     def __init__(self, num):
-        self.equippable = True, 'Body'
+        self.equippable = 'Body'
         self.type = 'Armor'
         super().__init__(num)
 
@@ -89,7 +97,11 @@ class Misc_Object(Item):
         self.num = num
         self.cost = None
 
-
+class Magic(Item):
+    def __init__(self, num):
+        self.num = num
+        self.cost = None
+        self.origin = " : ".join(['item', self.__class__.__name__.replace("_", " ")])
 ############################################################ Weapons
 
 class Club(Weapon):
@@ -462,7 +474,8 @@ class Whip(Weapon):
 
 class Padded(Armor):
     def __init__(self, num):
-        self.desc = 'Padded armor consists of quilted layers of cloth and batting.'
+        self.desc = 'Padded armor consists of quilted layers of cloth and ' \
+                    'batting. '
         self.armor_type = 'Light'
         self.AC = 11
         self.req = None
@@ -474,9 +487,10 @@ class Padded(Armor):
 
 class Leather(Armor):
     def __init__(self, num):
-        self.desc = 'The Breastplate and shoulder protectors of this armor are made of leather that has been ' \
-                    'stiffened by being boiled in oil. The rest of the armor is made of softer and more flexible ' \
-                    'materials. '
+        self.desc = 'The Breastplate and shoulder protectors of this armor ' \
+                    'are made of leather that has been stiffened by being ' \
+                    'boiled in oil. The rest of the armor is made of softer ' \
+                    'and more flexible materials. '
         self.armor_type = 'Light'
         self.cost = '5 g'
         self.AC = 11
@@ -488,8 +502,8 @@ class Leather(Armor):
 
 class Studded_Leather(Armor):
     def __init__(self, num):
-        self.desc = 'Made from tough but flexible leather, studded leather is reinforced with close-set rivets or ' \
-                    'spikes. '
+        self.desc = 'Made from tough but flexible leather, studded leather is ' \
+                    'reinforced with close-set rivets or spikes. '
         self.armor_type = 'Light'
         self.cost = '45 g'
         self.AC = 12
@@ -501,9 +515,10 @@ class Studded_Leather(Armor):
 
 class Hide(Armor):
     def __init__(self, num):
-        self.desc = 'This crude armor consists of thick furs and pelts. It is commonly worn by Barbarian tribes, ' \
-                    'evil Humanoids, and other folk who lack access to the tools and materials needed to create ' \
-                    'better armor. '
+        self.desc = 'This crude armor consists of thick furs and pelts. It is ' \
+                    'commonly worn by Barbarian tribes, evil Humanoids, ' \
+                    'and other folk who lack access to the tools and ' \
+                    'materials needed to create better armor. '
         self.armor_type = 'Medium'
         self.cost = '10 g'
         self.AC = 12
@@ -515,9 +530,11 @@ class Hide(Armor):
 
 class Chain_Shirt(Armor):
     def __init__(self, num):
-        self.desc = 'Made of interlocking metal rings, a Chain Shirt is worn between layers of clothing or leather. ' \
-                    'This armor offers modest Protection to the wearer’s upper body and allows the sound of the rings ' \
-                    'rubbing against one another to be muffled by outer layers. '
+        self.desc = 'Made of interlocking metal rings, a Chain Shirt is worn ' \
+                    'between layers of clothing or leather. This armor offers ' \
+                    'modest Protection to the wearer’s upper body and allows ' \
+                    'the sound of the rings rubbing against one another to be ' \
+                    'muffled by outer layers. '
         self.armor_type = 'Medium'
         self.cost = '50 g'
         self.AC = 13
@@ -529,8 +546,10 @@ class Chain_Shirt(Armor):
 
 class Scale_Mail(Armor):
     def __init__(self, num):
-        self.desc = 'This armor consists of a coat and leggings (and perhaps a separate skirt) of leather covered ' \
-                    'with overlapping pieces of metal, much like the scales of a fish. The suit includes gauntlets. '
+        self.desc = 'This armor consists of a coat and leggings (and perhaps ' \
+                    'a separate skirt) of leather covered with overlapping ' \
+                    'pieces of metal, much like the scales of a fish. The ' \
+                    'suit includes gauntlets. '
         self.armor_type = 'Medium'
         self.cost = '50 g'
         self.AC = 14
@@ -542,9 +561,11 @@ class Scale_Mail(Armor):
 
 class Breastplate(Armor):
     def __init__(self, num):
-        self.desc = 'This armor consists of a fitted metal chest piece worn with supple leather. Although it leaves ' \
-                    'the legs and arms relatively unprotected, this armor provides good Protection for the wearer’s ' \
-                    'vital organs while leaving the wearer relatively unencumbered. '
+        self.desc = 'This armor consists of a fitted metal chest piece worn ' \
+                    'with supple leather. Although it leaves the legs and ' \
+                    'arms relatively unprotected, this armor provides good ' \
+                    'Protection for the wearer’s vital organs while leaving ' \
+                    'the wearer relatively unencumbered. '
         self.armor_type = 'Medium'
         self.cost = '400 g'
         self.AC = 14
@@ -556,8 +577,10 @@ class Breastplate(Armor):
 
 class Half_Plate(Armor):
     def __init__(self, num):
-        self.desc = 'Half Plate consists of shaped metal plates that cover most of the wearer’s body. It does not ' \
-                    'include leg Protection beyond simple greaves that are attached with leather straps. '
+        self.desc = 'Half Plate consists of shaped metal plates that cover ' \
+                    'most of the wearer’s body. It does not include leg ' \
+                    'Protection beyond simple greaves that are attached with ' \
+                    'leather straps. '
         self.armor_type = 'Medium'
         self.cost = '750 g'
         self.AC = 15
@@ -569,9 +592,11 @@ class Half_Plate(Armor):
 
 class Ring_Mail(Armor):
     def __init__(self, num):
-        self.desc = "This armor is Leather Armor with heavy rings sewn into it. The rings help reinforce the armor " \
-                    "against blows from Swords and axes. Ring Mail is inferior to Chain Mail, and it's usually worn " \
-                    "only by those who can’t afford better armor. "
+        self.desc = "This armor is Leather Armor with heavy rings sewn into " \
+                    "it. The rings help reinforce the armor against blows " \
+                    "from Swords and axes. Ring Mail is inferior to Chain " \
+                    "Mail, and it's usually worn only by those who can’t " \
+                    "afford better armor. "
         self.armor_type = 'Heavy'
         self.AC = 14
         self.req = None
@@ -583,8 +608,10 @@ class Ring_Mail(Armor):
 
 class Chain_Mail(Armor):
     def __init__(self, num):
-        self.desc = 'Made of interlocking metal rings, chain mail includes a layer of quilted fabric worn underneath ' \
-                    'the mail to prevent chafing and to cushion the impact of blows. The suit includes gauntlets. '
+        self.desc = 'Made of interlocking metal rings, chain mail includes a ' \
+                    'layer of quilted fabric worn underneath the mail to ' \
+                    'prevent chafing and to cushion the impact of blows. The ' \
+                    'suit includes gauntlets. '
         self.armor_type = 'Heavy'
         self.AC = 16
         self.req = 13
@@ -596,8 +623,9 @@ class Chain_Mail(Armor):
 
 class Splint(Armor):
     def __init__(self, num):
-        self.desc = 'This armor is made of narrow vertical strips of metal riveted to a backing of leather that is ' \
-                    'worn over cloth padding. Flexible Chain Mail protects the joints. '
+        self.desc = 'This armor is made of narrow vertical strips of metal ' \
+                    'riveted to a backing of leather that is worn over cloth ' \
+                    'padding. Flexible Chain Mail protects the joints. '
         self.armor_type = 'Heavy'
         self.AC = 17
         self.req = 15
@@ -609,9 +637,11 @@ class Splint(Armor):
 
 class Plate(Armor):
     def __init__(self, num):
-        self.desc = 'Plate consists of shaped, interlocking metal plates to cover the entire body. A suit of plate ' \
-                    'includes gauntlets, heavy leather boots, a visored helmet, and thick layers of padding ' \
-                    'underneath the armor. Buckles and straps distribute the weight over the body. '
+        self.desc = 'Plate consists of shaped, interlocking metal plates to ' \
+                    'cover the entire body. A suit of plate includes ' \
+                    'gauntlets, heavy leather boots, a visored helmet, ' \
+                    'and thick layers of padding underneath the armor. ' \
+                    'Buckles and straps distribute the weight over the body. '
         self.armor_type = 'Heavy'
         self.AC = 18
         self.req = 15
@@ -623,8 +653,9 @@ class Plate(Armor):
 
 class Shield(Armor):
     def __init__(self, num):
-        self.desc = 'A shield is made from wood or metal and is carried in one hand. Wielding a shield increases your ' \
-                    'Armor Class by 2. You can benefit from only one shield at a time. '
+        self.desc = 'A shield is made from wood or metal and is carried in ' \
+                    'one hand. Wielding a shield increases your Armor Class ' \
+                    'by 2. You can benefit from only one shield at a time. '
         self.armor_type = 'Shield'
         self.AC = 2
         self.req = None
@@ -632,7 +663,7 @@ class Shield(Armor):
         self.cost = '10 g'
         self.weight = 6
         super().__init__(num)
-        self.equippable = True, 'Hand'
+        self.equippable = 'Hand'
 
 
 ############################################################ Packs
@@ -671,8 +702,31 @@ class Priest_Pack(Pack):
 
 class Holy_Symbol(Other):
     def __init__(self, num):
-        self.desc = 'A holy symbol is a representation of a god or pantheon. A cleric or paladin can use a holy ' \
-                    'symbol as a spellcasting focus, as described in the Spellcasting section. To use the symbol in ' \
-                    'this way, the caster must hold it in hand, wear it visibly, or bear it on a shield. '
+        self.desc = 'A holy symbol is a representation of a god or pantheon. ' \
+                    'A cleric or paladin can use a holy symbol as a ' \
+                    'spellcasting focus, as described in the Spellcasting ' \
+                    'section. To use the symbol in this way, the caster must ' \
+                    'hold it in hand, wear it visibly, or bear it on a shield. '
         self.cost = '5 g'
         super().__init__(num)
+
+
+############################################################ Magic
+
+
+class Cloak_of_Protection(Magic):
+    def __init__(self, num):
+        super().__init__(num)
+        self.desc = 'You gain a +1 bonus to AC and Saving Throws while you ' \
+                    'wear this cloak. '
+        self.effects = [modifier(self.origin, "stats.armour_class", +1)]
+
+        saving_throws = []
+        for attr in attrs:
+            saving_throws.append(modifier(self.origin, ".".join(["saving_throws", attr]), +1))
+
+        self.effects += saving_throws
+
+        self.equippable = 'Shoulders'
+        self.attunment = True
+

@@ -20,7 +20,6 @@ def LDK(dct, string_list):
 def mod_calc(num):
     return np.floor((num - 10) / 2)
 
-
 ##########################################################################
 
 def simple_choice(options_list):
@@ -30,16 +29,19 @@ def simple_choice(options_list):
 
     valid_choice = False
 
-    choice = int(input("Please enter number:"))
+    choice = (input("Please enter number:"))
 
     while not valid_choice:
-        if choice in range(len(options_list)):
+        if choice == "":
+            print("Invalid choice! Please choose from list.")
+            choice = (input())
+        elif int(choice) in range(len(options_list)):
             valid_choice = True
         else:
             print("Invalid choice! Please choose from list.")
-            choice = int(input())
+            choice = (input())
 
-    return choice
+    return int(choice)
 
 
 def choose_language(msg, known,

@@ -1,2 +1,5 @@
+x = 1
 
-print(False * 2)
+print(type(x))
+
+print(list(x))

@@ -31,7 +31,7 @@ class character:
                            'defences': None,
                            'conditions': None,
                            'size': Dict({'race': None, 'temp': None}),
-                           'speed': Dict({'race': None, 'mod': None}),
+                           'speed': Dict({'race': None}),
                            'senses': Dict({'perception': None,
                                            'investigation': None,
                                            'insight': None}),
@@ -39,8 +39,8 @@ class character:
                            })
 
         self.attributes = Dict({attr: Dict({'base': 10,
-                                            'stat' : None,
-                                            'mod' : None,
+                                            'stat': None,
+                                            'mod': None,
                                             'override': None})
                                 for attr in attrs})
 
@@ -73,6 +73,7 @@ class character:
         self.equipment = Dict()
 
         self.equipped = Dict()
+        self.penalties = Dict()
 
         self.choose_class(class_choice)
         self.choose_race(race_choice)
@@ -102,6 +103,9 @@ class character:
 
         two_handed = None
         hands = 0
+
+        penalties = Dict()
+
         for body_part in self.equipped:
             if not ('Hand' in body_part and two_handed):
                 options = [item_name for item_name, item in equippable.items()
@@ -114,28 +118,40 @@ class character:
                         print(f"\nChoose item to equip ({body_part.lower()}):")
                         choice = simple_choice(options)
 
-                        warning = None
+                        warnings = []
                         eq = equipment[options[choice]]
 
                         if not choice:
                             pass
                         elif hasattr(eq, 'armor_type'):
                             if eq.armor_type not in self.proficiencies.armor.set:
-                                warning = 'Not proficient in armor type!'
-                            if self.attributes.STR.stat < eq.req:
-                                warning = 'Strength too low for armor!'
+                                warnings.append(
+                                    f'Not proficient in armor type ({eq.armor_type})')
+                                penalty = 'Armor Prof'
+                            if eq.req and self.attributes.STR.stat < eq.req:
+                                warnings.append(f'Strength too low for '
+                                                f'{eq.__class__.__name__.lower().replace("_", " ")}')
+                                penalty2 = 'Armor STR'
                         elif hasattr(eq, 'weapon_type'):
-                            if eq.weapon_type[0] not in self.proficiencies.weapons.set:
-                                warning = 'Not proficient in weapon type!'
-
-                        if warning:
-                            print('Warning!', warning)
+                            if eq.weapon_type[
+                                0] not in self.proficiencies.weapons.set:
+                                warnings.append(
+                                    f'not proficient in weapon type ({eq.weapon_type[0]})')
+                                penalty = 'Weapon Prof'
+                        if warnings:
+                            warnings = [warning.lower() if n >= 1 else warning
+                                        for n, warning in enumerate(warnings)]
+                            print('Warning!', " and ".join(warnings) + "!")
                             answer = input(
                                 'Would you like to choose another option? Y/N').lower()
-                            if answer in 'yes':
-                                pass
-                            else:
+                            if answer in 'no':
                                 valid_choice = True
+                                penalties[eq] += [penalty]
+                                if penalty2:
+                                    penalties[eq] += [penalty2]
+                            else:
+                                penalty = None
+                                penalty2 = None
                         else:
                             valid_choice = True
 
@@ -146,10 +162,11 @@ class character:
 
                         if hands == 0 and \
                                 (hasattr(eq, 'properties')
-                                    and 'Versatile' in eq.properties):
+                                 and 'Versatile' in eq.properties):
                             wield = None
                             while wield not in ['y', 'yes', 'n', 'no']:
-                                wield = input(f'Wield {choice.lower()} two-handed? (Y/N)').lower()
+                                wield = input(
+                                    f'Wield {choice.lower()} two-handed? (Y/N)').lower()
                                 if ('y' or 'yes') in wield:
                                     two_handed = eq
                                     equippable[choice][1] -= 1
@@ -176,6 +193,9 @@ class character:
             if hasattr(item, 'effects'):
                 for effect in item.effects:
                     effect.add_effect(self)
+
+        if penalties:
+            self.penalties = penalties
 
     def update(self):
 
@@ -290,8 +310,45 @@ class character:
         ### Update profficiencies
 
         for prof in self.proficiencies:
-            prof_set = list(set([pro for pros in self.proficiencies[prof].values() for pro in pros]))
+            prof_set = list(set(
+                [pro for pros in self.proficiencies[prof].values() for pro in
+                 pros]))
             self.proficiencies[prof].set = prof_set
+
+        if self.penalties:
+            for item, penalties in self.penalties.items():
+                if 'Armor STR' in penalties:
+                    if item.req > self.attributes.STR.stat:
+                        self.stats.speed['Too weak for armour'] = -10
+                    else:
+                        del self.stats.speed['Too weak for armour']
+                        self.penalties[item].remove('Armor STR')
+                if 'Armor Prof' in penalties:
+                    if item.armor_type not in self.proficiencies.armor.set:
+                        self.attributes.STR['disadv'] = True
+                        self.attributes.DEX['disadv'] = True
+                        for skill_name, skill in self.skills.items():
+                            if skill.attr in ['DEX', 'STR']:
+                                skill['disadv'] = True
+
+                    #TODO: Cannot cast spells, disadv on attack.
+
+                    else:
+                        self.attributes.STR['disadv'] = False
+                        self.attributes.DEX['disadv'] = False
+                        for skill_name, skill in self.skills.items():
+                            if skill.attr in ['DEX', 'STR']:
+                                skill['disadv'] = False
+                elif 'Weapon Prof' in penalties:
+                    pass # Just check when making an attack
+                # if strength, reduce speed
+                # if armour type, dis on ability check, save or attack for STR and DEX
+                # if weapon, just don't add profficiency, probably don't check here? only on attacks
+
+        ### Speed and Size
+
+        self.stats.speed['value'] = 0
+        self.stats.speed['value'] = sum(self.stats.speed.values())
 
 
 class_choice = "Test"
@@ -302,8 +359,8 @@ char.update()
 
 from items import get_item
 
-char.equipment.update(
-    {'Cloak of Protection': get_item('Cloak of Protection', 1)})
+# char.equipment.update(
+#     {'Cloak of Protection': get_item('Cloak of Protection', 1)})
 
 char.equip()
 char.update()

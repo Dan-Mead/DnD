@@ -1,5 +1,3 @@
-x = 1
+x = ['A', 'B', 'Cs']
 
-print(type(x))
-
-print(list(x))
+print('C' in x)

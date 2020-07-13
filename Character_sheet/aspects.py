@@ -5,6 +5,7 @@ from classes import get_class
 from glossary import skills_dict, attrs
 from helper_functions import mod_calc, simple_choice
 from races import get_race
+import actions
 
 
 class character:
@@ -87,7 +88,6 @@ class character:
         race.add_race_modifiers(self)
 
     def equip(self):
-
         equipment = self.equipment
 
         self.equipped = Dict({'Body': None,
@@ -119,6 +119,8 @@ class character:
                         choice = simple_choice(options)
 
                         warnings = []
+                        penalty = None
+                        penalty2 = None
                         eq = equipment[options[choice]]
 
                         if not choice:
@@ -146,7 +148,8 @@ class character:
                                 'Would you like to choose another option? Y/N').lower()
                             if answer in 'no':
                                 valid_choice = True
-                                penalties[eq] += [penalty]
+                                if penalty:
+                                    penalties[eq] += [penalty]
                                 if penalty2:
                                     penalties[eq] += [penalty2]
                             else:
@@ -331,7 +334,7 @@ class character:
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = True
 
-                    #TODO: Cannot cast spells, disadv on attack.
+                    # TODO: Cannot cast spells, disadv on attack.
 
                     else:
                         self.attributes.STR['disadv'] = False
@@ -340,7 +343,7 @@ class character:
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = False
                 elif 'Weapon Prof' in penalties:
-                    pass # Just check when making an attack
+                    pass  # Just check when making an attack
                 # if strength, reduce speed
                 # if armour type, dis on ability check, save or attack for STR and DEX
                 # if weapon, just don't add profficiency, probably don't check here? only on attacks
@@ -350,19 +353,31 @@ class character:
         self.stats.speed['value'] = 0
         self.stats.speed['value'] = sum(self.stats.speed.values())
 
+def create_character():
 
-class_choice = "Test"
-race_choice = "Half Orc"
+    character.attack = actions.attack # This may be a group of actions eventually
 
-char = character(class_choice, race_choice)
-char.update()
+    class_choice = "Test"
+    race_choice = "Half Orc"
+
+    char = character(class_choice, race_choice)
+    char.update()
+
+    return char
+
+char = create_character()
 
 from items import get_item
 
 # char.equipment.update(
 #     {'Cloak of Protection': get_item('Cloak of Protection', 1)})
+char.attributes.STR.base = 16
+char.update()
 
 char.equip()
 char.update()
+
+
+char.attack()
 
 print("Done!")

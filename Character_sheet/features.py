@@ -53,6 +53,7 @@ class Savage_Attacks(feature, trigger_passive):
         limit = False
         trigger_passive.__init__(self, origin, "features", desc, trigger, limit)
 
+
 class Divine_Sense(feature, action):
     def __init__(self, origin):
         desc = "The presence of strong evil registers on your senses like a " \

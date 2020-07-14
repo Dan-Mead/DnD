@@ -20,6 +20,15 @@ def LDK(dct, string_list):
 def mod_calc(num):
     return np.floor((num - 10) / 2)
 
+def isclasstype(obj, type):
+
+    return type in [base.__name__ for base in obj.__class__.__bases__]
+
+def reset(dict):
+    for key, value in dict.items():
+        dict[key] = None
+    return dict
+
 ##########################################################################
 
 def simple_choice(options_list):

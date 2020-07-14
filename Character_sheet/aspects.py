@@ -3,9 +3,8 @@ from addict import Dict
 
 from classes import get_class
 from glossary import skills_dict, attrs
-from helper_functions import mod_calc, simple_choice
+from helper_functions import mod_calc, simple_choice, isclasstype, reset
 from races import get_race
-import actions
 
 
 class character:
@@ -36,7 +35,10 @@ class character:
                            'senses': Dict({'perception': None,
                                            'investigation': None,
                                            'insight': None}),
-                           'initiative': False
+                           'initiative': False,
+                           'attacks_per_turn': 1,
+                           'max_attuned': 3,
+                           'attuned': Dict()
                            })
 
         self.attributes = Dict({attr: Dict({'base': 10,
@@ -64,16 +66,25 @@ class character:
 
         self.actions = Dict({'actions': Dict(),
                              'bonus': Dict(),
-                             'attack': Dict(),
-                             'reaction': Dict()})
+                             'attacks': Dict(),
+                             'reactions': Dict()})
+
+        self.worn = Dict({'Body': None,
+                          'Shoulders': None,
+                          'Hands': None,
+                          'Wrists': None,
+                          'Head': None,
+                          'Feet': None,
+                          'Legs': None,
+                          'Belt': None,
+                          'Rings': None,
+                          'Neck': None})
 
         self.feats = Dict()
 
         self.features = Dict()
 
         self.equipment = Dict()
-
-        self.equipped = Dict()
         self.penalties = Dict()
 
         self.choose_class(class_choice)
@@ -90,115 +101,158 @@ class character:
     def equip(self):
         equipment = self.equipment
 
-        self.equipped = Dict({'Body': None,
-                              'Right Hand': None,
-                              'Left Hand': None,
-                              'Shoulders': None,
-                              'Feet': None})
+        self.worn = reset(self.worn)
+
+        attuned_items = self.stats.attuned.copy()
+
+        for object, location in attuned_items.items():
+            if location in list(self.worn.keys()):
+                del self.stats.attuned[object]
 
         equippable = {}
         for item_name, item in equipment.items():
-            if hasattr(item, 'equippable'):
+            if hasattr(item, 'equippable') and not isclasstype(item, 'Weapon'):
                 equippable[item_name] = [item.equippable, item.num]
 
-        two_handed = None
-        hands = 0
+        for body_part in self.worn:
+            choices = [item_name for item_name, item in equippable.items()
+                       if body_part in item[0] and item[1] >= 1]
 
-        penalties = Dict()
+            if choices:
 
-        for body_part in self.equipped:
-            if not ('Hand' in body_part and two_handed):
-                options = [item_name for item_name, item in equippable.items()
-                           if item[0] in body_part and item[1] >= 1]
-                if options:
-                    options.insert(0, 'None')
-                    valid_choice = False
+                print_choices = [choice + " (requires attunement)" if hasattr(
+                    equipment[choice], 'attunement')
+                                 else choice for choice in choices]
 
-                    while not valid_choice:
-                        print(f"\nChoose item to equip ({body_part.lower()}):")
-                        choice = simple_choice(options)
+                print_choices.insert(0, 'None')
+                choices.insert(0, None)
 
-                        warnings = []
-                        penalty = None
-                        penalty2 = None
-                        eq = equipment[options[choice]]
+                final_choice = False
 
-                        if not choice:
-                            pass
-                        elif hasattr(eq, 'armor_type'):
-                            if eq.armor_type not in self.proficiencies.armor.set:
-                                warnings.append(
-                                    f'Not proficient in armor type ({eq.armor_type})')
-                                penalty = 'Armor Prof'
-                            if eq.req and self.attributes.STR.stat < eq.req:
-                                warnings.append(f'Strength too low for '
-                                                f'{eq.__class__.__name__.lower().replace("_", " ")}')
-                                penalty2 = 'Armor STR'
-                        elif hasattr(eq, 'weapon_type'):
-                            if eq.weapon_type[
-                                0] not in self.proficiencies.weapons.set:
-                                warnings.append(
-                                    f'not proficient in weapon type ({eq.weapon_type[0]})')
-                                penalty = 'Weapon Prof'
-                        if warnings:
-                            warnings = [warning.lower() if n >= 1 else warning
-                                        for n, warning in enumerate(warnings)]
-                            print('Warning!', " and ".join(warnings) + "!")
-                            answer = input(
-                                'Would you like to choose another option? Y/N').lower()
-                            if answer in 'no':
-                                valid_choice = True
-                                if penalty:
-                                    penalties[eq] += [penalty]
-                                if penalty2:
-                                    penalties[eq] += [penalty2]
-                            else:
-                                penalty = None
-                                penalty2 = None
-                        else:
-                            valid_choice = True
-
+                while not final_choice:
+                    print(f"\nChoose item to equip ({body_part.lower()}):")
+                    choice_num = simple_choice(print_choices)
+                    choice = choices[choice_num]
                     if choice:
-                        choice = options[choice]
+                        eq = equipment[choice]
+                        warnings = []
+                        penalties = []
 
-                        # Awkward shit to do with 2-handed equipment.
+                        if hasattr(eq, 'req') \
+                                and eq.req \
+                                and eq.req > self.attributes.STR.stat:
+                            warnings += ['Strength too low for armour']
+                            penalties += ['Armor STR']
 
-                        if hands == 0 and \
-                                (hasattr(eq, 'properties')
-                                 and 'Versatile' in eq.properties):
-                            wield = None
-                            while wield not in ['y', 'yes', 'n', 'no']:
-                                wield = input(
-                                    f'Wield {choice.lower()} two-handed? (Y/N)').lower()
-                                if ('y' or 'yes') in wield:
-                                    two_handed = eq
-                                    equippable[choice][1] -= 1
-                                elif ('n' or 'no') in wield:
-                                    self.equipped[body_part] = eq
-                                    equippable[choice][1] -= 1
-                                else:
-                                    wield = input(
-                                        f'Input error. Wield {choice.lower()} two-handed? (Y/N)').lower()
+                        if hasattr(eq, 'armor_type') \
+                                and eq.armor_type not in self.proficiencies.armor.set:
+                            warnings += [
+                                f'Not proficient in armour type ({eq.armor_type})']
+                            penalties += ['Armor Prof']
+
+                        if hasattr(eq, 'attunement'):
+                            if len(
+                                    self.stats.attuned) >= self.stats.max_attuned:
+                                print(
+                                    'Warning! Maximum attuned items reached! Please choose another item.')
+                                del choices[choice_num]
+                                del print_choices[choice_num]
+                                continue
+                            else:
+                                self.stats.attuned.update({eq: body_part})
+                                print(
+                                    f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
+
+                        if not warnings:
+                            final_choice = True
                         else:
-                            self.equipped[body_part] = eq
-                            equippable[choice][1] -= 1
-                    if 'Hand' in body_part:
-                        hands += 1
-        if two_handed:
-            self.equipped['Hands'] = two_handed
+                            warnings = [warning.lower() if n >= 1
+                                        else warning for n, warning in
+                                        enumerate(warnings)]
+                            print('Warning!', " and ".join(warnings) + "!")
+                            choose_again = input(
+                                "Choose a different option? Y/N").lower()
 
-        self.equipped = Dict(
-            {part: item for part, item in self.equipped.items() if item})
+                            if choose_again in 'no':
+                                self.penalties.update({eq: tuple(penalties)})
+                                final_choice = True
+                            else:
+                                pass
+                    else:
+                        final_choice = True
 
-        ## Check for effects
+                if choice:
+                    if body_part != 'Rings':
+                        self.worn[body_part] = (eq.name, eq)
+                    else:
+                        self.worn[body_part] = Dict({eq.name: eq})
 
-        for item in self.equipped.values():
-            if hasattr(item, 'effects'):
-                for effect in item.effects:
-                    effect.add_effect(self)
+                    equippable[choice][1] -= 1
 
-        if penalties:
-            self.penalties = penalties
+        for part, worn in self.worn.items():
+            if worn:
+                item_name, item = worn
+                if hasattr(item, 'effects'):
+                    for effect in item.effects:
+                        effect.add_effect(self)
+                if hasattr(item, 'components'):
+                    for body_part, component in item.components.items():
+                        if not self.worn[body_part]:
+                            if body_part != 'Rings':
+                                self.worn[body_part] = (component, None)
+                            else:
+                                self.worn[body_part] = {component: None}
+
+        self.update()
+
+    def wield(self):
+        pass
+        #                 # Awkward shit to do with 2-handed equipment.
+        #
+        #                 if hands == 0 and \
+        #                         (hasattr(eq, 'properties')
+        #                          and 'Versatile' in eq.properties):
+        #                     wield = None
+        #                     while wield not in ['y', 'yes', 'n', 'no']:
+        #                         wield = input(
+        #                             f'Wield {choice.lower()} two-handed? (Y/N)').lower()
+        #                         if ('y' or 'yes') in wield:
+        #                             two_handed = eq
+        #                             equippable[choice][1] -= 1
+        #                         elif ('n' or 'no') in wield:
+        #                             self.equipped[body_part] = eq
+        #                             equippable[choice][1] -= 1
+        #                         else:
+        #                             wield = input(
+        #                                 f'Input error. Wield {choice.lower()} two-handed? (Y/N)').lower()
+        #                 else:
+        #                     self.equipped[body_part] = eq
+        #                     equippable[choice][1] -= 1
+        #             if 'Hand' in body_part:
+        #                 hands += 1
+        # if two_handed:
+        #     self.equipped['Hands'] = two_handed
+        #
+        # self.equipped = Dict(
+        #     {part: item for part, item in self.equipped.items() if item})
+        #
+        # ## Check for effects
+        #
+        # attack_opts = Dict({'Unarmed Strike': actions.unarmed_strike(self)})
+        #
+        # for body_part, item in self.equipped.items():
+        #
+        #     if isclasstype(item, 'Weapon'):
+        #         attack_opts[item_name] = item
+        #
+        #     if hasattr(item, 'effects'):
+        #         for effect in item.effects:
+        #             effect.add_effect(self)
+        #
+        # if penalties:
+        #     self.penalties = penalties
+        #
+        # self.actions['attacks'] = attack_opts
 
     def update(self):
 
@@ -282,23 +336,26 @@ class character:
         AC = 0
 
         if not stats.armour_class.special:  ## special types to do later
-            for item in self.equipped.values():
-                if hasattr(item, 'AC'):
-                    armor_type = item.armor_type
-                    if armor_type == 'Heavy':
-                        AC += item.AC
-                        armoured = True
-                    elif armor_type == 'Medium':
-                        dex_mod = self.attributes['DEX']['mod']
-                        if dex_mod > 2:
-                            dex_mod = 2
-                        AC += item.AC + dex_mod
-                        armoured = True
-                    elif armor_type == 'Light':
-                        AC += item.AC + self.attributes['DEX']['mod']
-                        armoured = True
-                    elif armor_type == 'Shield':
-                        AC += 2
+            if self.worn.Body:
+                item = self.worn.Body[1]
+                armor_type = item.armor_type
+                if armor_type == 'Heavy':
+                    AC += item.AC
+                    armoured = True
+                elif armor_type == 'Medium':
+                    dex_mod = self.attributes['DEX']['mod']
+                    if dex_mod > 2:
+                        dex_mod = 2
+                    AC += item.AC + dex_mod
+                    armoured = True
+                elif armor_type == 'Light':
+                    AC += item.AC + self.attributes['DEX']['mod']
+                    armoured = True
+
+        # TODO: Wielding a shield
+
+        # if  == 'Shield':
+        #     AC += 2
 
         for mod_name, mod_val in stats.armour_class.items():
             if not mod_name in ['value',
@@ -317,6 +374,8 @@ class character:
                 [pro for pros in self.proficiencies[prof].values() for pro in
                  pros]))
             self.proficiencies[prof].set = prof_set
+
+        ### Update Penalties
 
         if self.penalties:
             for item, penalties in self.penalties.items():
@@ -353,9 +412,9 @@ class character:
         self.stats.speed['value'] = 0
         self.stats.speed['value'] = sum(self.stats.speed.values())
 
-def create_character():
 
-    character.attack = actions.attack # This may be a group of actions eventually
+def create_character():
+    # character.attack = actions.attack # This may be a group of actions eventually
 
     class_choice = "Test"
     race_choice = "Half Orc"
@@ -365,19 +424,18 @@ def create_character():
 
     return char
 
+
 char = create_character()
 
 from items import get_item
 
-# char.equipment.update(
-#     {'Cloak of Protection': get_item('Cloak of Protection', 1)})
+char.equipment.update(
+    {'Cloak of Protection': get_item('Cloak of Protection', 1)})
 char.attributes.STR.base = 16
 char.update()
 
 char.equip()
-char.update()
 
-
-char.attack()
+# char.actions.attacks['Unarmed Strike'].attack()
 
 print("Done!")

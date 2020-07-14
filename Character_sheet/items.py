@@ -40,8 +40,10 @@ def get_item(item_name, num = 1):
 class Item:
 
     def __init__(self, num):
+        self.name = self.__class__.__name__.replace("_", " ")
         self.num = num
-        self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[1] + "p"
+        if self.cost:
+            self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[1] + "p"
 
     def add_number(self, num):
         self.num += num
@@ -102,6 +104,7 @@ class Magic(Item):
         self.num = num
         self.cost = None
         self.origin = " : ".join(['item', self.__class__.__name__.replace("_", " ")])
+        super().__init__(num)
 ############################################################ Weapons
 
 class Club(Weapon):
@@ -557,6 +560,8 @@ class Scale_Mail(Armor):
         self.stealth_dis = True
         self.weight = 45
         super().__init__(num)
+        self.components = {'Body': self.name,
+                      'Hands' : f'Gauntlets ({self.name})'}
 
 
 class Breastplate(Armor):
@@ -619,6 +624,8 @@ class Chain_Mail(Armor):
         self.cost = '75 g'
         self.weight = 55
         super().__init__(num)
+        self.components = {'Body': self.name,
+                      'Hands' : f'Gauntlets ({self.name})'}
 
 
 class Splint(Armor):
@@ -649,6 +656,11 @@ class Plate(Armor):
         self.cost = '1500 g'
         self.weight = 65
         super().__init__(num)
+        self.components = {'Body': self.name,
+                      'Hands' : f'Gauntlets ({self.name})',
+                      'Feet': f'Heavy Leather Boots ({self.name})',
+                      'Head' : f'Visored Helmet ({self.name})'}
+
 
 
 class Shield(Armor):
@@ -728,5 +740,5 @@ class Cloak_of_Protection(Magic):
         self.effects += saving_throws
 
         self.equippable = 'Shoulders'
-        self.attunment = True
+        self.attunement = True
 

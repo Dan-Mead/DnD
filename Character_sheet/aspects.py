@@ -80,12 +80,17 @@ class character:
                           'Rings': None,
                           'Neck': None})
 
+        self.wielded = Dict()
+
         self.feats = Dict()
 
         self.features = Dict()
 
         self.equipment = Dict()
         self.penalties = Dict()
+
+        self.other = Dict({'dual_wield_requirement': 'Light'
+                           })
 
         self.choose_class(class_choice)
         self.choose_race(race_choice)
@@ -103,12 +108,6 @@ class character:
 
         self.worn = reset(self.worn)
 
-        attuned_items = self.stats.attuned.copy()
-
-        for object, location in attuned_items.items():
-            if location in list(self.worn.keys()):
-                del self.stats.attuned[object]
-
         equippable = {}
         for item_name, item in equipment.items():
             if hasattr(item, 'equippable') and not isclasstype(item, 'Weapon'):
@@ -120,18 +119,13 @@ class character:
 
             if choices:
 
-                print_choices = [choice + " (requires attunement)" if hasattr(
-                    equipment[choice], 'attunement')
-                                 else choice for choice in choices]
-
-                print_choices.insert(0, 'None')
                 choices.insert(0, None)
 
                 final_choice = False
 
                 while not final_choice:
                     print(f"\nChoose item to equip ({body_part.lower()}):")
-                    choice_num = simple_choice(print_choices)
+                    choice_num = simple_choice(choices)
                     choice = choices[choice_num]
                     if choice:
                         eq = equipment[choice]
@@ -149,19 +143,6 @@ class character:
                             warnings += [
                                 f'Not proficient in armour type ({eq.armor_type})']
                             penalties += ['Armor Prof']
-
-                        if hasattr(eq, 'attunement'):
-                            if len(
-                                    self.stats.attuned) >= self.stats.max_attuned:
-                                print(
-                                    'Warning! Maximum attuned items reached! Please choose another item.')
-                                del choices[choice_num]
-                                del print_choices[choice_num]
-                                continue
-                            else:
-                                self.stats.attuned.update({eq: body_part})
-                                print(
-                                    f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
 
                         if not warnings:
                             final_choice = True
@@ -206,7 +187,20 @@ class character:
         self.update()
 
     def wield(self):
-        pass
+
+        self.wielded = Dict()
+        equipment = self.equipment
+
+        equippable = {}
+
+        for item_name, item in equipment.items():
+            if isclasstype(item, 'Weapon'):
+                equippable[item_name] = [item.properties, item.num]
+
+        print(equippable)
+
+        self.update()
+
         #                 # Awkward shit to do with 2-handed equipment.
         #
         #                 if hands == 0 and \
@@ -254,6 +248,22 @@ class character:
         #
         # self.actions['attacks'] = attack_opts
 
+    def attune(self):
+        pass
+        """
+        if hasattr(eq, 'attunement'):
+            if len(
+                    self.stats.attuned) >= self.stats.max_attuned:
+                print(
+                    'Warning! Maximum attuned items reached! Please choose another item.')
+                del choices[choice_num]
+                del print_choices[choice_num]
+                continue
+            else:
+                self.stats.attuned.update({eq: body_part})
+                print(
+                    f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
+        """
     def update(self):
 
         ### Level calculation
@@ -434,7 +444,8 @@ char.equipment.update(
 char.attributes.STR.base = 16
 char.update()
 
-char.equip()
+# char.equip()
+char.wield()
 
 # char.actions.attacks['Unarmed Strike'].attack()
 

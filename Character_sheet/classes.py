@@ -21,6 +21,7 @@ class character_class:
 
         ### Add new level features
 
+
 class Class:
 
     def add_class_features(self, char):
@@ -61,6 +62,7 @@ class Class:
             char.classes[self.class_name] = character_class(1, self.hit_dice,
                                                             self.hit_points,
                                                             False)
+
 
 def get_class(char, choice):
     classes = {}
@@ -107,8 +109,8 @@ class Paladin(Class):
         self.equipment += inv[choice]
         self.equipment += [('Chain Mail', 1), ('Holy Symbol', 1)]
 
-        self.levels = {1 : ['Divine Sense', 'Lay on Hands'],
-                       2 : ['Divine Smite', 'Fighting Style', 'Spellcasting']}
+        self.levels = {1: ['Divine Sense', 'Lay on Hands'],
+                       2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
 
 
 class Test(Class):
@@ -123,12 +125,12 @@ class Test(Class):
         self.saves = ["WIS", "CHA"]
         self.equipment = [('Chain Mail', 1)]
         self.equipment += [('Holy Symbol', 1),
-                          ('Shield', 1),
-                          ('Warhammer', 1),
-                          ('Handaxe', 1)]
-
-
-
+                           ('Shield', 1),
+                           ('Warhammer', 1),
+                           ('Shortsword', 1),
+                           ('Glaive', 1),
+                           ('Lance', 1),
+                           ('Handaxe', 1)]
 
     @staticmethod
     def levels():

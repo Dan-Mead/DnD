@@ -1,8 +1,7 @@
 import inspect
 import sys
 
-from effects import modifier, note, passive_effect, action
-
+from effects import modifier
 ### Weapons
 ### Armor
 ### Packs
@@ -60,10 +59,11 @@ class Weapon(Item):
         self.weapon_type = self.get_weapon_type()
         self.dmg_type = self.dmg_type[self.dmg[2]]
         self.dmg = self.dmg[0], self.dmg[1]
+        if type(self.properties) == str:
+            self.properties = (self.properties,)
         super().__init__(num)
 
     def silver(self):
-        print(type(self.properties))
         if type(self.properties) == str:
             self.properties = (self.properties,) + ('Silvered',)
         else:
@@ -123,10 +123,11 @@ class Club(Weapon):
 class Dagger(Weapon):
     def __init__(self, num):
         self.dmg = 1, 4, 'p'
-        self.properties = 'Finesse', 'Light', 'Thrown 20/60'
+        self.properties = 'Finesse', 'Light', 'Thrown'
         self.cost = '2 g'
         self.weight = 1
         super().__init__(num)
+        self.range = (20, 60)
 
     @staticmethod
     def get_weapon_type():
@@ -149,11 +150,11 @@ class Greatclub(Weapon):
 class Handaxe(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 's'
-        self.properties = 'Light', 'Thrown, 20/60'
+        self.properties = 'Light', 'Thrown'
         self.cost = '5 g'
         self.weight = 2
         super().__init__(num)
-
+        self.range = (20, 60)
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -162,11 +163,11 @@ class Handaxe(Weapon):
 class Javelin(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 'p'
-        self.properties = 'Thrown, 30/120'
+        self.properties = 'Thrown'
         self.cost = '5 s'
         self.weight = 2
         super().__init__(num)
-
+        self.range = (30, 120)
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -175,11 +176,11 @@ class Javelin(Weapon):
 class Light_Hammer(Weapon):
     def __init__(self, num):
         self.dmg = 1, 4, 'b'
-        self.properties = 'Light', 'Thrown 20/60'
+        self.properties = 'Light', 'Thrown'
         self.cost = '2 g'
         self.weight = 2
         super().__init__(num)
-
+        self.range = (20, 60)
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -201,7 +202,7 @@ class Mace(Weapon):
 class Quarterstaff(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 'b'
-        self.properties = 'Versatile 8'
+        self.properties = 'Versatile'
         self.cost = '2 s'
         self.weight = 4
         super().__init__(num)
@@ -227,10 +228,11 @@ class Sickle(Weapon):
 class Spear(Weapon):
     def __init__(self, num):
         self.dmg = 1, 6, 'p'
-        self.properties = 'Thrown 20/60', 'Versatile 8'
+        self.properties = 'Thrown', 'Versatile'
         self.cost = '1 g'
         self.weight = 3
         super().__init__(num)
+        self.range = (20, 60)
 
     @staticmethod
     def get_weapon_type():
@@ -244,7 +246,7 @@ class Battleaxe(Weapon):
         self.cost = '10 g'
         self.dmg = 1, 8, 's'
         self.weight = 4
-        self.properties = 'Versatile 10'
+        self.properties = 'Versatile'
         super().__init__(num)
 
     @staticmethod
@@ -335,7 +337,7 @@ class Longsword(Weapon):
         self.cost = '15 g'
         self.dmg = 1, 8, 's'
         self.weight = 3
-        self.properties = 'Versatile 10'
+        self.properties = 'Versatile'
         super().__init__(num)
 
     @staticmethod
@@ -426,9 +428,9 @@ class Trident(Weapon):
         self.cost = '5 g'
         self.dmg = 1, 6, 'p'
         self.weight = 4
-        self.properties = 'Thrown 20/60', 'Versatile 8'
+        self.properties = 'Thrown', 'Versatile'
         super().__init__(num)
-
+        self.range = (20, 60)
     @staticmethod
     def get_weapon_type():
         return 'Martial', 'Melee'
@@ -450,7 +452,7 @@ class War_Pick(Weapon):
 class Warhammer(Weapon):
     def __init__(self, num):
         self.dmg = 1, 8, 'b'
-        self.properties = 'Versatile 10'
+        self.properties = 'Versatile'
         self.cost = '15 g'
         self.weight = 2
         super().__init__(num)

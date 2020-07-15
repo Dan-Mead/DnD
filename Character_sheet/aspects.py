@@ -1,6 +1,7 @@
 import numpy as np
 from addict import Dict
 
+from actions import atk_option, unarmed_strike
 from classes import get_class
 from glossary import skills_dict, attrs, ordinals
 from helper_functions import mod_calc, simple_choice, isclasstype, reset, \
@@ -217,7 +218,6 @@ class character:
                 if 'Weapon' in equippable[choice][0]:
                     if equippable[choice][1][
                         0] not in self.proficiencies.weapons.set:
-
                         print(
                             f'Warning! Not proficient with {equippable[choice][1][0].lower()} weapons!')
                         choose_again = input(
@@ -227,7 +227,7 @@ class character:
                         else:
                             continue
 
-                    if 'Versatile' in equippable[choice][2] and hands == 0:
+                    if 'Versatile' in str(equippable[choice][2]) and hands == 0:
                         two_hand = input('Wield two-handed? Y/N').lower()
                         if two_hand in 'yes':
                             handed = 2
@@ -236,12 +236,37 @@ class character:
                     else:
                         handed = 1
 
-                    wielded = equipment[choice]  # make attack object
+                    if 'Two-handed' in equippable[choice][2]:
+                        if hands == 0:
+                            two_hand = input('Wield two-handed? Y/N').lower()
+                            if two_hand in 'yes':
+                                handed = 2
+                            else:
+                                handed = 1
+                                print(
+                                    'Warning! Weapon requires two hands to attack')
+                                choose_again = input(
+                                    "Choose a different option? Y/N").lower()
+
+                                if choose_again in 'no':
+                                    handed = 1
+                                else:
+                                    continue
+
+                        else:
+                            print(
+                                'Warning! Weapon requires two hands to attack')
+                            choose_again = input(
+                                "Choose a different option? Y/N").lower()
+
+                            if choose_again in 'no':
+                                handed = 1
+                            else:
+                                continue
 
                 elif choice == 'Shield':
                     if 'Shield' in self.proficiencies.armor.set:
                         handed = 1
-                        wielded = equipment[choice]
                     else:
                         print('Warning! Not proficient with Shields!')
                         choose_again = input(
@@ -251,13 +276,12 @@ class character:
                             self.penalties.update(
                                 {equipment[choice]: ('Armor Prof')})
                             handed = 1
-                            wielded = equipment[choice]
                         else:
                             continue
 
                 equippable[choice][-1] -= 1
                 self.wielded.update(Dict({choice: {'handed': handed,
-                                                   'obj': wielded}}))
+                                                   'obj': equipment[choice]}}))
             else:
                 handed = 1
                 if not self.wielded and hands >= 1:
@@ -266,53 +290,6 @@ class character:
             hands += handed
 
         self.update()
-
-        #                 # Awkward shit to do with 2-handed equipment.
-        #
-        #                 if hands == 0 and \
-        #                         (hasattr(eq, 'properties')
-        #                          and 'Versatile' in eq.properties):
-        #                     wield = None
-        #                     while wield not in ['y', 'yes', 'n', 'no']:
-        #                         wield = input(
-        #                             f'Wield {choice.lower()} two-handed? (Y/N)').lower()
-        #                         if ('y' or 'yes') in wield:
-        #                             two_handed = eq
-        #                             equippable[choice][1] -= 1
-        #                         elif ('n' or 'no') in wield:
-        #                             self.equipped[body_part] = eq
-        #                             equippable[choice][1] -= 1
-        #                         else:
-        #                             wield = input(
-        #                                 f'Input error. Wield {choice.lower()} two-handed? (Y/N)').lower()
-        #                 else:
-        #                     self.equipped[body_part] = eq
-        #                     equippable[choice][1] -= 1
-        #             if 'Hand' in body_part:
-        #                 hands += 1
-        # if two_handed:
-        #     self.equipped['Hands'] = two_handed
-        #
-        # self.equipped = Dict(
-        #     {part: item for part, item in self.equipped.items() if item})
-        #
-        # ## Check for effects
-        #
-        # attack_opts = Dict({'Unarmed Strike': actions.unarmed_strike(self)})
-        #
-        # for body_part, item in self.equipped.items():
-        #
-        #     if isclasstype(item, 'Weapon'):
-        #         attack_opts[item_name] = item
-        #
-        #     if hasattr(item, 'effects'):
-        #         for effect in item.effects:
-        #             effect.add_effect(self)
-        #
-        # if penalties:
-        #     self.penalties = penalties
-        #
-        # self.actions['attacks'] = attack_opts
 
     def attune(self):
         pass
@@ -488,6 +465,18 @@ class character:
 
         self.stats.speed['value'] = 0
         self.stats.speed['value'] = sum(self.stats.speed.values())
+
+        self.stats.size[
+            'current'] = self.stats.size.temp or self.stats.size.race
+
+        ### Attack objects:
+
+        self.actions.attacks = Dict()
+        self.actions.attacks.update({'Unarmed Strike': unarmed_strike(self)})
+        for wielded, stats in self.wielded.items():  # TODO: Only if weapon
+            print(wielded, stats)
+            self.actions.attacks.update(
+                {wielded: atk_option(self, stats['obj'])})
 
 
 def create_character():

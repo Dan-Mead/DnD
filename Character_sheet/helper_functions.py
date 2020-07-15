@@ -45,19 +45,22 @@ def simple_choice(options_list):
 
     valid_choice = False
 
-    choice = (input("Please enter number:"))
-
     while not valid_choice:
-        if choice == "":
-            print("Invalid choice! Please choose from list.")
-            choice = (input())
-        elif int(choice) in range(len(options_list)):
-            valid_choice = True
-        else:
-            print("Invalid choice! Please choose from list.")
-            choice = (input())
+        try:
+            choice = int(input("\nPlease enter number:"))
+            if choice not in range(len(options_list)):
+                raise Exception("Choice not in range! Please choose from list.")
 
-    return int(choice)
+        except ValueError:
+            print('Value must be a number!')
+
+        except Exception as ex:
+            print(ex)
+
+        else:
+            valid_choice = True
+
+    return choice
 
 
 def choose_language(msg, known,

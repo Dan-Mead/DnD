@@ -28,7 +28,7 @@ def get_items(type_filter=None):
     return items
 
 
-def get_item(item_name, num = 1):
+def get_item(item_name, num=1):
     items = get_items()
 
     item = items[item_name](num)
@@ -42,7 +42,8 @@ class Item:
         self.name = self.__class__.__name__.replace("_", " ")
         self.num = num
         if self.cost:
-            self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[1] + "p"
+            self.cost = int(self.cost.split(" ")[0]), self.cost.split(" ")[
+                1] + "p"
 
     def add_number(self, num):
         self.num += num
@@ -99,12 +100,16 @@ class Misc_Object(Item):
         self.num = num
         self.cost = None
 
+
 class Magic(Item):
     def __init__(self, num):
         self.num = num
         self.cost = None
-        self.origin = " : ".join(['item', self.__class__.__name__.replace("_", " ")])
+        self.origin = " : ".join(
+            ['item', self.__class__.__name__.replace("_", " ")])
         super().__init__(num)
+
+
 ############################################################ Weapons
 
 class Club(Weapon):
@@ -155,6 +160,7 @@ class Handaxe(Weapon):
         self.weight = 2
         super().__init__(num)
         self.range = (20, 60)
+
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -168,6 +174,7 @@ class Javelin(Weapon):
         self.weight = 2
         super().__init__(num)
         self.range = (30, 120)
+
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -181,6 +188,7 @@ class Light_Hammer(Weapon):
         self.weight = 2
         super().__init__(num)
         self.range = (20, 60)
+
     @staticmethod
     def get_weapon_type():
         return 'Simple', 'Melee'
@@ -431,6 +439,7 @@ class Trident(Weapon):
         self.properties = 'Thrown', 'Versatile'
         super().__init__(num)
         self.range = (20, 60)
+
     @staticmethod
     def get_weapon_type():
         return 'Martial', 'Melee'
@@ -473,6 +482,143 @@ class Whip(Weapon):
     @staticmethod
     def get_weapon_type():
         return 'Martial', 'Melee'
+
+
+##################### Simple Ranged
+
+class Crossbow_Light(Weapon):
+    def __init__(self, num):
+        self.cost = '25 g'
+        self.dmg = 1, 8, 'p'
+        self.weight = 5
+        self.properties = 'Ammunition', 'Loading', 'Two-handed'
+        super().__init__(num)
+        self.range = (80, 320)
+        self.ammo = 20
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Ranged'
+
+
+class Dart(Weapon):
+    def __init__(self, num):
+        self.cost = '5 c'
+        self.dmg = 1, 4, 'p'
+        self.weight = 0.25
+        self.properties = 'Finesse', 'Thrown'
+        super().__init__(num)
+        self.range = (20, 60)
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Ranged'
+
+
+class Shortbow(Weapon):
+    def __init__(self, num):
+        self.cost = '25 g'
+        self.dmg = 1, 6, 'p'
+        self.weight = 2
+        self.properties = 'Ammunition', 'Two-handed'
+        super().__init__(num)
+        self.range = (80, 320)
+        self.ammo = 20
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Ranged'
+
+
+class Sling(Weapon):
+    def __init__(self, num):
+        self.cost = '1 s'
+        self.dmg = 1, 4, 'b'
+        self.weight = 0
+        self.properties = 'Ammunition'
+        super().__init__(num)
+        self.range = (30, 120)
+        self.ammo = 0
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Simple', 'Ranged'
+
+
+##################### Martial Ranged
+
+class Blowgun(Weapon):
+    def __init__(self, num):
+        self.cost = '10 g'
+        self.dmg = 1, 1, 'p'
+        self.weight = 1
+        self.properties = 'Ammunition', 'Loading',
+        super().__init__(num)
+        self.range = (25, 100)
+        self.ammo = 0
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Ranged'
+
+
+class Crossbow_Hand(Weapon):
+    def __init__(self, num):
+        self.cost = '75 g'
+        self.dmg = 1, 6, 'p'
+        self.weight = 3
+        self.properties = 'Ammunition', 'Light', 'Loading'
+        super().__init__(num)
+        self.range = (30, 120)
+        self.ammo = 20
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Ranged'
+
+
+class Crossbow_Heavy(Weapon):
+    def __init__(self, num):
+        self.cost = '50 g'
+        self.dmg = 1, 10, 'p'
+        self.weight = 18
+        self.properties = 'Ammunition', 'Loading', 'Heavy', 'Two-handed'
+        super().__init__(num)
+        self.range = (100, 400)
+        self.ammo = 20
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Ranged'
+
+
+class Longbow(Weapon):
+    def __init__(self, num):
+        self.cost = '50 g'
+        self.dmg = 1, 8, 'p'
+        self.weight = 2
+        self.properties = 'Ammunition', 'Heavy', 'Two-handed'
+        super().__init__(num)
+        self.range = (150, 600)
+        self.ammo = 20
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Ranged'
+
+
+class Net(Weapon):
+    def __init__(self, num):
+        self.cost = '1 g'
+        self.dmg = 0, 0, 'b'
+        self.weight = 3
+        self.properties = 'Special', 'Thrown',
+        super().__init__(num)
+        self.range = (5, 15)
+
+    @staticmethod
+    def get_weapon_type():
+        return 'Martial', 'Ranged'
 
 
 ############################################################ Armor
@@ -563,7 +709,7 @@ class Scale_Mail(Armor):
         self.weight = 45
         super().__init__(num)
         self.components = {'Body': self.name,
-                      'Hands' : f'Gauntlets ({self.name})'}
+                           'Hands': f'Gauntlets ({self.name})'}
 
 
 class Breastplate(Armor):
@@ -627,7 +773,7 @@ class Chain_Mail(Armor):
         self.weight = 55
         super().__init__(num)
         self.components = {'Body': self.name,
-                      'Hands' : f'Gauntlets ({self.name})'}
+                           'Hands': f'Gauntlets ({self.name})'}
 
 
 class Splint(Armor):
@@ -659,10 +805,9 @@ class Plate(Armor):
         self.weight = 65
         super().__init__(num)
         self.components = {'Body': self.name,
-                      'Hands' : f'Gauntlets ({self.name})',
-                      'Feet': f'Heavy Leather Boots ({self.name})',
-                      'Head' : f'Visored Helmet ({self.name})'}
-
+                           'Hands': f'Gauntlets ({self.name})',
+                           'Feet': f'Heavy Leather Boots ({self.name})',
+                           'Head': f'Visored Helmet ({self.name})'}
 
 
 class Shield(Armor):
@@ -737,10 +882,10 @@ class Cloak_of_Protection(Magic):
 
         saving_throws = []
         for attr in attrs:
-            saving_throws.append(modifier(self.origin, ".".join(["saving_throws", attr]), +1))
+            saving_throws.append(
+                modifier(self.origin, ".".join(["saving_throws", attr]), +1))
 
         self.effects += saving_throws
 
         self.equippable = 'Shoulders'
         self.attunement = True
-

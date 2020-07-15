@@ -70,8 +70,12 @@ class Weapon(Item):
         else:
             self.properties += ('Silvered',)
 
-    def attack(self):
-        pass  # TODO Remember Profficiencies
+    def add_ammo(self, num):
+
+        if hasattr(self, 'ammo'):
+            self.ammo += num
+        else:
+            pass
 
 
 class Armor(Item):

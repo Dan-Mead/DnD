@@ -124,7 +124,6 @@ class unarmed_strike(atk_option):
     def __init__(self, char):
         self.can_attack = True
         self.prof = True
-        self.attack_type = 'Melee'
         self.disadv = False
         self.round_limit = None
         self.reach = 5

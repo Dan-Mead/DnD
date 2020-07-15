@@ -406,10 +406,9 @@ class character:
                     AC += item.AC + self.attributes['DEX']['mod']
                     armoured = True
 
-        # TODO: Wielding a shield
-
-        # if  == 'Shield':
-        #     AC += 2
+        for item in self.wielded.keys():
+            if item == 'Shield':
+                AC += 2
 
         for mod_name, mod_val in stats.armour_class.items():
             if not mod_name in ['value',
@@ -429,6 +428,23 @@ class character:
                  pros]))
             self.proficiencies[prof].set = prof_set
 
+        ### Speed and Size
+
+        self.stats.speed['value'] = 0
+        self.stats.speed['value'] = sum(self.stats.speed.values())
+
+        self.stats.size[
+            'current'] = self.stats.size.temp or self.stats.size.race
+
+        ### Attack objects:
+
+        self.actions.attacks = Dict()
+        self.actions.attacks.update({'Unarmed Strike': unarmed_strike(self)})
+        for wielded, stats in self.wielded.items():  # TODO: Only if weapon
+            if isclasstype(stats['obj'], 'Weapon'):
+                self.actions.attacks.update(
+                    {wielded: atk_option(self, stats['obj'])})
+
         ### Update Penalties
 
         if self.penalties:
@@ -447,7 +463,8 @@ class character:
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = True
 
-                    # TODO: Cannot cast spells, disadv on attack.
+                    for atk, vals in self.actions.attacks.items():
+                        vals.disadv = True
 
                     else:
                         self.attributes.STR['disadv'] = False
@@ -455,29 +472,6 @@ class character:
                         for skill_name, skill in self.skills.items():
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = False
-                elif 'Weapon Prof' in penalties:
-                    pass  # Just check when making an attack
-                # if strength, reduce speed
-                # if armour type, dis on ability check, save or attack for STR and DEX
-                # if weapon, just don't add profficiency, probably don't check here? only on attacks
-
-        ### Speed and Size
-
-        self.stats.speed['value'] = 0
-        self.stats.speed['value'] = sum(self.stats.speed.values())
-
-        self.stats.size[
-            'current'] = self.stats.size.temp or self.stats.size.race
-
-        ### Attack objects:
-
-        self.actions.attacks = Dict()
-        self.actions.attacks.update({'Unarmed Strike': unarmed_strike(self)})
-        for wielded, stats in self.wielded.items():  # TODO: Only if weapon
-            print(wielded, stats)
-            self.actions.attacks.update(
-                {wielded: atk_option(self, stats['obj'])})
-
 
 def create_character():
     # character.attack = actions.attack # This may be a group of actions eventually

@@ -1,4 +1,5 @@
 import textwrap
+
 import numpy as np
 
 from glossary import common_languages, attrs, skills_dict, exotic_languages, \
@@ -20,14 +21,20 @@ def LDK(dct, string_list):
 def mod_calc(num):
     return np.floor((num - 10) / 2)
 
-def isclasstype(obj, type):
 
-    return type in [base.__name__ for base in obj.__class__.__bases__]
+def isclasstype(obj, type):
+    return type in get_bases(obj)
+
+
+def get_bases(obj):
+    return tuple([base.__name__ for base in obj.__class__.__bases__])
+
 
 def reset(dict):
     for key, value in dict.items():
         dict[key] = None
     return dict
+
 
 ##########################################################################
 

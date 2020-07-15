@@ -117,8 +117,9 @@ class Test(Class):
         self.hit_dice = 10
         self.hit_points = 6
         self.prof_armor = ["Light", "Medium", "Heavy", "Shield"]
-        # self.prof_armor = ["Light", "Medium", "Shield"]
+        # self.prof_armor = ["Light", "Medium"]
         self.prof_weapons = ["Simple", "Martial"]
+        # self.prof_weapons = ["Simple"]
         self.saves = ["WIS", "CHA"]
         self.equipment = [('Chain Mail', 1)]
         self.equipment += [('Holy Symbol', 1),

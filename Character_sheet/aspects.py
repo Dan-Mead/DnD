@@ -2,8 +2,9 @@ import numpy as np
 from addict import Dict
 
 from classes import get_class
-from glossary import skills_dict, attrs
-from helper_functions import mod_calc, simple_choice, isclasstype, reset
+from glossary import skills_dict, attrs, ordinals
+from helper_functions import mod_calc, simple_choice, isclasstype, reset, \
+    get_bases
 from races import get_race
 
 
@@ -194,10 +195,75 @@ class character:
         equippable = {}
 
         for item_name, item in equipment.items():
+            if hasattr(item,
+                       'equippable') and item.equippable == 'Hand':  # covers 'other' items, may need changing in future.
+                equippable[item_name] = [get_bases(item), item.num]
             if isclasstype(item, 'Weapon'):
-                equippable[item_name] = [item.properties, item.num]
+                equippable[item_name] = [get_bases(item), item.weapon_type,
+                                         item.properties, item.num]
 
-        print(equippable)
+        hands = 0
+
+        while hands < 2:
+            choices = [item_name for item_name, item in equippable.items()
+                       if item[-1] >= 1]
+            choices.insert(0, None)
+
+            print(f"\nChoose {ordinals[hands].lower()} item to wield!")
+            choice_num = simple_choice(choices)
+            choice = choices[choice_num]
+
+            if choice:
+                if 'Weapon' in equippable[choice][0]:
+                    if equippable[choice][1][
+                        0] not in self.proficiencies.weapons.set:
+
+                        print(
+                            f'Warning! Not proficient with {equippable[choice][1][0].lower()} weapons!')
+                        choose_again = input(
+                            "Choose a different option? Y/N").lower()
+                        if choose_again in 'no':
+                            pass
+                        else:
+                            continue
+
+                    if 'Versatile' in equippable[choice][2] and hands == 0:
+                        two_hand = input('Wield two-handed? Y/N').lower()
+                        if two_hand in 'yes':
+                            handed = 2
+                        else:
+                            handed = 1
+                    else:
+                        handed = 1
+
+                    wielded = equipment[choice]  # make attack object
+
+                elif choice == 'Shield':
+                    if 'Shield' in self.proficiencies.armor.set:
+                        handed = 1
+                        wielded = equipment[choice]
+                    else:
+                        print('Warning! Not proficient with Shields!')
+                        choose_again = input(
+                            "Choose a different option? Y/N").lower()
+
+                        if choose_again in 'no':
+                            self.penalties.update(
+                                {equipment[choice]: ('Armor Prof')})
+                            handed = 1
+                            wielded = equipment[choice]
+                        else:
+                            continue
+
+                equippable[choice][-1] -= 1
+                self.wielded.update(Dict({choice: {'handed': handed,
+                                                   'obj': wielded}}))
+            else:
+                handed = 1
+                if not self.wielded and hands >= 1:
+                    print('Why did you even bother?')
+
+            hands += handed
 
         self.update()
 
@@ -264,6 +330,7 @@ class character:
                 print(
                     f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
         """
+
     def update(self):
 
         ### Level calculation

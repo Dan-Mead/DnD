@@ -1,7 +1,7 @@
 import numpy as np
 from addict import Dict
 
-from actions import atk_option, unarmed_strike
+from actions import atk_option, unarmed_strike, attack_list
 from classes import get_class
 from glossary import skills_dict, attrs, ordinals
 from helper_functions import mod_calc, simple_choice, isclasstype, reset, \
@@ -473,8 +473,9 @@ class character:
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = False
 
+
 def create_character():
-    # character.attack = actions.attack # This may be a group of actions eventually
+    character.attack = attack_list  # This may be a group of actions eventually
 
     class_choice = "Test"
     race_choice = "Half Orc"
@@ -497,6 +498,7 @@ char.update()
 # char.equip()
 char.wield()
 
+char.attack()
 # char.actions.attacks['Unarmed Strike'].attack()
 
 print("Done!")

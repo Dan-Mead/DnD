@@ -4,6 +4,7 @@ Attacks (Weapons, Unarmed)
 Combat: (Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object)
 Bonus: Two weapon (if holding)
 """
+import textwrap
 
 
 class atk_option:
@@ -17,7 +18,7 @@ class atk_option:
         # TODO: Ammo
 
     def finesse(self):
-        self.mod_type = 'STR', 'DEX'
+        self.attr = 'STR', 'DEX'
 
     def heavy(self, size):
         size, = size
@@ -67,7 +68,7 @@ class atk_option:
     def versatile(self, hands):
         hands, = hands
         if hands == 2:
-            self.dmg = (self.dmg[0], self.dmg[1] + 2)
+            self.dmg_roll = (self.dmg_roll[0], self.dmg_roll[1] + 2)
 
     def __init__(self, char, weapon):
 
@@ -81,14 +82,15 @@ class atk_option:
             self.prof = False
 
         if weapon.weapon_type[1] == 'Melee':
-            self.mod_type = 'STR'
+            self.attr = ('STR',)
         elif weapon.weapon_type[1] == 'Ranged':
-            self.mod_type = 'DEX'
+            self.attr = ('DEX',)
 
         self.disadv = False
         self.round_limit = None
         self.reach = 5
-        self.dmg = weapon.dmg
+        self.dmg_roll = weapon.dmg
+        self.dmg_mod = 0
         self.dmg_type = weapon.dmg_type
         self.two_weapon_fighting = False
 
@@ -120,23 +122,116 @@ class atk_option:
     def attack(self):
         print("Bonk!", self.dmg, "damage.")
 
+
 class unarmed_strike(atk_option):
     def __init__(self, char):
         self.can_attack = True
         self.prof = True
+        self.attr = ('STR',)
         self.disadv = False
         self.round_limit = None
         self.reach = 5
-        self.dmg = 1 + char.attributes.STR.mod
+        self.dmg_roll = None
+        self.dmg_mod = 1
         self.dmg_type = 'Bludgeoning'
 
 
+def attack_list(self):
+    """ This is a fucking mess but what do you expect from trying to format strings.
+    Prime candidate for refactoring."""
 
+    print('\nAttack options:',
+          f'\nNumber of attacks per round/action: {self.stats.attacks_per_turn}\n')
 
+    atk_rows = {}
+    atk_cats = {}
 
-# def attack(self):
-#
-#     attacks = {'Unarmed Strike' : unarmed_strike(self)}
-#
-#     print(attacks['Unarmed Strike'].attack())
+    headers = {'names': 'Attack',
+               'range': 'Reach (Range)',
+               'atk': 'Hit Roll',
+               'dmg': 'Damage Roll'
+               }
 
+    note = []
+
+    for option, values in self.actions.attacks.items():
+        if values.can_attack == True:
+            atk_rows[option] = {'range': [],
+                                'atk': [],
+                                'dmg': []
+                                }
+
+            try:
+                reach = (getattr(values, 'reach'),)
+            except:
+                pass
+            else:
+                atk_rows[option]['range'] += reach
+
+            try:
+                range = (getattr(values, 'range'),)
+            except:
+                pass
+            else:
+                atk_rows[option]['range'] += range
+
+            atk_rows[option]['range'] = str(atk_rows[option]['range'])[1:-1]
+
+            # Assume you'd want to use max. Can separate out if not, for some reason.
+            roll_val = max([self.attributes[attr].mod for attr in values.attr])
+
+            atk = f'1d20 + {roll_val + values.prof * self.stats.proficiency}'
+
+            if values.disadv:
+                atk = f'{atk} (Disadvantage)'
+
+            atk_rows[option]['atk'] = atk
+
+            dmg = f'{roll_val + values.dmg_mod} {values.dmg_type}'
+
+            if values.dmg_roll:
+                dmg = f'{values.dmg_roll[0]}d{values.dmg_roll[1]} + {dmg}'
+
+            atk_rows[option]['dmg'] = dmg
+
+            try:
+                if len(option) > atk_cats['names']:
+                    atk_cats['names'] = len(option)
+            except:
+                atk_cats['names'] = max([len(option), len(headers['names'])])
+
+            for key in atk_rows[option].keys():
+                length = len(atk_rows[option][key])
+                try:
+                    if length > atk_cats[key]:
+                        atk_cats[key] = length
+                except:
+                    atk_cats[key] = max([length, len(headers[key])])
+
+            if hasattr(values, 'note'):
+                note += [values.note]
+
+    header = f'{headers["names"]:>{atk_cats["names"]}} | ' \
+             f'{headers["range"]:^{atk_cats["range"]}} | ' \
+             f'{headers["atk"]:^{atk_cats["atk"]}} | ' \
+             f'{headers["dmg"]:^{atk_cats["dmg"]}}'
+
+    header_len = len(header)
+    atks = []
+    for atk, vals in atk_rows.items():
+        row = (f'{atk:>{atk_cats["names"]}} | '
+               f'{vals["range"]:^{atk_cats["range"]}} | '
+               f'{vals["atk"]:^{atk_cats["atk"]}} | '
+               f'{vals["dmg"]:^{atk_cats["dmg"]}}')
+        atks += [row]
+        if len(row) > header_len:
+            header_len = len(row)
+
+    print(header)
+    print(header_len * '-')
+    for atk in atks: print(atk)
+
+    print()
+
+    if note:
+        for comment in note: print(textwrap.fill(comment, width=80))

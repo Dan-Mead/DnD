@@ -101,4 +101,6 @@ class Half_Orc(race):
 
 class Test(race):
     def __init__(self, char):
+        self.speed = 30
         self.feats = f.add_feat(char, 1)
+        print()

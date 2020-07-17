@@ -38,6 +38,10 @@ class Class:
                     for save in self.saves:
                         char.saving_throws[save].prof = True
 
+                elif trait == 'skills':
+                    for skill in self.skills:
+                        char.skills[skill].prof = True
+
                 elif trait == 'prof_weapons':
                     char.proficiencies.weapons[origin] = self.prof_weapons
                 elif trait == 'prof_armor':
@@ -54,6 +58,11 @@ class Class:
                         else:
                             char.equipment.update(
                                 {item[0]: get_item(item[0], item[1])})
+
+                elif trait not in ['class_name', 'hit_dice', 'hit_points',
+                                   'levels']:
+                    raise Exception(
+                        f"{trait} included which haven't been added.")
 
             char.classes[self.class_name] = character_class(1, self.hit_dice,
                                                             self.hit_points,
@@ -84,7 +93,6 @@ class Paladin(Class):
         self.hit_points = 6
         self.prof_armor = ["Light", "Medium", "Heavy", "Shield"]
         self.prof_weapons = ["Simple", "Martial"]
-        self.prof_tools = None
         self.saves = ["WIS", "CHA"]
         allowed_skills = ["athletics", "insight", "intimidation", "medicine",
                           "persuasion", "religion"]

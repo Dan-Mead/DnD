@@ -176,8 +176,11 @@ class character:
             if worn:
                 item_name, item = worn
                 if hasattr(item, 'effects'):
-                    for effect in item.effects:
-                        effect.add_effect(self)
+                    if (hasattr(item,
+                                'attunement') and item_name in self.stats.attuned.keys()) \
+                            or not hasattr(item, 'attunement'):
+                        for effect in item.effects:
+                            effect.add_effect(self)
                 if hasattr(item, 'components'):
                     for body_part, component in item.components.items():
                         if not self.worn[body_part]:
@@ -292,21 +295,38 @@ class character:
         self.update()
 
     def attune(self):
-        pass
-        """
-        if hasattr(eq, 'attunement'):
-            if len(
-                    self.stats.attuned) >= self.stats.max_attuned:
+        attuneable = {}
+        self.stats.attuned = Dict()
+
+        for name, eq in self.equipment.items():
+            # print(name, eq)
+            if hasattr(eq, 'attunement'):
+                attuneable[name] = eq
+                # if len(
+                #         self.stats.attuned) >= self.stats.max_attuned:
+                #     print(
+                #         'Warning! Maximum attuned items reached! Please choose another item.')
+                #     del choices[choice_num]
+                #     del print_choices[choice_num]
+                #     continue
+                # else:
+                #     self.stats.attuned.update({eq: body_part})
+                #     print(
+                #         f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
+
+        choices = [name for name in attuneable.keys()]
+        choices.insert(0, None)
+        while len(self.stats.attuned) < self.stats.max_attuned:
+            if len(choices) > 1:
                 print(
-                    'Warning! Maximum attuned items reached! Please choose another item.')
-                del choices[choice_num]
-                del print_choices[choice_num]
-                continue
+                    f"Choose items to attune. Currently {len(self.stats.attuned)}/{self.stats.max_attuned} chosen.")
+                choice = simple_choice(choices)
+                self.stats.attuned[choices[choice]] = attuneable[
+                    choices[choice]]
+                del choices[choice]
             else:
-                self.stats.attuned.update({eq: body_part})
-                print(
-                    f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
-        """
+                break
+        self.update()
 
     def update(self):
 
@@ -334,7 +354,10 @@ class character:
             else:
                 for mod_name, mod_val in attr.items():
                     if mod_name not in ['override', 'mod', 'stat']:
-                        attr.stat += sum([mod_val])
+                        try:
+                            attr.stat += sum([mod_val])
+                        except TypeError:
+                            attr.stat += sum(mod_val)
                 attr.mod = int(mod_calc(attr.stat))
 
         ### Skills and saving throws
@@ -345,7 +368,7 @@ class character:
             skill['val'] = attrs[skill['attr']]['mod'] \
                            + self.stats.proficiency * skill['prof']
             for mod_name, mod_val in skill.items():
-                if not mod_name in ['val', 'name', 'attr', 'prof']:
+                if not mod_name in ['val', 'name', 'attr', 'prof', 'notes']:
                     skill['val'] += sum(mod_val)
 
         saves = self.saving_throws
@@ -354,11 +377,10 @@ class character:
             if save.override:
                 save.val = save.override
             else:
-                save.val = attrs[save_name].mod + self.stats.proficiency * save[
-                    'prof']
-
+                save.val = attrs[save_name].mod \
+                           + self.stats.proficiency * save['prof']
                 for mod_name, mod_val in save.items():
-                    if not mod_name in ['val', 'override', 'prof']:
+                    if not mod_name in ['val', 'override', 'prof', 'notes']:
                         save.val += sum(mod_val)
 
         ### HP #TODO: Temp HP?
@@ -424,8 +446,8 @@ class character:
 
         for prof in self.proficiencies:
             prof_set = list(set(
-                [pro for pros in self.proficiencies[prof].values() for pro in
-                 pros]))
+                [pro for pros in self.proficiencies[prof].values()
+                 for pro in pros]))
             self.proficiencies[prof].set = prof_set
 
         ### Speed and Size
@@ -455,6 +477,8 @@ class character:
                     else:
                         del self.stats.speed['Too weak for armour']
                         self.penalties[item].remove('Armor STR')
+                        self.update()
+
                 if 'Armor Prof' in penalties:
                     if item.armor_type not in self.proficiencies.armor.set:
                         self.attributes.STR['disadv'] = True
@@ -463,8 +487,8 @@ class character:
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = True
 
-                    for atk, vals in self.actions.attacks.items():
-                        vals.disadv = True
+                        for atk, vals in self.actions.attacks.items():
+                            vals.disadv = True
 
                     else:
                         self.attributes.STR['disadv'] = False
@@ -472,13 +496,17 @@ class character:
                         for skill_name, skill in self.skills.items():
                             if skill.attr in ['DEX', 'STR']:
                                 skill['disadv'] = False
+                            for atk, vals in self.actions.attacks.items():
+                                vals.disadv = False
+                        self.penalties[item].remove('Armor STR')
+                        self.update()
 
 
 def create_character():
     character.attack = attack_list  # This may be a group of actions eventually
 
     class_choice = "Test"
-    race_choice = "Half Orc"
+    race_choice = "Test"
 
     char = character(class_choice, race_choice)
     char.update()
@@ -495,10 +523,11 @@ char.equipment.update(
 char.attributes.STR.base = 16
 char.update()
 
-# char.equip()
-char.wield()
+char.attune()
+char.equip()
+# char.wield()
 
-char.attack()
-# char.actions.attacks['Unarmed Strike'].attack()
+
+# char.attack()
 
 print("Done!")

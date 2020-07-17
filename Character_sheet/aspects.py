@@ -505,8 +505,8 @@ class character:
 def create_character():
     character.attack = attack_list  # This may be a group of actions eventually
 
-    class_choice = "Test"
-    race_choice = "Test"
+    class_choice = "Paladin"
+    race_choice = "Human Variant"
 
     char = character(class_choice, race_choice)
     char.update()
@@ -521,13 +521,18 @@ from items import get_item
 char.equipment.update(
     {'Cloak of Protection': get_item('Cloak of Protection', 1)})
 char.attributes.STR.base = 16
+char.attributes.DEX.base = 12
+char.attributes.CON.base = 14
+char.attributes.INT.base = 18
+char.attributes.WIS.base = 13
+char.attributes.CHA.base = 17
+
 char.update()
 
 char.attune()
 char.equip()
-# char.wield()
+char.wield()
 
-
-# char.attack()
+char.attack()
 
 print("Done!")

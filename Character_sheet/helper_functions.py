@@ -202,7 +202,7 @@ def add_attributes(allowed, num_attr):
     attrs_list = []
     for n in range(num_attr):
         attrs_list.append(choose_stat(
-            "Choose " + ordinals[n].lower() + "ability score to increase,",
+            "Choose " + ordinals[n].lower() + " ability score to increase,",
             attrs_list))
 
     return list(zip(attrs_list, [1] * len(attrs_list)))

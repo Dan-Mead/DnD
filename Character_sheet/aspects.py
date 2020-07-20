@@ -1,7 +1,7 @@
 import numpy as np
 from addict import Dict
 
-from actions import atk_option, unarmed_strike, attack_list
+from actions import atk_option, unarmed_strike
 from classes import get_class
 from glossary import skills_dict, attrs, ordinals
 from helper_functions import mod_calc, simple_choice, isclasstype, reset, \
@@ -11,7 +11,7 @@ from races import get_race
 
 class character:
 
-    def __init__(self, class_choice, race_choice):
+    def __init__(self):
 
         self.info = Dict({'alignment': None,
                           'level': None,
@@ -94,9 +94,6 @@ class character:
         self.other = Dict({'dual_wield_requirement': 'Light',
                            'can_cast_spells': True,
                            })
-
-        self.choose_class(class_choice)
-        self.choose_race(race_choice)
 
     def choose_class(self, class_choice):
         starting_class = get_class(self, class_choice)
@@ -456,7 +453,7 @@ class character:
             self.actions.attacks = Dict()
             self.actions.attacks.update(
                 {'Unarmed Strike': unarmed_strike(self)})
-            for wielded, stats in self.wielded.items():  # TODO: Only if weapon
+            for wielded, stats in self.wielded.items():
                 if isclasstype(stats['obj'], 'Weapon'):
                     self.actions.attacks.update(
                         {wielded: atk_option(self, stats['obj'])})
@@ -522,39 +519,3 @@ class character:
             attack_objects()
             penalties()
 
-
-def create_character():
-    character.attack = attack_list  # This may be a group of actions eventually
-
-    class_choice = "Test"
-    race_choice = "Test"
-
-    char = character(class_choice, race_choice)
-
-    char.update()
-
-    return char
-
-
-char = create_character()
-
-from items import get_item
-
-char.equipment.update(
-    {'Cloak of Protection': get_item('Cloak of Protection', 1)})
-char.attributes.STR.base = 16
-char.attributes.DEX.base = 12
-char.attributes.CON.base = 14
-char.attributes.INT.base = 18
-char.attributes.WIS.base = 13
-char.attributes.CHA.base = 17
-
-char.update()
-
-char.attune()
-char.equip()
-char.wield()
-
-char.attack()
-
-print("Done!")

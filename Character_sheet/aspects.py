@@ -91,7 +91,8 @@ class character:
         self.equipment = Dict()
         self.penalties = Dict()
 
-        self.other = Dict({'dual_wield_requirement': 'Light'
+        self.other = Dict({'dual_wield_requirement': 'Light',
+                           'can_cast_spells': True,
                            })
 
         self.choose_class(class_choice)
@@ -299,20 +300,8 @@ class character:
         self.stats.attuned = Dict()
 
         for name, eq in self.equipment.items():
-            # print(name, eq)
             if hasattr(eq, 'attunement'):
                 attuneable[name] = eq
-                # if len(
-                #         self.stats.attuned) >= self.stats.max_attuned:
-                #     print(
-                #         'Warning! Maximum attuned items reached! Please choose another item.')
-                #     del choices[choice_num]
-                #     del print_choices[choice_num]
-                #     continue
-                # else:
-                #     self.stats.attuned.update({eq: body_part})
-                #     print(
-                #         f'You now have {len(self.stats.attuned)}/{self.stats.max_attuned} items attuned.')
 
         choices = [name for name in attuneable.keys()]
         choices.insert(0, None)
@@ -328,187 +317,220 @@ class character:
                 break
         self.update()
 
-    def update(self):
+    def update(self, func=None):
 
-        ### Level calculation
+        def levels():
 
-        classes = self.classes
+            classes = self.classes
 
-        level = 0
-        for class_obj in classes.values():
-            level += class_obj.level
-        self.info.level = level
+            level = 0
+            for class_obj in classes.values():
+                level += class_obj.level
+            self.info.level = level
 
-        ### Proficiency
+            self.stats.proficiency = int(np.ceil(level / 4) + 1)
 
-        self.stats.proficiency = int(np.ceil(level / 4) + 1)
+        def modifiers():
 
-        ### Modifiers
+            attrs = self.attributes
+            for attr_name, attr in attrs.items():
+                attr.stat = 0
+                if attr.override:
+                    attr.stat = attr.override
+                    break
+                else:
+                    for mod_name, mod_val in attr.items():
+                        if mod_name not in ['override', 'mod', 'stat']:
+                            try:
+                                attr.stat += sum([mod_val])
+                            except TypeError:
+                                attr.stat += sum(mod_val)
+                    attr.mod = int(mod_calc(attr.stat))
 
-        attrs = self.attributes
-        for attr_name, attr in attrs.items():
-            attr.stat = 0
-            if attr.override:
-                attr.stat = attr.override
-                break
-            else:
-                for mod_name, mod_val in attr.items():
-                    if mod_name not in ['override', 'mod', 'stat']:
-                        try:
-                            attr.stat += sum([mod_val])
-                        except TypeError:
-                            attr.stat += sum(mod_val)
-                attr.mod = int(mod_calc(attr.stat))
+        def skills_and_saves():
 
-        ### Skills and saving throws
+            attrs = self.attributes
 
-        skills = self.skills
+            skills = self.skills
 
-        for skill in skills.values():
-            skill['val'] = attrs[skill['attr']]['mod'] \
-                           + self.stats.proficiency * skill['prof']
-            for mod_name, mod_val in skill.items():
-                if not mod_name in ['val', 'name', 'attr', 'prof', 'notes']:
-                    skill['val'] += sum(mod_val)
+            for skill in skills.values():
+                skill['val'] = attrs[skill['attr']]['mod'] \
+                               + self.stats.proficiency * skill['prof']
+                for mod_name, mod_val in skill.items():
+                    if not mod_name in ['val', 'name', 'attr', 'prof', 'notes']:
+                        skill['val'] += sum(mod_val)
 
-        saves = self.saving_throws
+            saves = self.saving_throws
 
-        for save_name, save in saves.items():
-            if save.override:
-                save.val = save.override
-            else:
-                save.val = attrs[save_name].mod \
-                           + self.stats.proficiency * save['prof']
-                for mod_name, mod_val in save.items():
-                    if not mod_name in ['val', 'override', 'prof', 'notes']:
-                        save.val += sum(mod_val)
+            for save_name, save in saves.items():
+                if save.override:
+                    save.val = save.override
+                else:
+                    save.val = attrs[save_name].mod \
+                               + self.stats.proficiency * save['prof']
+                    for mod_name, mod_val in save.items():
+                        if not mod_name in ['val', 'override', 'prof', 'notes']:
+                            save.val += sum(mod_val)
 
-        ### HP #TODO: Temp HP?
+        def HP():
 
-        HP = 0
+            attrs = self.attributes
+            classes = self.classes
 
-        for class_obj in classes.values():
-            if class_obj.base_class:
-                HP += class_obj.hit_dice
-            else:
-                HP += class_obj.lvl_up_hp
+            HP = 0
 
-        HP += (level * attrs.CON.mod)
-        self.stats.max_hp = int(HP)
+            for class_obj in classes.values():
+                if class_obj.base_class:
+                    HP += class_obj.hit_dice
+                else:
+                    HP += class_obj.lvl_up_hp
 
-        ### Passive senses
+            HP += (self.info.level * attrs.CON.mod)
+            self.stats.max_hp = int(HP)
 
-        senses = self.stats.senses
+        def senses():
 
-        senses.perception = 10 + attrs.WIS.mod
-        senses.investigation = 10 + attrs.INT.mod
-        senses.insight = 10 + attrs.WIS.mod
+            attrs = self.attributes
+            senses = self.stats.senses
 
-        ### AC calc
+            senses.perception = 10 + attrs.WIS.mod
+            senses.investigation = 10 + attrs.INT.mod
+            senses.insight = 10 + attrs.WIS.mod
 
-        stats = self.stats
-        armoured = False
+        def AC():
 
-        AC = 0
+            stats = self.stats
+            armoured = False
 
-        if not stats.armour_class.special:  ## special types to do later
-            if self.worn.Body:
-                item = self.worn.Body[1]
-                armor_type = item.armor_type
-                if armor_type == 'Heavy':
-                    AC += item.AC
-                    armoured = True
-                elif armor_type == 'Medium':
-                    dex_mod = self.attributes['DEX']['mod']
-                    if dex_mod > 2:
-                        dex_mod = 2
-                    AC += item.AC + dex_mod
-                    armoured = True
-                elif armor_type == 'Light':
-                    AC += item.AC + self.attributes['DEX']['mod']
-                    armoured = True
+            AC = 0
 
-        for item in self.wielded.keys():
-            if item == 'Shield':
-                AC += 2
+            if not stats.armour_class.special:  ## special types to do later
+                if self.worn.Body:
+                    item = self.worn.Body[1]
+                    armor_type = item.armor_type
+                    if armor_type == 'Heavy':
+                        AC += item.AC
+                        armoured = True
+                    elif armor_type == 'Medium':
+                        dex_mod = self.attributes['DEX']['mod']
+                        if dex_mod > 2:
+                            dex_mod = 2
+                        AC += item.AC + dex_mod
+                        armoured = True
+                    elif armor_type == 'Light':
+                        AC += item.AC + self.attributes['DEX']['mod']
+                        armoured = True
 
-        for mod_name, mod_val in stats.armour_class.items():
-            if not mod_name in ['value',
-                                'special']:  # recall overrides etc here
-                AC += sum(mod_val)
+            for item in self.wielded.keys():
+                if item == 'Shield':
+                    AC += 2
 
-        if not armoured:
-            AC += 10 + self.attributes['DEX']['mod']
+            for mod_name, mod_val in stats.armour_class.items():
+                if not mod_name in ['value',
+                                    'special']:  # recall overrides etc here
+                    AC += sum(mod_val)
 
-        stats.armour_class['value'] = AC
+            if not armoured:
+                AC += 10 + self.attributes['DEX']['mod']
 
-        ### Update profficiencies
+            stats.armour_class['value'] = AC
 
-        for prof in self.proficiencies:
-            prof_set = list(set(
-                [pro for pros in self.proficiencies[prof].values()
-                 for pro in pros]))
-            self.proficiencies[prof].set = prof_set
+        def proficiencies():
 
-        ### Speed and Size
+            for prof in self.proficiencies:
+                prof_set = list(set(
+                    [pro for pros in self.proficiencies[prof].values()
+                     for pro in pros]))
+                self.proficiencies[prof].set = prof_set
 
-        self.stats.speed['value'] = 0
-        self.stats.speed['value'] = sum(self.stats.speed.values())
+        def speed_and_size():
 
-        self.stats.size[
-            'current'] = self.stats.size.temp or self.stats.size.race
+            self.stats.speed['value'] = 0
+            self.stats.speed['value'] = sum(self.stats.speed.values())
 
-        ### Attack objects:
+            self.stats.size['current'] = self.stats.size.temp \
+                                         or self.stats.size.race
 
-        self.actions.attacks = Dict()
-        self.actions.attacks.update({'Unarmed Strike': unarmed_strike(self)})
-        for wielded, stats in self.wielded.items():  # TODO: Only if weapon
-            if isclasstype(stats['obj'], 'Weapon'):
-                self.actions.attacks.update(
-                    {wielded: atk_option(self, stats['obj'])})
+        def attack_objects():
 
-        ### Update Penalties
+            self.actions.attacks = Dict()
+            self.actions.attacks.update(
+                {'Unarmed Strike': unarmed_strike(self)})
+            for wielded, stats in self.wielded.items():  # TODO: Only if weapon
+                if isclasstype(stats['obj'], 'Weapon'):
+                    self.actions.attacks.update(
+                        {wielded: atk_option(self, stats['obj'])})
 
-        if self.penalties:
-            for item, penalties in self.penalties.items():
-                if 'Armor STR' in penalties:
-                    if item.req > self.attributes.STR.stat:
-                        self.stats.speed['Too weak for armour'] = -10
-                    else:
-                        del self.stats.speed['Too weak for armour']
-                        self.penalties[item].remove('Armor STR')
-                        self.update()
+        def penalties():
 
-                if 'Armor Prof' in penalties:
-                    if item.armor_type not in self.proficiencies.armor.set:
-                        self.attributes.STR['disadv'] = True
-                        self.attributes.DEX['disadv'] = True
-                        for skill_name, skill in self.skills.items():
-                            if skill.attr in ['DEX', 'STR']:
-                                skill['disadv'] = True
+            no_longer = []
 
-                        for atk, vals in self.actions.attacks.items():
-                            vals.disadv = True
+            if self.penalties:
+                for item, penalties in self.penalties.items():
+                    if 'Armor STR' in penalties:
+                        if item.req > self.attributes.STR.stat:
+                            self.stats.speed['Too weak for armour'] = -10
+                        else:
+                            del self.stats.speed['Too weak for armour']
+                            self.penalties[item].remove('Armor STR')
+                            self.update()
 
-                    else:
-                        self.attributes.STR['disadv'] = False
-                        self.attributes.DEX['disadv'] = False
-                        for skill_name, skill in self.skills.items():
-                            if skill.attr in ['DEX', 'STR']:
-                                skill['disadv'] = False
+                    if 'Armor Prof' in penalties:
+                        if item.armor_type not in self.proficiencies.armor.set:
+                            self.attributes.STR['disadv'] = True
+                            self.attributes.DEX['disadv'] = True
+                            for skill_name, skill in self.skills.items():
+                                if skill.attr in ['DEX', 'STR']:
+                                    skill['disadv'] = True
+
                             for atk, vals in self.actions.attacks.items():
-                                vals.disadv = False
-                        self.penalties[item].remove('Armor STR')
-                        self.update()
+                                vals.disadv = True
+
+                            self.other['can_cast_spells'] = False
+
+                        else:
+                            self.attributes.STR['disadv'] = False
+                            self.attributes.DEX['disadv'] = False
+                            for skill_name, skill in self.skills.items():
+                                if skill.attr in ['DEX', 'STR']:
+                                    skill['disadv'] = False
+                                for atk, vals in self.actions.attacks.items():
+                                    vals.disadv = False
+
+                            self.other['can_cast_spells'] = True
+
+                            self.penalties[item].remove('Armor STR')
+                            self.update()
+                    if not penalties:
+                        no_longer += item
+
+            if no_longer:
+                for item in no_longer:
+                    del self.penalties[item]
+
+        if not func:
+            levels()
+            modifiers()
+            skills_and_saves()
+            HP()
+            senses()
+            AC()
+            proficiencies()
+            speed_and_size()
+            proficiencies()
+            speed_and_size()
+            attack_objects()
+            penalties()
 
 
 def create_character():
     character.attack = attack_list  # This may be a group of actions eventually
 
-    class_choice = "Paladin"
-    race_choice = "Human Variant"
+    class_choice = "Test"
+    race_choice = "Test"
 
     char = character(class_choice, race_choice)
+
     char.update()
 
     return char

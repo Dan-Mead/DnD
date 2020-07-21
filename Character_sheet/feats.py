@@ -113,7 +113,7 @@ class Shield_Master(feat):
                              "saving_throws.DEX.notes",
                              "You can use your reaction to take no damage, "
                              "if successful on a saving throw to take half "
-                             "damage from an effect.")]
+                             "damage from an effect.")]  # change this to reaction
 
     @staticmethod
     def prereq():

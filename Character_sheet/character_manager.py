@@ -58,12 +58,12 @@ def add_info():
 
 
 def set_stats():
-    char.attributes.STR.base = 16
-    char.attributes.DEX.base = 12
-    char.attributes.CON.base = 14
-    char.attributes.INT.base = 18
-    char.attributes.WIS.base = 13
-    char.attributes.CHA.base = 17
+    # char.attributes.STR.base = 16
+    # char.attributes.DEX.base = 12
+    # char.attributes.CON.base = 14
+    # char.attributes.INT.base = 18
+    # char.attributes.WIS.base = 13
+    # char.attributes.CHA.base = 17
 
     char.update()
 
@@ -86,6 +86,11 @@ def first_equip():
 
 
 def export_info(name, info_object):
+    try:
+        info_object.update()
+    except:
+        print('Failed to update on export')
+
     loc = f'Character_sheet/saved/{name}'
 
     with open(loc + '.pkl', "wb") as file:
@@ -109,6 +114,11 @@ def import_info(name=None):
     file = open(loc, "rb")
     info = pickle.load(file)
     file.close()
+
+    try:
+        info.update()
+    except:
+        print('Failed to update on import')
 
     return info
 
@@ -140,6 +150,7 @@ def Human_V_Paladin_setup():
 
 
 # char = import_info("Gorden")
+# export_info("Gorden", char)
 
 char = create_character()
 

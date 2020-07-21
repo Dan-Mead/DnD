@@ -165,6 +165,7 @@ class character:
                 if choice:
                     if body_part != 'Rings':
                         self.worn[body_part] = (eq.name, eq)
+
                     else:
                         self.worn[body_part] = Dict({eq.name: eq})
 
@@ -307,8 +308,9 @@ class character:
                 print(
                     f"Choose items to attune. Currently {len(self.stats.attuned)}/{self.stats.max_attuned} chosen.")
                 choice = simple_choice(choices)
-                self.stats.attuned[choices[choice]] = attuneable[
-                    choices[choice]]
+                if choice:
+                    self.stats.attuned[choices[choice]] = attuneable[
+                        choices[choice]]
                 del choices[choice]
             else:
                 break
@@ -337,7 +339,8 @@ class character:
                     break
                 else:
                     for mod_name, mod_val in attr.items():
-                        if mod_name not in ['override', 'mod', 'stat']:
+                        if mod_name not in ['override', 'mod', 'stat',
+                                            'disadv']:
                             try:
                                 attr.stat += sum([mod_val])
                             except TypeError:
@@ -354,7 +357,8 @@ class character:
                 skill['val'] = attrs[skill['attr']]['mod'] \
                                + self.stats.proficiency * skill['prof']
                 for mod_name, mod_val in skill.items():
-                    if not mod_name in ['val', 'name', 'attr', 'prof', 'notes']:
+                    if not mod_name in ['val', 'name', 'attr', 'prof', 'notes',
+                                        'disadv']:
                         skill['val'] += sum(mod_val)
 
             saves = self.saving_throws
@@ -469,41 +473,48 @@ class character:
                             self.stats.speed['Too weak for armour'] = -10
                         else:
                             del self.stats.speed['Too weak for armour']
-                            self.penalties[item].remove('Armor STR')
-                            self.update()
+
+                            # self.penalties[item].remove('Armor STR')
+                            # self.update()
 
                     if 'Armor Prof' in penalties:
+
+                        cause = f'Armour proficiency: {item.__class__.__name__.replace("_", " ")}'
+
                         if item.armor_type not in self.proficiencies.armor.set:
-                            self.attributes.STR['disadv'] = True
-                            self.attributes.DEX['disadv'] = True
+                            self.attributes.STR['disadv'] += [cause]
+                            self.attributes.DEX['disadv'] += [cause]
                             for skill_name, skill in self.skills.items():
                                 if skill.attr in ['DEX', 'STR']:
-                                    skill['disadv'] = True
+                                    skill['disadv'] += [cause]
 
                             for atk, vals in self.actions.attacks.items():
-                                vals.disadv = True
+                                vals.disadv += [cause]
 
                             self.other['can_cast_spells'] = False
 
                         else:
-                            self.attributes.STR['disadv'] = False
-                            self.attributes.DEX['disadv'] = False
+                            self.attributes.STR['disadv'].remove(cause)
+                            self.attributes.DEX['disadv'].remove(cause)
                             for skill_name, skill in self.skills.items():
                                 if skill.attr in ['DEX', 'STR']:
-                                    skill['disadv'] = False
+                                    skill['disadv'].remove(cause)
+
                                 for atk, vals in self.actions.attacks.items():
-                                    vals.disadv = False
+                                    vals.disadv.remove(cause)
 
                             self.other['can_cast_spells'] = True
 
-                            self.penalties[item].remove('Armor STR')
-                            self.update()
+                            # self.penalties[item].remove('Armor STR')
+                            # self.update()
+
                     if not penalties:
                         no_longer += item
 
             if no_longer:
                 for item in no_longer:
                     del self.penalties[item]
+                self.update()
 
         if not func:
             levels()

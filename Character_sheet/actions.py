@@ -23,7 +23,7 @@ class atk_option:
     def heavy(self, size):
         size, = size
         if size == 'Small':
-            self.disadv = True
+            self.disadv += ['Small using heavy weapon']
 
     def light(self):
         self.two_weapon_fighting = True
@@ -86,7 +86,7 @@ class atk_option:
         elif weapon.weapon_type[1] == 'Ranged':
             self.attr = ('DEX',)
 
-        self.disadv = False
+        self.disadv = []
         self.round_limit = None
         self.reach = 5
         self.dmg_roll = weapon.dmg
@@ -128,7 +128,7 @@ class unarmed_strike(atk_option):
         self.can_attack = True
         self.prof = True
         self.attr = ('STR',)
-        self.disadv = False
+        self.disadv = []
         self.round_limit = None
         self.reach = 5
         self.dmg_roll = None

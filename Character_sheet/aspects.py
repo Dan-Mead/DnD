@@ -155,7 +155,7 @@ class character:
                                 "Choose a different option? Y/N").lower()
 
                             if choose_again in 'no':
-                                self.penalties.update({eq: tuple(penalties)})
+                                self.penalties.update({eq: list(penalties)})
                                 final_choice = True
                             else:
                                 pass
@@ -439,6 +439,7 @@ class character:
         def proficiencies():
 
             for prof in self.proficiencies:
+                prof_set = []
                 prof_set = list(set(
                     [pro for pros in self.proficiencies[prof].values()
                      for pro in pros]))
@@ -468,20 +469,26 @@ class character:
 
             if self.penalties:
                 for item, penalties in self.penalties.items():
+
+                    item_name = item.__class__.__name__.replace("_", " ")
+
+                    worn_items = [item[0] for item in self.worn.values() if
+                                  item]
+
                     if 'Armor STR' in penalties:
-                        if item.req > self.attributes.STR.stat:
+                        if item_name in worn_items \
+                                and item.req > self.attributes.STR.stat:
                             self.stats.speed['Too weak for armour'] = -10
                         else:
                             del self.stats.speed['Too weak for armour']
-
-                            # self.penalties[item].remove('Armor STR')
-                            # self.update()
+                            self.penalties[item].remove('Armor STR')
 
                     if 'Armor Prof' in penalties:
 
-                        cause = f'Armour proficiency: {item.__class__.__name__.replace("_", " ")}'
+                        cause = f'Armour proficiency: {item_name}'
 
-                        if item.armor_type not in self.proficiencies.armor.set:
+                        if item_name in worn_items and \
+                                item.armor_type not in self.proficiencies.armor.set:
                             self.attributes.STR['disadv'] += [cause]
                             self.attributes.DEX['disadv'] += [cause]
                             for skill_name, skill in self.skills.items():
@@ -500,16 +507,14 @@ class character:
                                 if skill.attr in ['DEX', 'STR']:
                                     skill['disadv'].remove(cause)
 
-                                for atk, vals in self.actions.attacks.items():
-                                    vals.disadv.remove(cause)
+                                # for atk, vals in self.actions.attacks.items():
+                                #     vals.disadv.remove(cause)
 
                             self.other['can_cast_spells'] = True
-
-                            # self.penalties[item].remove('Armor STR')
-                            # self.update()
+                            self.penalties[item].remove('Armor Prof')
 
                     if not penalties:
-                        no_longer += item
+                        no_longer += [item]
 
             if no_longer:
                 for item in no_longer:

@@ -58,12 +58,12 @@ def add_info():
 
 
 def set_stats():
-    # char.attributes.STR.base = 16
-    # char.attributes.DEX.base = 12
-    # char.attributes.CON.base = 14
-    # char.attributes.INT.base = 18
-    # char.attributes.WIS.base = 13
-    # char.attributes.CHA.base = 17
+    char.attributes.STR.base = 16
+    char.attributes.DEX.base = 12
+    char.attributes.CON.base = 14
+    char.attributes.INT.base = 18
+    char.attributes.WIS.base = 13
+    char.attributes.CHA.base = 17
 
     char.update()
 
@@ -131,28 +131,21 @@ def test_func():
     char = character()
     add_race_class()
 
-    saveas = input("Save as:")
+    char.equip()
+    char.proficiencies.armor.update({'Additional': ['Heavy']})
 
-    export_info(saveas, char)
+    # saveas = input("Save as:")
 
-
-def Human_V_Paladin_setup():
-    global char
-
-    char = import_info('HV_P_V1')
-
-    add_info()
-    set_stats()
-    add_other()
-
-    first_equip()
+    # export_info(saveas, char)
     return char
 
 
 # char = import_info("Gorden")
 # export_info("Gorden", char)
 
-char = create_character()
+# char = create_character()
+
+char = test_func()
 
 # char.attack()
 

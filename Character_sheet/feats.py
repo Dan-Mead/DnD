@@ -1,16 +1,13 @@
 import inspect
 import sys
 
-from effects import modifier, note, passive_effect, action
+from actions import shove
 
 
 class feat:
-    def __init__(self):
-        self.origin = " : ".join(['feat', self.__class__.__name__.replace("_", " ")])
 
-    def add_feat_modifiers(self, char):
-        for effect in self.effects:
-            effect.add_effect(char)
+    def initial_effects(self, char):
+        pass
 
 
 def get_feats():
@@ -23,9 +20,9 @@ def get_feats():
     return feats
 
 
-def get_feat(feat_name):
+def get_feat(feat_name, origin):
     feat_list = get_feats()
-    feat = feat_list[feat_name]()
+    feat = feat_list[feat_name](origin)
 
     return feat
 
@@ -48,28 +45,51 @@ def get_valid_feats(char):
     return valid_feats
 
 
+class effect:
+
+    def __init__(self, desc):
+        self.desc = desc
+
+
 class Actor(feat):
-    def __init__(self):
+
+    def __init__(self, origin):
+        self.desc = {"Skilled at mimicry and dramatics, you gain the "
+                     "following benefits:":
+                         ["+1 to Charisma",
+                          "Advantage on Deception and Performance checks when "
+                          "pretending to be someone else.",
+                          "You can mimic the speech of another person or the "
+                          "sounds made by other creatures. You must have "
+                          "heard the person speaking, or heard the creature "
+                          "make the sound, for at least 1 minute. A "
+                          "successful Wisdom (Insight) check contested by "
+                          "your Charisma (Deception) check allows a listener "
+                          "to determine that the effect is faked."
+                          ]}
+        self.origin = origin
         super().__init__()
 
-        self.desc = "Skilled at mimicry and dramatics, you gain the following " \
-                    "benefits: "
-        self.effects = [modifier(self.origin, "attributes.CHA", +1),
-                        note(self.origin, "skills.deception.notes",
-                             "Advantage when pretending to be someone else."),
-                        note(self.origin, "skills.performance.notes",
-                             "Advantage when pretending to be someone else."),
-                        passive_effect(self.origin, "features",
-                                       "You can mimic the speech of another "
-                                       "person or the sounds made by other "
-                                       "creatures. You must have heard the "
-                                       "person speaking, or heard the creature "
-                                       "make the sound, for at least 1 minute. "
-                                       "A successful Wisdom (Insight) check "
-                                       "contested by your Charisma (Deception) "
-                                       "check allows a listener to determine "
-                                       "that the effect is faked.")
-                        ]
+    def initial_effects(self, char):
+        name = f'Feat: {self.__class__.__name__.replace("_", " ")}'
+
+        char.attributes.CHA[name] = 1
+        char.skills.deception['notes'][name] += [
+            'Advantage when pretending to be '
+            'someone else.']
+        char.skills.performance['notes'][name] += [
+            'Advantage when pretending to be '
+            'someone else.']
+        char.features[name] = ["You can mimic the speech of another "
+                               "person or the sounds made by other "
+                               "creatures. You must have heard the "
+                               "person speaking, or heard the "
+                               "creature make the sound, for at "
+                               "least 1 minute. A successful Wisdom "
+                               "(Insight) check contested by your "
+                               "Charisma (Deception) check allows a "
+                               "listener to determine that the "
+                               "effect is faked."]
 
     @staticmethod
     def prereq():
@@ -77,16 +97,20 @@ class Actor(feat):
 
 
 class Heavily_Armored(feat):
-    def __init__(self):
+    def __init__(self, origin):
+        self.desc = {"You have trained to master the use of heavy armor, "
+                     "gaining the following benefits:":
+                         ['+1 to Strength',
+                          'Heavy Armour proficiency']}
+
+        self.origin = origin
         super().__init__()
-        self.desc = "You have trained to master the use of heavy armor, gaining " \
-                    "the following benefits: "
-        self.effects = [modifier(self.origin,
-                                 "attributes.STR",
-                                 +1),
-                        modifier(self.origin,
-                                 "proficiencies.armor",
-                                 "Heavy")]
+
+    def initial_effects(self, char):
+        name = f'Feat: {self.__class__.__name__.replace("_", " ")}'
+
+        char.attributes.STR[name] = 1
+        char.proficiencies.armor[name] = ['Heavy']
 
     @staticmethod
     def prereq():
@@ -94,26 +118,54 @@ class Heavily_Armored(feat):
 
 
 class Shield_Master(feat):
-    def __init__(self):
+    def __init__(self, origin):
+        self.desc = {"You use shields not just for protection but also for "
+                     "offense. You gain the following benefits while you are "
+                     "wielding a shield:":
+                         ["If you take the Attack action on your turn, "
+                          "you can use a bonus action to try to shove a "
+                          "creature within 5 feet of you with your shield.",
+                          "If you aren’t incapacitated, you can add your "
+                          "shield’s AC bonus to any Dexterity saving throw "
+                          "you make against a spell or other harmful effect "
+                          "that targets only you.",
+                          "If you are subjected to an effect that allows you "
+                          "to make a Dexterity saving throw to take only half "
+                          "damage, you can use your reaction to take no "
+                          "damage if you succeed on the saving throw, "
+                          "interposing your shield between yourself and the "
+                          "source of the effect."]}
+
+        self.origin = origin
         super().__init__()
-        self.desc = "You use shields not just for protection but also for " \
-                    "offense. You gain the following benefits while you are " \
-                    "wielding a shield:",
-        self.effects = [action(self.origin,
-                               "actions.bonus",
-                               "If you take the Attack action on your turn, "
-                               "you can use a bonus action to try to shove a "
-                               "creature within 5 feet of you with your shield."),
-                        note(self.origin,
-                             "saving_throws.DEX.notes",
-                             "Add shield's AC bonus if only you are targeted "
-                             "by spell or harmful effect, and if not "
-                             "incapacitated."),
-                        note(self.origin,
-                             "saving_throws.DEX.notes",
-                             "You can use your reaction to take no damage, "
-                             "if successful on a saving throw to take half "
-                             "damage from an effect.")]  # change this to reaction
+
+    def conditionals(self, char):
+
+        name = f'Feat: {self.__class__.__name__.replace("_", " ")}'
+
+        if 'Shield' in char.wielded.keys():
+
+            char.saving_throws.DEX['notes'][name] = \
+                ["If you aren’t incapacitated, you can add your shield’s AC "
+                 "bonus to any Dexterity saving throw you make against a "
+                 "spell or other harmful effect that targets only you.",
+                 "If you are subjected to an effect that allows you to make a "
+                 "Dexterity saving throw to take only half damage, you can "
+                 "use your reaction to take no damage if you succeed on the "
+                 "saving throw, interposing your shield between yourself and "
+                 "the source of the effect."]
+
+            char.actions.bonus['Shield Shove'] = {
+                'desc': "If you take the Attack action on your turn, you can "
+                        "use a bonus action to try to shove a creature within "
+                        "5 feet of you with your shield.",
+                'action': shove}
+        else:
+            try:
+                del char.actions.bonus['Shield Shove']
+                del char.saving_throws.DEX['notes'][name]
+            except:
+                pass
 
     @staticmethod
     def prereq():

@@ -122,7 +122,6 @@ class atk_option:
     def attack(self):
         print("Bonk!", self.dmg, "damage.")
 
-
 class unarmed_strike(atk_option):
     def __init__(self, char):
         self.can_attack = True
@@ -134,7 +133,6 @@ class unarmed_strike(atk_option):
         self.dmg_roll = None
         self.dmg_mod = 1
         self.dmg_type = 'Bludgeoning'
-
 
 def attack_list(self):
     """ This is a fucking mess but what do you expect from trying to format strings.
@@ -235,3 +233,33 @@ def attack_list(self):
 
     if note:
         for comment in note: print(textwrap.fill(comment, width=80))
+
+
+class shove:
+    def __init__(self):
+        self.desc = [
+            "Using the Attack action, you can make a Special melee Attack to "
+            "shove a creature, either to knock it prone or push it away from "
+            "you. If you’re able to make multiple attacks with the Attack "
+            "action, this Attack replaces one of them.",
+            "The target must be no more than one size larger than you and "
+            "must be within your reach. Instead of Making an Attack roll, "
+            "you make a Strength (Athletics) check contested by the target’s "
+            "Strength (Athletics) or Dexterity (Acrobatics) check (the target "
+            "chooses the ability to use). If you win the contest, you either "
+            "knock the target prone or push it 5 feet away from you."]
+
+
+class limited_action:
+    def __init__(self, desc, limit, reset):
+
+        self.desc = desc
+        self.max_uses = limit
+        self.reset = reset
+        self.current_uses = 0
+
+    def use(self):
+        if self.current_uses < self.max_uses:
+            self.current_uses += 1
+        else:
+            print("Not enough uses remaining!")

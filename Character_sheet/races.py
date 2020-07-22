@@ -9,48 +9,37 @@ class race:
 
     def add_race_modifiers(self, char):
 
-        race_key = {
-            'race_name': ['info'],
-            'size': ['stats', 'size'],
-            'speed': ['stats', 'speed'],
-            'languages': ['proficiencies', 'languages'],
-            'attributes': ['attributes'],
-            'skills': ['skills'],
-            'feats': ['feats'],
-            'features': ['features']}
+        char.info.race = self.race_name
+        char.stats.size.race = self.size
+        char.stats.speed.race = self.speed
+        char.proficiencies.languages.race = self.languages
 
         for trait in vars(self).keys():
-            if trait in ['race_name', 'size', 'speed', 'languages']:
-                path = getattr(char, race_key[trait][0])
-                if len(race_key[trait]) > 1:
-                    path = f.LDK(path, race_key[trait][1:])
-
-                path['race'] = getattr(self, trait)
-
-
-            elif trait == 'attributes':
+            if trait == 'attributes':
                 for attr in self.attributes:
                     char.attributes[attr[0]]['race'] = attr[1]
 
             elif trait == 'skills':
                 for skill in self.skills:
-                    char.skills[skill].prof = True
+                    char.skills[skill].prof += [self.race_name]
 
             elif trait == 'feats':
                 from feats import get_feat
                 for feat in self.feats:
-                    new_feat = get_feat(feat)
-                    char.feats.race = new_feat
-                    new_feat.add_feat_modifiers(char)
+                    new_feat = get_feat(feat, self.race_name)
+                    char.feats[feat] = new_feat
+                    char.feats[feat].initial_effects(char)
+
 
             elif trait == 'features':
                 from features import get_feature
                 for feature in self.features:
-                    char.features[self.race_name][feature] = get_feature(
-                        feature)(self.race_name)
+                    new_feature = get_feature(feature)
+                    char.features[self.race_name][feature] = new_feature
+                    new_feature.initial_effects(char)
 
-    def remove_race_modifiers(self):
-        pass
+            elif trait not in ['race_name', 'size', 'speed', 'languages']:
+                raise Exception(f"{trait} included which hasn't been added.")
 
 
 def get_race(char, race_choice):
@@ -83,7 +72,7 @@ class Human(Human_Base):
 class Human_Variant(Human_Base):
     def __init__(self, char):
         super().__init__(char)
-        self.attributes = f.add_attributes(attrs, 2)
+        self.attributes = [(attr, 1) for attr in f.add_attributes(attrs, 2)]
         self.skills = f.add_skill(char.skills, skills_dict.keys(), 1)
         self.feats = f.add_feat(char, 1)
 
@@ -101,6 +90,11 @@ class Half_Orc(race):
 
 class Test(race):
     def __init__(self, char):
+        self.race_name = "Test Race"
+        self.size = "Medium"
         self.speed = 30
+        self.languages = ["Common"]
+        # self.languages = f.add_language(char.proficiencies.languages, 'Common', 1)
+        # self.attributes = [(attr, 1) for attr in f.add_attributes(attrs, 2)]
         # self.feats = f.add_feat(char, 1)
-        print()
+        self.features = ["Darkvision", "Relentless Endurance", "Savage Attacks"]

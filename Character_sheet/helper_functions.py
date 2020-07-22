@@ -63,66 +63,10 @@ def simple_choice(options_list):
     return choice
 
 
-def choose_language(msg, known,
-                    base_options=common_languages + exotic_languages):
-    print_options = [option for option in base_options if option not in known]
-    true_options = [option.lower() for option in print_options]
-
-    valid_choice = False
-
-    print(msg, "valid choices are:")
-    print(
-        textwrap.fill(", ".join(print_options), width=80, initial_indent='    ',
-                      subsequent_indent='    '),
-        "or 'none'.")
-
-    while not valid_choice:
-
-        choice = input()
-        if choice.lower() in true_options:
-            valid_choice = True
-        elif choice == "" or choice == " ":
-            valid_choice = True
-            choice = None
-        else:
-            print("Invalid Choice, valid choices are:")
-            print(textwrap.fill(", ".join(print_options), width=80,
-                                initial_indent='    ',
-                                subsequent_indent='    '))
-
-    return choice
-
-
-def choose_stat(msg, invalid=None):
-    if invalid is None:
-        invalid = []
-    print_options = [option for option in attrs if option not in invalid]
-    true_options = print_options.copy()
-
-    valid_choice = False
-
-    print(msg, "valid choices are:")
-    print(
-        textwrap.fill(", ".join(print_options), width=80, initial_indent='    ',
-                      subsequent_indent='    '))
-
-    while not valid_choice:
-
-        choice = input().upper()
-        if choice in true_options:
-            valid_choice = True
-        else:
-            print("Invalid Choice, valid choices are:")
-            print(textwrap.fill(", ".join(print_options), width=80,
-                                initial_indent='    ',
-                                subsequent_indent='    '))
-
-    return choice
-
-
 def choose_skill(msg, invalid=None):
     if invalid is None:
         invalid = []
+
     print_options = [skills_dict[option][0] for option in skills_dict if
                      option not in invalid]
 
@@ -131,20 +75,81 @@ def choose_skill(msg, invalid=None):
     valid_choice = False
 
     print(msg, "valid choices are:")
-    print(
-        textwrap.fill(", ".join(print_options), width=80, initial_indent='    ',
-                      subsequent_indent='    '))
+
+    while not valid_choice:
+        print(textwrap.fill(", ".join(print_options),
+                            width=80,
+                            initial_indent='    ',
+                            subsequent_indent='    '))
+
+        try:
+            choice = input().lower().replace(" ", "_")
+            if choice not in true_options:
+                raise Exception("Invalid choice! Valid choices are:")
+        except Exception as ex:
+            print(ex)
+        else:
+            valid_choice = True
+
+    return choice
+
+
+def choose_language(msg, known,
+                    base_options=common_languages + exotic_languages):
+    print_options = [option for option in base_options if option not in known]
+    true_options = [option.lower() for option in print_options]
+
+    valid_choice = False
+
+    print(msg, "valid choices are:")
 
     while not valid_choice:
 
-        choice = input().lower().replace(" ", "_")
-        if choice in true_options:
-            valid_choice = True
+        print(textwrap.fill(", ".join(print_options),
+                            width=80, initial_indent='    ',
+                            subsequent_indent='    '),
+              "or 'None'.")
+
+        try:
+            choice = input().lower()
+            print(choice)
+            if choice == "":
+                break
+            if choice not in true_options:
+                raise Exception("Invalid choice! Valid choices are:")
+        except Exception as ex:
+            print(ex)
         else:
-            print("Invalid Choice, valid choices are:")
-            print(textwrap.fill(", ".join(print_options), width=80,
-                                initial_indent='    ',
-                                subsequent_indent='    '))
+            valid_choice = True
+            choice = choice.capitalize()
+
+    return choice
+
+
+def choose_stat(msg, invalid):
+    print_options = [option for option in attrs if option not in invalid]
+    true_options = print_options.copy()
+
+    valid_choice = False
+
+    print(msg, "valid choices are:")
+
+    while not valid_choice:
+
+        print(textwrap.fill(", ".join(print_options),
+                            width=80,
+                            initial_indent='    ',
+                            subsequent_indent='    '))
+        try:
+            choice = input().upper()
+            if choice not in true_options:
+                raise Exception("Invalid choice! Valid choices are:")
+
+        except Exception as ex:
+            print(ex)
+
+        else:
+            valid_choice = True
 
     return choice
 
@@ -185,34 +190,12 @@ def choose_feat(msg, char):
 
 ##########################################################################
 
-def add_language(char_languages, default, num_lang):
-    lang_list = [default]
-    for n in range(num_lang):
-        new_lang = choose_language(
-            "Choose " + ordinals[len(lang_list)].lower() + " language,",
-            [default] + list(char_languages.values()))
-        lang_list.append(new_lang)
-
-    return list(filter(None, lang_list))
-
-
-def add_attributes(allowed, num_attr):
-    # TODO: Possibly need to include adding scores other than 1.
-
-    attrs_list = []
-    for n in range(num_attr):
-        attrs_list.append(choose_stat(
-            "Choose " + ordinals[n].lower() + " ability score to increase,",
-            attrs_list))
-
-    return list(zip(attrs_list, [1] * len(attrs_list)))
-
 
 def add_skill(char_skills, allowed, num_skills):
+
     skills_list = []
 
-    invalids = [skill for skill in char_skills if
-                char_skills[skill]['prof'] == True]
+    invalids = [skill for skill in char_skills if char_skills[skill]['prof']]
 
     invalids += [skill for skill in char_skills.keys() if skill not in allowed]
 
@@ -222,6 +205,31 @@ def add_skill(char_skills, allowed, num_skills):
             invalids))
         invalids += skills_list
     return skills_list
+
+
+def add_language(char_languages, known, num_lang):
+    if not known:
+        known = []
+    lang_list = [known]
+
+    for n in range(num_lang):
+        new_lang = choose_language(
+            f"Choose {ordinals[len(lang_list) + n].lower()} language,",
+            lang_list + list(char_languages.values()))
+        lang_list.append(new_lang)
+
+    return list(filter(None, lang_list))
+
+
+def add_attributes(allowed, num_attr):
+    attrs_list = []
+    invalid = [attr for attr in attrs if attr not in allowed]
+    for n in range(num_attr):
+        attrs_list.append(choose_stat(
+            f"Choose {ordinals[n].lower()} ability score to increase,",
+            invalid + attrs_list))
+        invalid.append(attrs_list)
+    return attrs_list
 
 
 def add_feat(char, num_feats):

@@ -4,6 +4,7 @@ import sys
 from addict import Dict
 
 import helper_functions as f
+from features import get_feature
 from items import get_item
 
 
@@ -14,10 +15,10 @@ class character_class:
         self.lvl_up_hp = lvl_up_hp
         self.base_class = first
 
-    def level_up(self, class_name):
+    def level_up(self):
         self.level += 1
 
-        level_table = getattr(sys.modules[__name__], class_name).levels()
+        # level_table = getattr(sys.modules[__name__], class_name).levels()
 
         ### Add new level features
 
@@ -30,17 +31,17 @@ class Class:
 
             char.classes = Dict()
 
-            origin = 'origin : ' + self.class_name
+            origin = 'origin: ' + self.class_name
 
             for trait in vars(self).keys():
 
                 if trait == 'saves':
                     for save in self.saves:
-                        char.saving_throws[save].prof = True
+                        char.saving_throws[save].prof += [origin]
 
                 elif trait == 'skills':
                     for skill in self.skills:
-                        char.skills[skill].prof = True
+                        char.skills[skill].prof += [origin]
 
                 elif trait == 'prof_weapons':
                     char.proficiencies.weapons[origin] = self.prof_weapons
@@ -50,8 +51,7 @@ class Class:
                     char.proficiencies.tools[origin] = self.prof_tools
 
                 elif trait == 'equipment':
-                    self.equipment = f.choose_weapons(
-                        self.equipment)
+                    self.equipment = f.choose_weapons(self.equipment)
                     for item in self.equipment:
                         if item[0] in char.equipment:
                             char.equipment[item[0]].add_number(item[1])
@@ -71,6 +71,11 @@ class Class:
             char.classes[self.class_name] = character_class(1, self.hit_dice,
                                                             self.hit_points,
                                                             False)
+
+        for feature in self.levels[1]:
+            new_feature = get_feature(feature)
+            char.features[f"Class: {self.class_name}"][feature] = new_feature
+            new_feature.initial_effects(char)
 
 
 def get_class(char, choice):
@@ -117,19 +122,28 @@ class Paladin(Class):
         self.equipment += inv[choice]
         self.equipment += [('Chain Mail', 1), ('Holy Symbol', 1)]
 
-        self.levels = {1: ['Divine Sense', 'Lay on Hands'],
+        self.levels = {1: ['Divine Sense', 'Lay On Hands'],
                        2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
+
+    @staticmethod
+    def levels():
+        levels = {1: ['Divine Sense', 'Lay On Hands'],
+                  2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
+        return levels
 
 
 class Test(Class):
     def __init__(self, char):
-        self.class_name = 'Test'
+        self.class_name = 'Paladin'
         self.hit_dice = 10
         self.hit_points = 6
-        # self.prof_armor = ["Light", "Medium", "Heavy", "Shield"]
-        self.prof_armor = ["Light", "Medium"]
-        # self.prof_weapons = ["Simple", "Martial"]
-        self.prof_weapons = ["Simple"]
+        allowed_skills = ["athletics", "insight", "intimidation", "medicine",
+                          "persuasion", "religion"]
+        # self.skills = f.add_skill(char.skills, allowed_skills, 2)
+        self.prof_armor = ["Light", "Medium", "Heavy", "Shield"]
+        # self.prof_armor = ["Light", "Medium"]
+        self.prof_weapons = ["Simple", "Martial"]
+        # self.prof_weapons = ["Simple"]
         self.saves = ["WIS", "CHA"]
         self.equipment = [('Chain Mail', 1)]
         self.equipment += [('Holy Symbol', 1),
@@ -140,8 +154,5 @@ class Test(Class):
                            ('Lance', 1),
                            ('Handaxe', 1)]
 
-    @staticmethod
-    def levels():
-        levels = {1: ['Divine Sense', 'Lay on Hands'],
-                  2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}
-        return levels
+        self.levels = {1: ['Divine Sense', 'Lay On Hands'],
+                       2: ['Divine Smite', 'Fighting Style', 'Spellcasting']}

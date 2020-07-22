@@ -74,7 +74,6 @@ class trigger_passive(effect):
 class action(effect):
     """Adds an action and type"""
 
-    def __init__(self, origin, aspect, desc):
+    def __init__(self, origin, aspect, desc, action_type, limit):
         self.desc = desc
         super().__init__(origin, aspect)
-        # TODO: Finish this

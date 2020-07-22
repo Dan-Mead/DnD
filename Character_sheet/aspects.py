@@ -1,12 +1,12 @@
+import inspect
+
 import numpy as np
 from addict import Dict
 
-from actions import atk_option, unarmed_strike
-from classes import get_class
+from actions import atk_option, unarmed_strike, attack_list
 from glossary import skills_dict, attrs, ordinals
 from helper_functions import mod_calc, simple_choice, isclasstype, reset, \
     get_bases
-from races import get_race
 
 
 class character:
@@ -44,19 +44,19 @@ class character:
                            })
 
         self.attributes = Dict({attr: Dict({'base': 10,
-                                            'stat': None,
-                                            'mod': None,
+                                            'current': 0,
+                                            'mod': 0,
                                             'override': None})
                                 for attr in attrs})
 
         self.skills = Dict({skill: Dict({'name': skills_dict[skill][0],
                                          'attr': skills_dict[skill][1],
-                                         'prof': False})
+                                         'prof': []})
                             for skill in skills_dict})
 
         self.saving_throws = Dict({attr: Dict({'val': None,
                                                'override': None,
-                                               'prof': False})
+                                               'prof': []})
                                    for attr in attrs})
 
         self.proficiencies = Dict({'languages': Dict(),
@@ -66,7 +66,7 @@ class character:
                                    'other': Dict()
                                    })
 
-        self.actions = Dict({'actions': Dict(),
+        self.actions = Dict({'actions': Dict({"Attack": attack_list}),
                              'bonus': Dict(),
                              'attacks': Dict(),
                              'reactions': Dict()})
@@ -94,14 +94,6 @@ class character:
         self.other = Dict({'dual_wield_requirement': 'Light',
                            'can_cast_spells': True,
                            })
-
-    def choose_class(self, class_choice):
-        starting_class = get_class(self, class_choice)
-        starting_class.add_class_features(self)
-
-    def choose_race(self, race_name):
-        race = get_race(self, race_name)
-        race.add_race_modifiers(self)
 
     def equip(self):
         equipment = self.equipment
@@ -134,7 +126,7 @@ class character:
 
                         if hasattr(eq, 'req') \
                                 and eq.req \
-                                and eq.req > self.attributes.STR.stat:
+                                and eq.req > self.attributes.STR.current:
                             warnings += ['Strength too low for armour']
                             penalties += ['Armor STR']
 
@@ -316,6 +308,9 @@ class character:
                 break
         self.update()
 
+    def attack(self):
+        self.actions.actions.attack()
+
     def update(self, func=None):
 
         def levels():
@@ -333,19 +328,19 @@ class character:
 
             attrs = self.attributes
             for attr_name, attr in attrs.items():
-                attr.stat = 0
+                attr.current = 0
                 if attr.override:
-                    attr.stat = attr.override
+                    attr.current = attr.override
                     break
                 else:
                     for mod_name, mod_val in attr.items():
-                        if mod_name not in ['override', 'mod', 'stat',
+                        if mod_name not in ['override', 'mod', 'current',
                                             'disadv']:
                             try:
-                                attr.stat += sum([mod_val])
+                                attr.current += sum([mod_val])
                             except TypeError:
-                                attr.stat += sum(mod_val)
-                    attr.mod = int(mod_calc(attr.stat))
+                                attr.current += sum(mod_val)
+                    attr.mod = int(mod_calc(attr.current))
 
         def skills_and_saves():
 
@@ -355,7 +350,8 @@ class character:
 
             for skill in skills.values():
                 skill['val'] = attrs[skill['attr']]['mod'] \
-                               + self.stats.proficiency * skill['prof']
+                               + (self.stats.proficiency if skill[
+                    'prof'] else 0)
                 for mod_name, mod_val in skill.items():
                     if not mod_name in ['val', 'name', 'attr', 'prof', 'notes',
                                         'disadv']:
@@ -368,7 +364,8 @@ class character:
                     save.val = save.override
                 else:
                     save.val = attrs[save_name].mod \
-                               + self.stats.proficiency * save['prof']
+                               + (self.stats.proficiency if skill[
+                        'prof'] else 0)
                     for mod_name, mod_val in save.items():
                         if not mod_name in ['val', 'override', 'prof', 'notes']:
                             save.val += sum(mod_val)
@@ -439,7 +436,6 @@ class character:
         def proficiencies():
 
             for prof in self.proficiencies:
-                prof_set = []
                 prof_set = list(set(
                     [pro for pros in self.proficiencies[prof].values()
                      for pro in pros]))
@@ -477,7 +473,7 @@ class character:
 
                     if 'Armor STR' in penalties:
                         if item_name in worn_items \
-                                and item.req > self.attributes.STR.stat:
+                                and item.req > self.attributes.STR.current:
                             self.stats.speed['Too weak for armour'] = -10
                         else:
                             del self.stats.speed['Too weak for armour']
@@ -521,6 +517,26 @@ class character:
                     del self.penalties[item]
                 self.update()
 
+        def feats():
+
+            for feat_name, feat_item in self.feats.items():
+                for method in inspect.getmembers(feat_item, inspect.ismethod):
+                    if method[0] not in ['__init__', 'initial_effects']:
+                        method[1](self)
+
+        def features():
+            for feature_name, feature in self.features.items():
+                if inspect.isclass(feature):
+                    for method in inspect.getmembers(feature, inspect.ismethod):
+                        if method[0] not in ['__init__', 'initial_effects']:
+                            method[1](self)
+                if isinstance(feature, dict):
+                    for subfeature in feature.values():
+                        for method in inspect.getmembers(subfeature,
+                                                         inspect.ismethod):
+                            if method[0] not in ['__init__', 'initial_effects']:
+                                method[1](self)
+
         if not func:
             levels()
             modifiers()
@@ -534,4 +550,5 @@ class character:
             speed_and_size()
             attack_objects()
             penalties()
-
+            feats()
+            features()

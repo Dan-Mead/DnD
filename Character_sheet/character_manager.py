@@ -34,14 +34,14 @@ def add_race_class():
 
     class_list = sorted([class_[0].replace("_", " ") for class_ in
                          inspect.getmembers(classes, inspect.isclass)
-                         if issubclass(class_[1], classes.Class) and not class_[
-            1].__subclasses__()])
+                         if issubclass(class_[1], classes.Class)
+                         and not class_[1].__subclasses__()])
 
     class_choice = class_list[simple_choice(class_list)]
-    race_choice = race_list[simple_choice(race_list)]
+    classes.get_class(char, class_choice).add_class_features(char)
 
-    char.choose_class(class_choice)
-    char.choose_race(race_choice)
+    race_choice = race_list[simple_choice(race_list)]
+    races.get_race(char, race_choice).add_race_modifiers(char)
 
     char.update()
 
@@ -131,8 +131,10 @@ def test_func():
     char = character()
     add_race_class()
 
-    char.equip()
-    char.proficiencies.armor.update({'Additional': ['Heavy']})
+    # set_stats()
+    # add_other()
+
+    # first_equip()
 
     # saveas = input("Save as:")
 
@@ -141,12 +143,18 @@ def test_func():
 
 
 # char = import_info("Gorden")
-# export_info("Gorden", char)
 
 # char = create_character()
 
 char = test_func()
 
+char.attributes.CHA.base = 18
+char.update()
+# export_info("Test", char)
+# char = import_info("Test")
+# char.wield()
 # char.attack()
+
+char.actions.actions["Divine Sense"].use()
 
 print("Done!")

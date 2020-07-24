@@ -311,6 +311,69 @@ class character:
     def attack(self):
         self.actions.actions.attack()
 
+    def short_rest(self):
+        hit_dice = []
+
+        for class_ in self.classes.values():
+            lvl = class_.level
+            hit_die = class_.hit_dice
+
+            hit_dice += [f'{lvl}d{hit_die}']
+
+        print("\nShort rest, you can heal up to:")
+        print(",".join(hit_dice))
+        print("plus constitution modifier per dice rolled.\n")
+
+        if input("Would you like to heal? Y/N").lower() in "yes":
+            self.heal()
+
+    def long_rest(self):
+        pass
+
+    def heal(self, heal_num=None):
+        if not heal_num:
+            heal_num = input("How many hitpoints to heal?")
+
+        while True:
+            try:
+                self.stats.current_hp = + int(heal_num)
+            except TypeError:
+                heal_num = input("Please enter a whole number:")
+            else:
+                break
+
+        if self.stats.current_hp > self.stats.max_hp:
+            self.stats.current_hp = self.stats.max_hp
+
+    def damage(self, damage_num=None):
+        if not damage_num:
+            damage_num = input("How many hitpoints to damage?")
+
+        while True:
+            try:
+                self.stats.current_hp -= int(damage_num)
+            except TypeError:
+                damage_num = input("Please enter a whole number:")
+            except Exception as err:
+                print(err)
+            else:
+                break
+
+        if self.stats.current_hp < 0:
+            if abs(self.stats.current_hp) >= self.stats.max_hp:
+                print("INSTANT DEATH! GAME OVER.")
+                self.state = "DEAD"
+            else:
+                print("Saving throws!")
+                self.state = "Save Throw"
+
+            self.stats.current_hp = 0
+
+        # critical damage
+
+    def hp(self):
+        return f'HP: {self.stats.current_hp}/{self.stats.max_hp}'
+
     def update(self, func=None):
 
         def levels():

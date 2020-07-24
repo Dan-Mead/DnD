@@ -261,5 +261,7 @@ class limited_action:
     def use(self):
         if self.current_uses < self.max_uses:
             self.current_uses += 1
+            print(self.desc)
+            print(f'{self.current_uses}/{self.max_uses} uses')
         else:
             print("Not enough uses remaining!")

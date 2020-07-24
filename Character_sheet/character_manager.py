@@ -130,7 +130,7 @@ def test_func():
 
     char = character()
     add_race_class()
-
+    char.stats.current_hp = char.stats.max_hp
     # set_stats()
     # add_other()
 
@@ -155,6 +155,8 @@ char.update()
 # char.wield()
 # char.attack()
 
-char.actions.actions["Divine Sense"].use()
+print(char.hp())
+char.damage(20)
+print(char.hp())
 
 print("Done!")

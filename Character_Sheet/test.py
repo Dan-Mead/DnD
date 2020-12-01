@@ -1,11 +1,4 @@
-import pickle
+import inspect, sys
+from races import race_list
 
-name = "Ser Gorden Simpleton"
-
-loc = f'saves/{name}.pkl'
-
-file = open(loc, "rb")
-info = pickle.load(file)
-file.close()
-
-print(info)
+print([race for race in race_list])

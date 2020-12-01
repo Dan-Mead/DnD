@@ -1,4 +1,11 @@
-import tkinter as tk
+import pickle
 
-window = tk.Tk()
-# greeting = tk.Label(text = "Hello, Tkinter")
+name = "Ser Gorden Simpleton"
+
+loc = f'saves/{name}.pkl'
+
+file = open(loc, "rb")
+info = pickle.load(file)
+file.close()
+
+print(info)

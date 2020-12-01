@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 from addict import Dict
 import pickle
 
@@ -16,27 +17,20 @@ def export(character):
         pickle.dump(character, file, pickle.HIGHEST_PROTOCOL)
     file.close()
 
-    return name
 
+def import_info(filename):
+    # name = "Test_1"
 
-def import_info():
-    name = "Test_1"
+    # loc = f'saves/{name}.pkl'
 
-    loc = f'saves/{name}.pkl'
-
-    file = open(loc, "rb")
+    file = open(filename, "rb")
     info = pickle.load(file)
     file.close()
 
     return info
 
-    # for key, value in form_data[middle_frame_index].items():
-    #     text = character[key]
-    #     value.insert(0, text)
-
 
 def update_character_info(index):
-
     data = form_data[index]
 
     for key in data:
@@ -46,10 +40,66 @@ def update_character_info(index):
             pass
 
 
-
 def save():
-    name = export(character)
-    return name
+    update_character_info(middle_frame_index)
+    export(character)
+
+
+def load():
+
+    filename = tk.filedialog.askopenfilename(initialdir="saves/",
+                                             title="Select save file",
+                                             filetypes=(("Pickled Files", "*.pkl"),
+                                                        ("all files", "*.*")))
+
+    character = import_info(filename)
+
+    for sheet in form_data:
+        for key, value in sheet.items():
+            text = character[key]
+            if isinstance(value, tk.ttk.Combobox):
+                value["state"]= "normal"
+                value.delete(0, tk.END)
+                value.insert(0, text)
+                value["state"] = "readonly"
+            else:
+                value.delete(0, tk.END)
+                value.insert(0, text)
+
+def save_and_close():
+    save()
+    window.destroy()
+
+
+def close():
+    window.destroy()
+
+
+def exit():
+    def exit_save_and_close():
+        save_and_close()
+        exit_window.destroy()
+
+    def exit_close():
+        close()
+        exit_window.destroy()
+
+    exit_window = tk.Tk()
+    exit_label = tk.Label(exit_window, text="Would you like to save?", font=default_font + " 10")
+    exit_label.pack()
+    exit_buttons = tk.Frame(exit_window)
+    yes_button = tk.Button(exit_buttons, width=8, text="Yes", command=exit_save_and_close)
+    no_button = tk.Button(exit_buttons, width=8, text="No", command=exit_close)
+    cancel_button = tk.Button(exit_buttons, width=8, text="Cancel", command=exit_window.destroy)
+
+    yes_button.grid(row=1, column=0, padx=4)
+    no_button.grid(row=1, column=1, padx=4, pady=8)
+    cancel_button.grid(row=1, column=2, padx=4)
+
+    exit_buttons.pack()
+
+    # window.destroy()
+
 
 def Title():
     title = tk.Label(master=character_creation_frame,
@@ -59,21 +109,20 @@ def Title():
 
     title.pack(side=tk.TOP)
 
+    main_menu = tk.Menu(master=character_creation_frame)
+
+    file_menu = tk.Menu(master=main_menu, tearoff=0)
+    file_menu.add_command(label="Save", command=save)
+    file_menu.add_command(label="Load", command=load)
+    file_menu.add_separator()
+    file_menu.add_command(label="Exit", command=exit)
+    main_menu.add_cascade(label="File", menu=file_menu)
+
+    window.config(menu=main_menu)
+
 
 def Buttons():
     buttons = tk.Frame(master=character_creation_frame)
-
-    def close():
-        global middle_frame_index
-
-        update_character_info(middle_frame_index)
-
-        save()
-        window.destroy()
-
-    close_button = tk.Button(master=buttons,
-                             text="Close",
-                             command=close)
 
     def back():
 
@@ -117,18 +166,30 @@ def Buttons():
         if middle_frame_index == len(middle_frames) - 1:
             next_button.grid_forget()
 
+    close_button = tk.Button(master=buttons,
+                             text="Close",
+                             command=exit,
+                             width=6)
+
     next_button = tk.Button(master=buttons,
                             text="Next",
-                            command=next)
+                            command=next,
+                            width=6)
 
     back_button = tk.Button(master=buttons,
                             text="Back",
-                            command=back)
+                            command=back,
+                            width=6)
 
-    close_button.grid(row=0, column=1)
+    close_button.grid(row=0, column=1, padx=8)
     next_button.grid(row=0, column=2)
 
+    buttons.update()
+    sizes = [close_button.winfo_width(), next_button.winfo_width()]
+    buttons.grid_columnconfigure((0, 1, 2), minsize=max(sizes))
+
     buttons.pack(side=tk.BOTTOM)
+
 
 def Info(index):
     info_frame = tk.Frame(master=character_creation_frame,
@@ -287,29 +348,32 @@ def Info(index):
 
     return info_frame
 
+
 def Race(index):
     race_frame = tk.Frame(master=character_creation_frame,
                           relief=tk.SUNKEN,
                           borderwidth=4,
                           )
     race_label = tk.Label(master=race_frame,
-                          text="Race!")
+                          text="Race",
+                          font=default_font+" 12 bold")
 
     race_data = {"Race": "Race Data"}
 
     form_data[index] = race_data
 
-    race_label.pack()
+    race_label.pack(pady=(8,16))
 
     return race_frame
 
+
 def Class(index):
     class_frame = tk.Frame(master=character_creation_frame,
-                          relief=tk.SUNKEN,
-                          borderwidth=4,
-                          )
+                           relief=tk.SUNKEN,
+                           borderwidth=4,
+                           )
     class_label = tk.Label(master=class_frame,
-                          text="Class")
+                           text="Class")
 
     class_data = {"Class": "Class Data"}
 
@@ -351,7 +415,7 @@ middle_frame_index = 0
 middle_frames[middle_frame_index].pack(fill=tk.X)
 
 page_number_text = tk.StringVar()
-page_number_text.set(f'Page {middle_frame_index+1} of {len(middle_frames)}')
+page_number_text.set(f'Page {middle_frame_index + 1} of {len(middle_frames)}')
 
 page_number = tk.Label(master=character_creation_frame, textvariable=page_number_text)
 page_number.pack()

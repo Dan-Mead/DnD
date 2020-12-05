@@ -5,7 +5,10 @@ from addict import Dict
 import pickle
 
 from races import race_list
-from glossary import common_languages, exotic_languages, attrs
+from feats import feat_list, unpack_desc
+from glossary import common_languages, exotic_languages, attrs, skills_dict
+
+global current_race_instance, current_subrace_instance
 
 
 def export(character):
@@ -46,6 +49,7 @@ def update_character_info(index):
 def save():
     update_character_info(middle_frame_index)
     export(character)
+    update_character_info(middle_frame_index)
 
 
 def load():
@@ -263,7 +267,6 @@ def Info(index):
 
     physicals = {}
 
-    row = 0
     for j in range(len(appearance_aspects)):
 
         frames = appearance_frame, size_frame
@@ -279,17 +282,15 @@ def Info(index):
 
             physicals[label.cget("text")] = entry
 
-            label.grid(row=row * 2, pady=(2, 1))
-            entry.grid(row=row * 2 + 1)
-
-        row += 1
+            label.grid(row=1, column=j, pady=(2, 1), padx=4)
+            entry.grid(row=2, column=j, padx=8)
 
     ### Add all data to frame
 
-    age_frame.grid(row=0, column=0, padx=(0, 8), pady=(0, 10))
-    gender_frame.grid(row=0, column=1, padx=(8, 0), pady=(0, 10))
-    appearance_frame.grid(row=1, column=0, padx=(0, 8))
-    size_frame.grid(row=1, column=1, padx=(8, 0))
+    age_frame.grid(row=0, column=0, padx=(0, 4), sticky="E")
+    gender_frame.grid(row=0, column=1, padx=(4, 0), sticky="W")
+    appearance_frame.grid(row=2, column=0, columnspan=2, padx=(0, 8))
+    size_frame.grid(row=4, column=0, columnspan=2, padx=(8, 0))
 
     data_frame.pack()
 
@@ -354,44 +355,46 @@ def Info(index):
 
 
 def Race(index):
-
     def update_race_info():
-        choice = race_choice.get()
 
-        size = race_list[choice].size
-        speed = race_list[choice].speed
+        size = current_race_instance.size
+        speed = current_race_instance.speed
         race_size_text.set(size)
         race_speed_text.set(f'{speed} ft.')
 
-        if race_list[choice].__subclasses__():
+        if current_race_instance.__subclasses__():
             subrace_choice.pack()
-            subrace_choice.set("Choose subrace: ")
-            asi_frame.pack_forget()
+            if current_subrace.get() != '':
+                subrace_choice.set(current_subrace.get())
+            else:
+                subrace_choice.set(subrace_choice_prompt)
             subclass = True
 
         else:
+            current_subrace.set(None)
             subrace_choice.pack_forget()
             subclass = False
+            subrace_choice.set("")
 
         race_info.pack_forget()
         race_info.pack()
         race_languages_choice.grid_forget()
         race_base_info.update()
-        languages(choice)
+        languages()
 
-        if subclass == False:
-            ASI(choice, None)
-            other_features(choice, None)
+        if not subclass:
+            ASI()
+            other_features()
 
-    def languages(choice):
+    def languages():
 
-        language_list = [language for language in race_list[choice].languages]
+        language_list = [language for language in current_race_instance.languages]
 
-        choices_num = language_list.count("Choice")
+        choices_num = language_list.count("choice")
 
         if choices_num > 0:
-            language_list.remove("Choice")
-            race_languages_choice.grid(row=3, column=2, stick="W")
+            language_list.remove("choice")
+            race_languages_choice.grid(row=3, column=2, stick="W", padx=(2, 0))
 
             divider.grid(rowspan=race_base_info.grid_size()[1])
 
@@ -405,46 +408,49 @@ def Race(index):
 
         race_language_text.set(language_list)
 
-    def ASI(race, subrace):
+    def ASI():
 
-        if subrace == None:
+        bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
 
-            ASI = race_list[race].ASI
-
+        if current_subrace_instance is None:
+            ASI = current_race_instance.ASI
         else:
-            subraces_list = dict([(subrace.subrace_name, subrace) for subrace in race_list[race].__subclasses__()])
-
-            ASI = subraces_list[subrace].ASI
+            ASI = current_subrace_instance.ASI
 
         num_choices = 0
         choice_options = []
 
         for i in ASI:
-            if i[0] == "Choice":
+            if i[0] == "choice":
                 num_choices += 1
                 choice_options.append(i[1])
 
         ASI_automatic = dict(ASI)
 
         if num_choices > 0:
-            del ASI_automatic["Choice"]
+            del ASI_automatic["choice"]
 
-        for asi_value in asi_automatic_values:
-            asi_value.configure(text="")
+        if ASI_automatic:
+            asi_attributes_frame.grid(row=1)
+            for asi_value in asi_automatic_values:
+                asi_value.configure(text="")
 
-        for attribute, attr_value in ASI_automatic.items():
-            attr_index = attrs.index(attribute)
+            for attribute, attr_value in ASI_automatic.items():
+                attr_index = attrs.index(attribute)
 
-            text_value = f'{attr_value:+d}'
+                text_value = f'{attr_value:+d}'
 
-            asi_automatic_values[attr_index].configure(text=text_value)
+                asi_automatic_values[attr_index].configure(text=text_value)
+        else:
+            asi_attributes_frame.grid_forget()
 
-        asi_choice_1.grid_forget()
-        asi_choice_2.grid_forget()
+        asi_choice_frame.grid_forget()
 
         if num_choices > 0:
-            asi_choice_1.grid(row=7, column=0, columnspan=3)
-            if choice_options[0] == "Any":
+            asi_choice_label["text"] = "Choose ability score to increase by +1:"
+            asi_choice_frame.grid(row=2)
+            asi_choice_2.grid_forget()
+            if choice_options[0] == "any":
                 asi_options = attrs.copy()
             else:
                 asi_options = attrs.copy()
@@ -454,7 +460,10 @@ def Race(index):
             asi_choice_1["textvariable"] = asi_choice_1_val
             asi_choice_1["values"] = asi_options
         if num_choices == 2:
-            asi_choice_2.grid(row=8, column=0, columnspan=3)
+            asi_choice_label["text"] = "Choose ability scores to increase by +1:"
+            asi_choice_2.grid(row=2)
+            asi_choice_2_val = tk.StringVar()
+            asi_choice_2["textvariable"] = asi_choice_2_val
 
             def check_asi_1_choices():
                 second_choice = asi_choice_2.get()
@@ -474,15 +483,157 @@ def Race(index):
             asi_choice_1["postcommand"] = check_asi_1_choices
             asi_choice_2["postcommand"] = check_asi_2_choices
 
+        asi_frame.grid(row=2, column=0)
 
+    def other_features():
 
-        asi_frame.pack()
+        race_features_frame.grid_forget()
+        divider_2.grid_forget()
 
-    def other_features(race, subrace):
-        pass
+        print("Forgotten_all")
 
-    ## Main Code
+        for widget in race_features_internal_frame.winfo_children():
+            widget.pack_forget()
 
+        if current_race_instance.features:
+            race_features = current_race_instance.features.copy()
+            try:
+                race_features += current_race_instance.features_chosen
+            except:
+                pass
+        else:
+            race_features = None
+
+        if current_subrace_instance:
+            subrace_features = current_subrace_instance.features.copy()
+            try:
+                subrace_features += current_subrace_instance.features_chosen
+            except:
+                pass
+        else:
+            subrace_features = None
+
+        if not (race_features or subrace_features):
+            return
+        else:
+            race_info.update()
+            # TODO: Make row here more intelligent
+            race_features_frame.grid(row=0, column=2, rowspan=8, sticky="N")
+            divider_2.grid(column=1, row=0, sticky="NS", rowspan=8)
+
+        if race_features:
+            features_checker(current_race_instance, race_features)
+
+        if subrace_features:
+            features_checker(current_subrace_instance, subrace_features)
+
+        form_data[index] = race_data
+        update_character_info(index)
+
+    def feature_switch(entity, feature):
+        if feature == "skills":
+            skills(entity.skills)
+        elif feature == "feat":
+            feat(entity.feats)
+        elif feature == "other":
+            others(entity.other_features)
+        elif feature == "choice":
+            feature_choice(entity)
+
+    def features_checker(entity, features):
+
+        for feature in features:
+            feature_switch(entity, feature)
+
+    def feature_choice(entity):
+
+        options = list(entity.choice_features.keys())
+
+        if entity.__subclasses__():
+            if race_feature_chosen.get() not in options:
+                race_feature_chosen.set("")
+            race_feature_chooser["values"] = options
+            subrace_feature_chooser_label.pack_forget()
+            subrace_feature_chooser.pack_forget()
+
+        else:
+            if subrace_feature_chosen.get() not in options:
+                subrace_feature_chosen.set("")
+            subrace_feature_chooser["values"] = options
+            race_feature_chooser_label.pack_forget()
+            race_feature_chooser.pack_forget()
+
+        race_feature_chooser_frame.pack()
+
+    def skills(valid_skills):
+
+        print("Skills check")
+
+        if isinstance(valid_skills, str):
+            skills_reference_dict = skills_dict.copy()
+            if valid_skills == "any":
+                valid_skills_name_list = tuple([value[0] for value in skills_reference_dict.values()])
+            else:
+                valid_skills_name_list = tuple([skills_reference_dict[skill][0] for skill in valid_skills])
+
+            skill_chooser_1["postcommand"] = None
+            skill_chooser_1["text_variable"] = None
+            skill_chooser_2["postcommand"] = None
+            skill_chooser_2["text_variable"] = None
+            skill_chooser_2.set("")
+            skill_chooser_1["values"] = valid_skills_name_list
+            skill_chooser_1.set("")
+            skill_chooser_2.pack_forget()
+
+        else:
+            def choose_race_skill():
+                for n, options in enumerate(valid_skills):
+                    skills_reference_dict = skills_dict.copy()
+                    if options == "any":
+                        valid_skills_name_list = tuple([skill[0] for skill in skills_reference_dict.values()])
+                    else:
+                        valid_skills_name_list = tuple([skills_reference_dict[skill][0] for skill in options])
+
+                    other_skills_chosen = skills_choices.copy()
+                    del other_skills_chosen[n]
+
+                    final_skill_list = list(valid_skills_name_list).copy()
+
+                    for chosen in other_skills_chosen:
+                        chosen = chosen.get()
+                        if chosen in final_skill_list:
+                            final_skill_list.remove(chosen)
+
+                    race_skill_choosers[n]["values"] = final_skill_list
+
+            race_skill_choosers = [skill_chooser_1, skill_chooser_2]  # TODO: this is a set size, not good
+            skills_choices = [tk.StringVar(), tk.StringVar()]
+            for n, skill_chooser in enumerate(race_skill_choosers):
+                skill_chooser["textvariable"] = skills_choices[n]
+                skill_chooser["postcommand"] = choose_race_skill
+                skill_chooser.pack()
+
+        skill_chooser_frame.pack()
+
+    def feat(valid_feats):
+        if valid_feats == "any":
+            valid_feats_name_list = tuple([name for name in feat_list.keys()])
+        else:  # TODO: This is incomplete, also need to check for prereq
+            valid_feats_name_list = tuple()
+
+        feat_chooser["values"] = valid_feats_name_list
+        feat_chooser_frame.pack()
+
+    def others(other_features):
+        text = ""
+        for name, feature in other_features.items():
+            text += f'{name}:'
+            text += f'\n{feature.desc}\n\n'
+        text = text[:-1]
+        general_features_text.set(text)
+        general_features_frame.pack()
+
+    # Chosing Race and Subrace
     race_frame = tk.Frame(character_creation_frame,
                           relief=tk.SUNKEN,
                           borderwidth=4,
@@ -492,20 +643,20 @@ def Race(index):
                           font=default_font + " 12 bold")
 
     current_race = tk.StringVar()
-
     race_choice = ttk.Combobox(race_frame,
                                values=[race for race in race_list],
                                state="readonly",
                                width=16,
                                textvariable=current_race)
 
-    race_choice.set("Choose race: ")
+    race_choice_prompt = "Choose race: "
+    race_choice.set(race_choice_prompt)
 
+    subrace_choice_prompt = "Choose subrace: "
     current_subrace = tk.StringVar()
 
     def get_subclasses():
-        choice = race_choice.get()
-        subrace_choice["values"] = [subrace.subrace_name for subrace in race_list[choice].__subclasses__()]
+        subrace_choice["values"] = [subrace.subrace_name for subrace in current_race_instance.__subclasses__()]
 
     subrace_choice = ttk.Combobox(race_frame,
                                   postcommand=get_subclasses,
@@ -514,7 +665,12 @@ def Race(index):
                                   width=16,
                                   textvariable=current_subrace)
 
+    # Race Info Stuff
     race_info = tk.Frame(race_frame)
+
+    race_info_label = tk.Label(race_info,
+                               text="Racial Stats:",
+                               font=default_font + " 10 bold")
 
     race_size_text = tk.StringVar()
     race_speed_text = tk.StringVar()
@@ -525,6 +681,7 @@ def Race(index):
     race_language_text.set("Common")
 
     race_base_info = tk.Frame(race_info)
+
     race_size_label = tk.Label(race_base_info,
                                text="Size",
                                font=default_font + " 10 bold")
@@ -567,60 +724,233 @@ def Race(index):
 
     divider.grid(column=1, row=0, rowspan=race_base_info.grid_size()[1], sticky="NS")
 
-    ttk.Separator(race_base_info).grid(column=0, row=5, columnspan=3, sticky="EW")
+    bottom_divider = ttk.Separator(race_base_info)
+    bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
 
-    race_base_info.pack()
+    race_info_label.grid(row=0)
+    race_base_info.grid(row=1, column=0, sticky="N")
 
-    def subrace_chosen(event):
-        ASI(race_choice.get(), subrace_choice.get())
-
-    subrace_choice.bind("<<ComboboxSelected>>", subrace_chosen)
-
+    # Tracing Race/Subrace values
     def changed_race(*args):
-        current_race  # this is essential and I have no idea why, even pycharm says it seems to do nothing
-        update_race_info()
+        global current_race_instance
+        if current_race.get() != race_choice_prompt:  # essential to call the variable once, no idea why
+            current_race_instance = race_list[current_race.get()]
+            asi_frame.grid_forget()
+            bottom_divider.grid_forget()
+            current_subrace.set(subrace_choice_prompt)
+            update_race_info()
+        else:
+            current_race_instance = None
 
     current_race.trace('w', changed_race)
 
+    def changed_subrace(*args):
+        global current_subrace_instance
+        if race_list[current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
+            current_subrace_instance = \
+                {subrace.subrace_name: subrace for subrace in current_race_instance.__subclasses__()}[
+                    current_subrace.get()]
+            asi_frame.grid_forget()
+            bottom_divider.grid_forget()
+            ASI()
+            other_features()
+
+        elif current_subrace.get() == subrace_choice_prompt:
+            race_features_frame.grid_forget()
+            current_subrace_instance = None
+
+    current_subrace.trace('w', changed_subrace)
+
+    # ASI Stuff
     asi_frame = tk.Frame(race_info)
+
+    asi_label = tk.Label(asi_frame,
+                         text="Ability score increases",
+                         font=default_font + " 8 bold")
+
+    asi_label.grid(row=0, sticky="N")
+
+    asi_attributes_frame = tk.Frame(asi_frame)
+
     asi_automatic_values = [None] * 6
     for n, attribute in enumerate(attrs):
-        label = tk.Label(asi_frame,
+        label = tk.Label(asi_attributes_frame,
                          text=attribute,
                          font=default_font + " 10 bold")
         label.grid(row=n, column=0, sticky="E")
 
-        value = tk.Label(asi_frame,
+        value = tk.Label(asi_attributes_frame,
                          font=default_font + " 10")
 
         value.grid(row=n, column=2, sticky="W")
         asi_automatic_values[n] = value
 
-    ttk.Separator(asi_frame,
-                  orient=tk.VERTICAL) \
-        .grid(column=1, row=0, sticky="NS", rowspan=asi_frame.grid_size()[1])
+    ttk.Separator(asi_attributes_frame,
+                  orient=tk.VERTICAL).grid(column=1, row=0, sticky="NS", rowspan=asi_attributes_frame.grid_size()[1])
 
+    asi_choice_frame = tk.Frame(asi_frame)
 
-    asi_choice_1 = ttk.Combobox(asi_frame,
+    asi_choice_label = tk.Label(asi_choice_frame,
+                                text="Choose ability score to increase by +1:")
+
+    asi_choice_1 = ttk.Combobox(asi_choice_frame,
                                 state="readonly",
                                 width=12)
 
-    asi_choice_2 = ttk.Combobox(asi_frame,
+    asi_choice_2 = ttk.Combobox(asi_choice_frame,
                                 state="readonly",
                                 width=12)
 
-    asi_choice_1.grid(row=7, column=0, columnspan=3)
-    asi_choice_2.grid(row=8, column=0, columnspan=3)
+    asi_choice_label.grid(row=0)
+    asi_choice_1.grid(row=1)
+    asi_choice_2.grid(row=2)
 
-    race_data = {"Race": race_choice,
-                 "Subrace": subrace_choice,
-                 "Languages": race_languages_choice
-                 }
-
-    form_data[index] = race_data
+    asi_attributes_frame.grid(row=1)
+    asi_choice_frame.grid(row=2)
 
     race_label.pack(pady=(8, 8))
     race_choice.pack()
+
+    # Race Features
+    race_features_frame = tk.Frame(race_info)
+
+    race_features_label = tk.Label(race_features_frame,
+                                   text="Racial Features:",
+                                   font=default_font + " 10 bold",
+                                   anchor="n")
+    race_features_label.grid(row=0, sticky="N")
+
+    # race_features_frame.grid(row=0, column=2, sticky="N")
+
+    divider_2 = ttk.Separator(race_info,
+                              orient=tk.VERTICAL)
+
+    # divider_2.grid(column=1, row=0, sticky="NS", rowspan=2)
+
+    race_features_internal_frame = tk.Frame(race_features_frame)
+    race_features_internal_frame.grid(row=1)
+
+    skill_chooser_frame = tk.Frame(race_features_internal_frame)
+
+    skill_chooser_label = tk.Label(skill_chooser_frame,
+                                   text="Choose skill proficiency:",
+                                   font=default_font + " 8")
+    skill_chooser_1 = ttk.Combobox(skill_chooser_frame,
+                                   state="readonly")
+    skill_chooser_label.pack(pady=(4, 0))
+    skill_chooser_1.pack()
+
+    skill_chooser_2 = ttk.Combobox(skill_chooser_frame,
+                                   state="readonly")
+    skill_chooser_2.pack()
+
+    feat_chooser_frame = tk.Frame(race_features_internal_frame)
+
+    feat_chooser_label = tk.Label(feat_chooser_frame,
+                                  text="Choose feat:",
+                                  font=default_font + " 8")
+    feat_chosen = tk.StringVar()
+    feat_chooser = ttk.Combobox(feat_chooser_frame,
+                                textvariable=feat_chosen,
+                                state="readonly")
+
+    def changed_feat(*args):
+        description = feat_list[feat_chosen.get()].desc
+        description_formatted = unpack_desc(description)
+        feat_description.set(description_formatted)
+
+    feat_chosen.trace('w', changed_feat)
+    feat_description = tk.StringVar()
+
+    feat_description_label = tk.Label(feat_chooser_frame,
+                                      textvariable=feat_description,
+                                      wraplength=400,
+                                      justify=tk.LEFT,
+                                      font=default_font + " 8")
+
+    feat_chooser_label.pack()
+    feat_chooser.pack()
+    feat_description_label.pack()
+
+    general_features_frame = tk.Frame(race_features_internal_frame)
+
+    general_features_text = tk.StringVar()
+
+    general_feature_label = tk.Label(general_features_frame,
+                                     textvariable=general_features_text,
+                                     wraplength=400,
+                                     justify=tk.LEFT,
+                                     anchor="w",
+                                     font=default_font + " 8"
+                                     )
+
+    general_feature_label.pack(side=tk.LEFT)
+
+    race_feature_chooser_frame = tk.Frame(race_features_internal_frame)
+    race_feature_chooser_label = tk.Label(race_feature_chooser_frame,
+                                          text="Choose racial feature:",
+                                          font=default_font + " 8")
+
+    subrace_feature_chooser_label = tk.Label(race_feature_chooser_frame,
+                                             text="Choose subrace feature:",
+                                             font=default_font + " 8")
+
+    race_feature_chosen = tk.StringVar()
+    subrace_feature_chosen = tk.StringVar()
+    race_feature_chooser = ttk.Combobox(race_feature_chooser_frame,
+                                        state="readonly",
+                                        textvariable=race_feature_chosen)
+    subrace_feature_chooser = ttk.Combobox(race_feature_chooser_frame,
+                                           state="readonly",
+                                           textvariable=subrace_feature_chosen)
+
+    def race_feature_changed(*args):
+        print(race_feature_chosen.get())
+
+    def subrace_feature_changed(*args):
+        if subrace_feature_chosen.get():
+
+            feature_value = current_subrace_instance.choice_features[subrace_feature_chosen.get()]
+
+            current_subrace_instance.features_chosen = []
+
+            if isinstance(feature_value, str):
+                current_subrace_instance.features_chosen.append(feature_value)
+                other_features()
+
+            else:
+                other_features()
+                text = general_features_text.get()
+                text += f'\n{subrace_feature_chosen.get()}:'
+                text += f'\n{feature_value.desc}\n'
+                general_features_text.set(text)
+                general_features_frame.pack()
+
+
+
+    race_feature_chosen.trace("w", race_feature_changed)
+    subrace_feature_chosen.trace("w", subrace_feature_changed)
+
+    race_feature_chooser_label.pack(pady=(4, 0))
+    race_feature_chooser.pack()
+    subrace_feature_chooser_label.pack()
+    subrace_feature_chooser.pack()
+
+    race_info.update()
+
+    race_data = {"Race": race_choice,
+                 "Subrace": subrace_choice,
+                 "Languages": race_languages_choice,
+                 "ASI choice 1": asi_choice_1,
+                 "ASI choice 2": asi_choice_2,
+                 "race_skill 1": skill_chooser_1,
+                 "race skill 2": skill_chooser_2,
+                 "race_feat": feat_chooser,
+                 "race_feature": race_feature_chooser,
+                 "subrace_feature": subrace_feature_chooser
+                 }
+
+    form_data[index] = race_data
 
     return race_frame
 

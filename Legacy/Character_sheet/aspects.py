@@ -522,7 +522,7 @@ class character:
             self.stats.speed['value'] = sum(self.stats.speed.values())
 
             self.stats.size['current'] = self.stats.size.temp \
-                                         or self.stats.size.race
+                                         or self.stats.size.Race
 
         def attack_objects():
 

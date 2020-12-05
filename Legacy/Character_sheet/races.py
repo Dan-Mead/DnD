@@ -9,10 +9,10 @@ class race:
 
     def add_race_modifiers(self, char):
 
-        char.info.race = self.race_name
-        char.stats.size.race = self.size
-        char.stats.speed.race = self.speed
-        char.proficiencies.languages.race = self.languages
+        char.info.Race = self.race_name
+        char.stats.size.Race = self.size
+        char.stats.speed.Race = self.speed
+        char.proficiencies.languages.Race = self.languages
 
         for trait in vars(self).keys():
             if trait == 'attributes':

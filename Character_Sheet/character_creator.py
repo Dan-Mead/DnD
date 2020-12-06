@@ -15,7 +15,7 @@ def export(character):
     name = character["Name"]
 
     if name == "":
-        name = "Test_Character"
+        name = "Empty_Character"
 
     loc = f'saves/{name}'
 
@@ -49,7 +49,6 @@ def update_character_info(index):
 def save():
     update_character_info(middle_frame_index)
     export(character)
-    update_character_info(middle_frame_index)
 
 
 def load():
@@ -357,6 +356,10 @@ def Info(index):
 def Race(index):
     def update_race_info():
 
+        for key, value in race_data.items():
+            if key != "Race" and key != "Subrace":
+                value.set("")
+
         size = current_race_instance.size
         speed = current_race_instance.speed
         race_size_text.set(size)
@@ -490,8 +493,6 @@ def Race(index):
         race_features_frame.grid_forget()
         divider_2.grid_forget()
 
-        print("Forgotten_all")
-
         for widget in race_features_internal_frame.winfo_children():
             widget.pack_forget()
 
@@ -567,8 +568,6 @@ def Race(index):
 
     def skills(valid_skills):
 
-        print("Skills check")
-
         if isinstance(valid_skills, str):
             skills_reference_dict = skills_dict.copy()
             if valid_skills == "any":
@@ -609,6 +608,9 @@ def Race(index):
             race_skill_choosers = [skill_chooser_1, skill_chooser_2]  # TODO: this is a set size, not good
             skills_choices = [tk.StringVar(), tk.StringVar()]
             for n, skill_chooser in enumerate(race_skill_choosers):
+
+                if valid_skills[n] == "any" or skill_chooser.get() in valid_skills[n]:
+                    skills_choices[n].set(skill_chooser.get())
                 skill_chooser["textvariable"] = skills_choices[n]
                 skill_chooser["postcommand"] = choose_race_skill
                 skill_chooser.pack()
@@ -616,6 +618,9 @@ def Race(index):
         skill_chooser_frame.pack()
 
     def feat(valid_feats):
+
+        feat_chooser.set("")
+
         if valid_feats == "any":
             valid_feats_name_list = tuple([name for name in feat_list.keys()])
         else:  # TODO: This is incomplete, also need to check for prereq
@@ -641,7 +646,7 @@ def Race(index):
     race_label = tk.Label(race_frame,
                           text="Race",
                           font=default_font + " 12 bold")
-
+    race_label.pack(pady=(8, 8))
     current_race = tk.StringVar()
     race_choice = ttk.Combobox(race_frame,
                                values=[race for race in race_list],
@@ -808,7 +813,6 @@ def Race(index):
     asi_attributes_frame.grid(row=1)
     asi_choice_frame.grid(row=2)
 
-    race_label.pack(pady=(8, 8))
     race_choice.pack()
 
     # Race Features
@@ -855,9 +859,11 @@ def Race(index):
                                 state="readonly")
 
     def changed_feat(*args):
-        description = feat_list[feat_chosen.get()].desc
-        description_formatted = unpack_desc(description)
-        feat_description.set(description_formatted)
+
+        if feat_chosen.get():
+            description = feat_list[feat_chosen.get()].desc
+            description_formatted = unpack_desc(description)
+            feat_description.set(description_formatted)
 
     feat_chosen.trace('w', changed_feat)
     feat_description = tk.StringVar()
@@ -905,7 +911,24 @@ def Race(index):
                                            textvariable=subrace_feature_chosen)
 
     def race_feature_changed(*args):
-        print(race_feature_chosen.get())
+
+        if race_feature_chosen.get():
+
+            feature_value = current_race_instance.choice_features[race_feature_chosen.get()]
+
+            current_race_instance.features_chosen = []
+
+            if isinstance(feature_value, str):
+                current_race_instance.features_chosen.append(feature_value)
+                other_features()
+
+            else:
+                other_features()
+                text = general_features_text.get()
+                text += f'\n{race_feature_chosen.get()}:'
+                text += f'\n{feature_value.desc}\n'
+                general_features_text.set(text)
+                general_features_frame.pack()
 
     def subrace_feature_changed(*args):
         if subrace_feature_chosen.get():
@@ -925,8 +948,6 @@ def Race(index):
                 text += f'\n{feature_value.desc}\n'
                 general_features_text.set(text)
                 general_features_frame.pack()
-
-
 
     race_feature_chosen.trace("w", race_feature_changed)
     subrace_feature_chosen.trace("w", subrace_feature_changed)
@@ -961,7 +982,24 @@ def Class(index):
                            borderwidth=4,
                            )
     class_label = tk.Label(class_frame,
-                           text="Class")
+                           text="Class",
+                           font=default_font + " 12 bold")
+
+    class_label.pack(pady=8)
+
+    class_choice_frame = tk.Frame(class_frame)
+    class_choice_label = tk.Label(class_choice_frame,
+                                  text="Choose starting class:",
+                                  font=default_font + " 8")
+
+    current_class_choice = tk.StringVar()
+    class_choice_chooser = ttk.Combobox(class_choice_frame,
+                                        values=["Classes"],
+                                        textvariable = current_class_choice)
+
+    class_choice_label.pack()
+    class_choice_chooser.pack()
+    class_choice_frame.pack()
 
     class_data = {"Class": "Class Data"}
 

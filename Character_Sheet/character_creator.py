@@ -6,7 +6,7 @@ import pickle
 from Character_Sheet.reference.races import race_list
 from Character_Sheet.reference.feats import feat_list, unpack_desc
 from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs, skills_dict
-
+from Character_Sheet.reference.classes import class_list
 
 global current_race_instance, current_subrace_instance
 
@@ -37,13 +37,15 @@ def import_info(filename):
 
 
 def update_character_info(index):
-    data = form_data[index]
 
-    for key in data:
-        try:
-            character[key] = data[key].get()
-        except:
-            pass
+    for sheet in form_data:
+        data = sheet
+
+        for key in data:
+            try:
+                character[key] = data[key].get()
+            except:
+                pass
 
 
 def save():
@@ -994,14 +996,69 @@ def Class(index):
 
     current_class_choice = tk.StringVar()
     class_choice_chooser = ttk.Combobox(class_choice_frame,
-                                        values=["Classes"],
-                                        textvariable = current_class_choice)
+                                        values=list(class_list.keys()),
+                                        state="readonly",
+                                        textvariable=current_class_choice)
 
     class_choice_label.pack()
     class_choice_chooser.pack()
     class_choice_frame.pack()
 
-    class_data = {"Class": "Class Data"}
+    def class_choice_changed(*args):
+
+        current_class_instance = class_list[current_class_choice.get()]()
+        class_ = current_class_instance
+        class_.base_features()
+        class_top_label["text"] = f"{class_.name} features:"
+        text = ""
+        text += f"Hit Dice: {class_.hit_die}\n"
+        text += f"Level up HP: {class_.lvl_up_hp}\n"
+
+        text += f"\nArmour Proficiencies:\n" \
+                f"{', '.join([class_.__name__ for class_ in class_.armour_proficiencies])}\n"
+
+        text += f"\nWeapon Proficiencies:\n" \
+                f"{', '.join([class_.name for class_ in class_.weapon_proficiencies])}\n"
+
+        text += f"\nTool Proficiencies:\n" \
+                f"{', '.join([class_.name if class_ else 'None' for class_ in class_.tool_proficiencies])}\n"
+
+        text += f"\nSaving Throw Proficiencies:\n" \
+                f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
+        class_basic_info_label["text"] = text
+
+    current_class_choice.trace("w", class_choice_changed)
+
+    class_info_frame = tk.Frame(class_frame)
+
+    class_top_label = tk.Label(class_info_frame,
+                                    font=default_font+" 10 bold")
+
+    class_features_internal_frame = tk.Frame(class_info_frame)
+
+    class_basic_info_label = tk.Label(class_features_internal_frame,
+                                      font=default_font+" 8",
+                                      justify=tk.LEFT,
+                                      anchor="w",
+                                      wraplength=200
+                                      )
+
+    class_central_frame = tk.Frame(class_features_internal_frame)
+    class_skills_frame = tk.Frame(class_central_frame)
+
+
+
+
+
+    class_basic_info_label.grid(column=0)
+    class_central_frame.grid(column=1)
+
+    class_top_label.pack()
+    class_features_internal_frame.pack()
+    class_info_frame.pack()
+
+
+    class_data = {"Class Choice": class_choice_chooser}
 
     form_data[index] = class_data
 
@@ -1025,6 +1082,10 @@ character_creation_frame = tk.Frame(window,
 middle_frames = [Info,
                  Race,
                  Class]
+
+middle_frames = [Class,
+                 Info,
+                 Race]
 
 form_data = [None] * len(middle_frames)
 

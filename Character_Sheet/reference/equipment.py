@@ -23,49 +23,84 @@ class Misc(Equipment):
     pass
 
 
+class Ammo(Equipment):
+    pass
+
+class Tools(Equipment):
+    pass
+
 # Weapons
 
+class Dagger(Simple, Melee):
+    name = "Dagger"
+
 class Javelin(Simple, Melee):
-    pass
+    name = "Javelin"
+
+
+class Shortbow(Simple, Ranged):
+    name = "Shortbow"
 
 
 class Longsword(Martial, Melee):
-    pass
+    name = "Longsword"
 
 
 class Rapier(Martial, Melee):
-    pass
+    name = "Rapier"
 
 
 class Shortsword(Martial, Melee):
-    pass
+    name = "Shortsword"
 
 
 class HandCrossbow(Martial, Ranged):
-    pass
+    name = "Hand Crossbow"
+
+
+# Other
+
+class Arrow(Ammo):
+    name = "Arrow"
 
 
 # Armour
 
-class ChainMail(Heavy):
-    pass
+class LeatherArmour(Light):
+    name = "Leather Armour"
 
+class ChainMail(Heavy):
+    name = "Chain Mail"
+
+class Shield(Shields):
+    name = "Shield"
 
 # Misc.
 
 class HolySymbol(Misc):
-    pass
+    name = "Holy Symbol"
 
 
 # Packs
 
 class PriestPack(Pack):
-    pass
+    name = "Priest's Pack"
 
 
 class ExplorerPack(Pack):
-    pass
+    name = "Explorer's Pack"
 
+class BurglarPack(Pack):
+    name = "Burglar's Pack"
+
+class DungeoneerPack(Pack):
+    name = "Dungeoneer's Pack"
+
+
+# Tools
+
+class ThievesTools(Tools):
+    name = "Thieves' Tools"
 
 if __name__ == '__main__':
     pass

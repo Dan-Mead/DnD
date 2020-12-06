@@ -7,11 +7,11 @@ class Weapon(Equipment):
 
 
 class Martial(Weapon):
-    pass
+    name = "Martial"
 
 
 class Simple(Weapon):
-    pass
+    name = "Simple"
 
 
 class Armour(Equipment):
@@ -19,25 +19,25 @@ class Armour(Equipment):
 
 
 class Light(Armour):
-    pass
+    name = "Light"
 
 
 class Medium(Armour):
-    pass
+    name = "Medium"
 
 
 class Heavy(Armour):
-    pass
+    name = "Heavy"
 
 
-class Shield(Armour):
-    pass
+class Shields(Armour):
+    name = "Shields"
 
 class Tools:
     pass
 
-class ThievesTools(Tools):
-    pass
+class Thieves(Tools):
+    name = "Thieves' tools"
 
 if __name__ == '__main__':
     pass

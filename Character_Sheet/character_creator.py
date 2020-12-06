@@ -12,6 +12,7 @@ global current_race_instance, current_subrace_instance
 
 
 def export(character):
+
     name = character["Name"]
 
     if name == "":
@@ -25,10 +26,6 @@ def export(character):
 
 
 def import_info(filename):
-    # name = "Test_1"
-
-    # loc = f'saves/{name}.pkl'
-
     file = open(filename, "rb")
     info = pickle.load(file)
     file.close()
@@ -36,21 +33,17 @@ def import_info(filename):
     return info
 
 
-def update_character_info(index):
+def update_character_info():
 
-    for sheet in form_data:
-        data = sheet
-
-        for key in data:
-            try:
-                character[key] = data[key].get()
-            except:
-                pass
+    character_data = {}
+    for name, item in character.items():
+        character_data[name] = item.get()
+    return character_data
 
 
 def save():
-    update_character_info(middle_frame_index)
-    export(character)
+    data = update_character_info()
+    export(data)
 
 
 def load():
@@ -59,20 +52,22 @@ def load():
                                              filetypes=(("Pickled Files", "*.pkl"),
                                                         ("all files", "*.*")))
 
-    character = import_info(filename)
+    character_data = import_info(filename)
 
-    for sheet in form_data:
-        for key, value in sheet.items():
-            text = character[key]
-            if isinstance(value, tk.ttk.Combobox):
-                # value["state"] = "normal"
-                # value.delete(0, tk.END)
-                # value.insert(0, text)
-                # value["state"] = "readonly"
-                value.set(text)
-            else:
-                value.delete(0, tk.END)
-                value.insert(0, text)
+
+    for key, value in character.items():
+        text = character_data[key]
+        if isinstance(value, tk.ttk.Combobox):
+            # value["state"] = "normal"
+            # value.delete(0, tk.END)
+            # value.insert(0, text)
+            # value["state"] = "readonly"
+            value.set(text)
+        else:
+            value.delete(0, tk.END)
+            value.insert(0, text)
+
+    resize_tabs()
 
 
 def save_and_close():
@@ -111,14 +106,14 @@ def exit():
 
 
 def Title():
-    title = tk.Label(character_creation_frame,
-                     text='Character Creation',
+    title = tk.Label(character_creator,
+                     text='Character Creator',
                      bd=8,
-                     font=default_font + " 16 bold")
+                     font=default_font + " 14 bold")
 
     title.pack(side=tk.TOP)
 
-    main_menu = tk.Menu(character_creation_frame)
+    main_menu = tk.Menu(character_creator)
 
     file_menu = tk.Menu(main_menu, tearoff=0)
     file_menu.add_command(label="Save", command=save)
@@ -200,8 +195,8 @@ def Buttons():
     buttons.pack(side=tk.BOTTOM)
 
 
-def Info(index):
-    info_frame = tk.Frame(character_creation_frame,
+def Info():
+    info_frame = tk.Frame(info_tab,
                           relief=tk.SUNKEN,
                           borderwidth=4,
                           )
@@ -350,12 +345,12 @@ def Info(index):
 
     character_info.update(physicals)
 
-    form_data[index] = character_info
+    character.update(character_info)
 
     return info_frame
 
 
-def Race(index):
+def Race():
     def update_race_info():
 
         for key, value in race_data.items():
@@ -472,7 +467,7 @@ def Race(index):
 
             def check_asi_1_choices():
                 second_choice = asi_choice_2.get()
-                if not (second_choice):
+                if not second_choice:
                     pass
                 else:
                     first_options = asi_options.copy()
@@ -529,9 +524,6 @@ def Race(index):
 
         if subrace_features:
             features_checker(current_subrace_instance, subrace_features)
-
-        form_data[index] = race_data
-        update_character_info(index)
 
     def feature_switch(entity, feature):
         if feature == "skills":
@@ -641,7 +633,7 @@ def Race(index):
         general_features_frame.pack()
 
     # Chosing Race and Subrace
-    race_frame = tk.Frame(character_creation_frame,
+    race_frame = tk.Frame(race_tab,
                           relief=tk.SUNKEN,
                           borderwidth=4,
                           )
@@ -749,6 +741,8 @@ def Race(index):
         else:
             current_race_instance = None
 
+        resize_tabs()
+
     current_race.trace('w', changed_race)
 
     def changed_subrace(*args):
@@ -765,6 +759,8 @@ def Race(index):
         elif current_subrace.get() == subrace_choice_prompt:
             race_features_frame.grid_forget()
             current_subrace_instance = None
+
+        resize_tabs()
 
     current_subrace.trace('w', changed_subrace)
 
@@ -867,6 +863,8 @@ def Race(index):
             description_formatted = unpack_desc(description)
             feat_description.set(description_formatted)
 
+        resize_tabs()
+
     feat_chosen.trace('w', changed_feat)
     feat_description = tk.StringVar()
 
@@ -932,6 +930,8 @@ def Race(index):
                 general_features_text.set(text)
                 general_features_frame.pack()
 
+        resize_tabs()
+
     def subrace_feature_changed(*args):
         if subrace_feature_chosen.get():
 
@@ -950,6 +950,8 @@ def Race(index):
                 text += f'\n{feature_value.desc}\n'
                 general_features_text.set(text)
                 general_features_frame.pack()
+
+        resize_tabs()
 
     race_feature_chosen.trace("w", race_feature_changed)
     subrace_feature_chosen.trace("w", subrace_feature_changed)
@@ -973,13 +975,13 @@ def Race(index):
                  "subrace_feature": subrace_feature_chooser
                  }
 
-    form_data[index] = race_data
+    character.update(race_data)
 
     return race_frame
 
 
-def Class(index):
-    class_frame = tk.Frame(character_creation_frame,
+def Class():
+    class_frame = tk.Frame(class_tab,
                            relief=tk.SUNKEN,
                            borderwidth=4,
                            )
@@ -1005,7 +1007,6 @@ def Class(index):
     class_choice_frame.pack()
 
     def class_choice_changed(*args):
-
         current_class_instance = class_list[current_class_choice.get()]()
         class_ = current_class_instance
         class_.base_features()
@@ -1027,17 +1028,19 @@ def Class(index):
                 f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
         class_basic_info_label["text"] = text
 
+        resize_tabs()
+
     current_class_choice.trace("w", class_choice_changed)
 
     class_info_frame = tk.Frame(class_frame)
 
     class_top_label = tk.Label(class_info_frame,
-                                    font=default_font+" 10 bold")
+                               font=default_font + " 10 bold")
 
     class_features_internal_frame = tk.Frame(class_info_frame)
 
     class_basic_info_label = tk.Label(class_features_internal_frame,
-                                      font=default_font+" 8",
+                                      font=default_font + " 8",
                                       justify=tk.LEFT,
                                       anchor="w",
                                       wraplength=200
@@ -1046,10 +1049,6 @@ def Class(index):
     class_central_frame = tk.Frame(class_features_internal_frame)
     class_skills_frame = tk.Frame(class_central_frame)
 
-
-
-
-
     class_basic_info_label.grid(column=0)
     class_central_frame.grid(column=1)
 
@@ -1057,10 +1056,9 @@ def Class(index):
     class_features_internal_frame.pack()
     class_info_frame.pack()
 
-
     class_data = {"Class Choice": class_choice_chooser}
 
-    form_data[index] = class_data
+    character.update(class_data)
 
     class_label.pack()
 
@@ -1068,48 +1066,106 @@ def Class(index):
 
 
 window = tk.Tk()
-
+window.title("Character Creator")
 default_font = "Verdana"
 
 # Character Creation Stuff
 
-character_creation_frame = tk.Frame(window,
-                                    relief=tk.FLAT,
-                                    borderwidth=5)
+character_creator = tk.Frame(window)
 
-## Frames list
+tab_manager = ttk.Notebook(character_creator)
 
-middle_frames = [Info,
-                 Race,
-                 Class]
+info_tab = ttk.Frame(tab_manager,
+                     relief=tk.FLAT,
+                     borderwidth=5)
+race_tab = ttk.Frame(tab_manager,
+                     relief=tk.FLAT,
+                     borderwidth=5)
+class_tab = ttk.Frame(tab_manager,
+                     relief=tk.FLAT,
+                     borderwidth=5)
 
-middle_frames = [Class,
-                 Info,
-                 Race]
 
-form_data = [None] * len(middle_frames)
+tab_manager.add(info_tab, text="Info")
 
-for n, frame in enumerate(middle_frames):
-    middle_frames[n] = frame(n)
-    middle_frames[n].pack_forget()
+tab_manager.add(race_tab, text="Race")
+
+tab_manager.add(class_tab, text="Class")
+
+def change_tabs(event):
+
+    event.widget.update_idletasks()
+    current_tab = event.widget.nametowidget(event.widget.select())
+    event.widget.configure(height=current_tab.winfo_reqheight(),
+                           width=current_tab.winfo_reqwidth())
+
+    # tab_manager.update_idletasks()
+    # current_tab = tab_manager.nametowidget(tab_manager.select())
+    # tab_manager.configure(height=current_tab.winfo_reqheight(),
+    #                       width=current_tab.winfo_reqwidth())
+
+def resize_tabs():
+
+    tab_manager.update_idletasks()
+    current_tab = tab_manager.nametowidget(tab_manager.select())
+    tab_manager.configure(height=current_tab.winfo_reqheight(),
+                           width=current_tab.winfo_reqwidth())
+
+    # character_creator.configure(height=character_creator.winfo_reqheight(),
+    #                             width=character_creator.winfo_reqwidth())
+
+tab_manager.bind("<<NotebookTabChanged>>", change_tabs)
+
 
 character = {}
 
-## Packing Character Creation
-
 Title()
-middle_frame_index = 0
-middle_frames[middle_frame_index].pack(fill=tk.X)
 
-page_number_text = tk.StringVar()
-page_number_text.set(f'Page {middle_frame_index + 1} of {len(middle_frames)}')
+Info().pack()
+Class().pack()
+Race().pack()
 
-page_number = tk.Label(character_creation_frame, textvariable=page_number_text)
-page_number.pack()
-Buttons()
+tab_manager.pack()
+character_creator.pack()
+
+
+# character_creation_frame = tk.Frame(window,
+#                                     relief=tk.FLAT,
+#                                     borderwidth=5)
+
+# ## Frames list
+#
+# middle_frames = [Info,
+#                  Race,
+#                  Class]
+#
+# middle_frames = [Class,
+#                  Info,
+#                  Race]
+
+# form_data = [None] * len(middle_frames)
+#
+# for n, frame in enumerate(middle_frames):
+#     middle_frames[n] = frame(n)
+#     middle_frames[n].pack_forget()
+#
+# character = {}
+#
+# ## Packing Character Creation
+
+# Title()
+# middle_frame_index = 0
+# middle_frames[middle_frame_index].pack(fill=tk.X)
+#
+# page_number_text = tk.StringVar()
+# page_number_text.set(f'Page {middle_frame_index + 1} of {len(middle_frames)}')
+#
+# page_number = tk.Label(character_creation_frame, textvariable=page_number_text)
+# page_number.pack()
+# Buttons()
 
 # Packing Main Page
 
-character_creation_frame.pack()
+# character_creation_frame.pack()
 
 window.mainloop()

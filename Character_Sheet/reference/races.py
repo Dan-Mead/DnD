@@ -1,7 +1,5 @@
-import inspect
-import sys
-from glossary import attrs
-from features import *
+from .glossary import attrs
+from .features import *
 
 
 class Race:
@@ -111,11 +109,5 @@ class AquaticElfDescent(HalfElf):
 
 race_list = dict([(race.name, race) for race in Race.__subclasses__()])
 
-# race_list = dict(zip())
-
-# for name, obj in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-#
-#
-#
-#     print(name, obj)
-#     print(issubclass(obj, race))
+if __name__ == '__main__':
+    pass

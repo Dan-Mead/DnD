@@ -1,12 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from addict import Dict
 import pickle
 
-from races import race_list
-from feats import feat_list, unpack_desc
-from glossary import common_languages, exotic_languages, attrs, skills_dict
+from Character_Sheet.reference.races import race_list
+from Character_Sheet.reference.feats import feat_list, unpack_desc
+from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs, skills_dict
+
 
 global current_race_instance, current_subrace_instance
 

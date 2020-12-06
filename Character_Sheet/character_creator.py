@@ -1109,7 +1109,7 @@ def resize_tabs():
     tab_manager.update_idletasks()
     current_tab = tab_manager.nametowidget(tab_manager.select())
     tab_manager.configure(height=current_tab.winfo_reqheight(),
-                           width=current_tab.winfo_reqwidth())
+                           width=current_tab.winfo_reqwidth()) #TODO: get width of window too and choose max
 
     # character_creator.configure(height=character_creator.winfo_reqheight(),
     #                             width=character_creator.winfo_reqwidth())

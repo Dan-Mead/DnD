@@ -28,7 +28,7 @@ class HumanVariant(Human):
     subrace_name = "Variant"
     ASI = (("choice", "any"), ("choice", "any"))
     features = ["skills", "feat"]
-    skills = "any"
+    skills = ("any",)
     feats = "any"
 
 
@@ -66,7 +66,7 @@ class WoodElfDescent(HalfElf):
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Fleet of Foot": FleetOfFoot(),
                        "Mask of the Wild": MaskOfTheWild()}
-    skills = ["any", "any"]
+    skills = ("any", "any")
 
 
 class MoonElfDescent(HalfElf):
@@ -76,7 +76,7 @@ class MoonElfDescent(HalfElf):
                        "Keen Senses": KeenSenses(),
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Cantrip": Catrip("one", "Wizard", "Intelligence")}
-    skills = ["any", "any"]
+    skills = ("any", "any")
 
 
 class SunElfDescent(HalfElf):
@@ -86,7 +86,7 @@ class SunElfDescent(HalfElf):
                        "Keen Senses": KeenSenses(),
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Cantrip": Catrip("one", "Wizard", "Intelligence")}
-    skills = ["any", "any"]
+    skills = ("any", "any")
 
 
 class DrowDescent(HalfElf):
@@ -95,7 +95,7 @@ class DrowDescent(HalfElf):
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Drow Magic": DrowMagic()}
-    skills = ["any", "any"]
+    skills = ("any", "any")
 
 
 class AquaticElfDescent(HalfElf):
@@ -104,7 +104,7 @@ class AquaticElfDescent(HalfElf):
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Swim": Swim()}
-    skills = ["any", "any"]
+    skills = ("any", "any")
 
 
 race_list = dict([(race.name, race) for race in Race.__subclasses__()])

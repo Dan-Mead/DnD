@@ -118,3 +118,5 @@ class Stealth(Skill):
 class Survival(Skill):
     name = "Survival"
     attr = WIS
+
+skills_list = {skill.name: skill for skill in Skill.__subclasses__()}

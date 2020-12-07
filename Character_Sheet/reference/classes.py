@@ -40,9 +40,6 @@ class Rogue(CharacterClass):
     name = "Rogue"
     desc = "Rogue Desc Here"
 
-    def __init__(self):
-        pass
-
     def base_features(self):
         self.hit_die = 8
         self.lvl_up_hp = 5
@@ -68,6 +65,31 @@ class Rogue(CharacterClass):
             ([(LeatherArmour, 1)]),
             ([(Dagger, 2)]),
             ([(ThievesTools, 1)])
+        )
+
+class Barbarian(CharacterClass):
+
+    name = "Barbarian"
+    desc = "Barbarian description here"
+
+    def base_features(self):
+        self.hit_die = 12
+        self.lvl_up_hp = 7
+        self.armour_proficiencies = (Light, Medium, Shields)
+        self.weapon_proficiencies = (Simple, Martial)
+        self.tool_proficiencies = (None,)
+        self.saving_throws = (STR, CON)
+        self.skills = ("choose", "choose")
+        self.valid_skills = (AnimalHandling, Athletics, Intimidation, Nature, Perception, Survival)
+        self.equipment = (
+            ([(Greataxe, 1)],
+             [((Martial, Melee), 1)]
+             ),
+            ([(Handaxe, 2)],
+             [(Simple, 1)]
+             ),
+            ([(ExplorerPack, 1)]),
+            ([(Javelin, 4)])
         )
 
 class_list = {class_.name: class_ for class_ in CharacterClass.__subclasses__()}

@@ -9,6 +9,8 @@ from Character_Sheet.reference.glossary import common_languages, exotic_language
 from Character_Sheet.reference.classes import class_list
 from Character_Sheet.reference.skills_and_attributes import skills_list
 
+# from Character_Sheet.reference.equipment import Martial, Simple, Ranged, Melee
+
 global current_race_instance, current_subrace_instance
 
 
@@ -984,7 +986,26 @@ def Class():
     def equipment_selection(current_class):
         equipment_list = current_class.equipment
 
-        # for selection
+        for selection in equipment_list:
+            if len(selection) > 1:
+                for n, option in enumerate(selection):
+                    print(f'Option {n+1}:')
+                    for item in option:
+                        if isinstance(item[0], tuple):
+                            conditions = item[0]
+                            print("Multiple conditions")
+                            print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
+
+                        elif item[0].__subclasses__():
+                            print([item.name for item in item[0].__subclasses__()])
+                        else:
+                            print(item[0].name)
+            else:
+                print("Entry")
+
+            print("\n")
+
+            # for choices in selection
 
     class_frame = tk.Frame(class_tab,
                            relief=tk.SUNKEN,
@@ -1170,7 +1191,6 @@ def resize_tabs():
     tab_manager.configure(height=current_tab.winfo_reqheight(),
                           width=current_tab.winfo_reqwidth())
 
-
 tab_manager.bind("<<NotebookTabChanged>>", change_tabs)
 
 character = {}
@@ -1180,10 +1200,6 @@ Title()
 Info().pack()
 Class().pack()
 Race().pack()
-
-# info_frame.pack()
-# class_frame.pack()
-# race_frame.pack()
 
 tab_manager.pack()
 character_creator.pack()

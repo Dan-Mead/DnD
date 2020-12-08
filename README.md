@@ -2,6 +2,8 @@
 
 Repo for my personal DnD project work. End goal is an automated character sheet, similar to Dnd Beyond but without paywalls for content (means I cannot distribute this subsequently). Written entirely in Python, using Tkinter for GUI components.
 
+Should work with out-of-the-box Python 3. If not, ensure Tkinter and Pickle are installed.
+
 Currently, the character creator GUI is working. Using it you can create a character, give it basic information, assign one of the implemented races and classes. Saving and loading should fully work. Some class features are incomplete.
 
 Next stages are:

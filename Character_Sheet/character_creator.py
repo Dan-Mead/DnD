@@ -2,10 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import pickle
+from num2words import num2words
 
 from Character_Sheet.reference.races import race_list
 from Character_Sheet.reference.feats import feat_list, unpack_desc
-from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs, skills_dict
+from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs
 from Character_Sheet.reference.classes import class_list
 from Character_Sheet.reference.skills_and_attributes import skills_list
 
@@ -989,34 +990,85 @@ def Class():
                 self.frame = tk.Frame(class_equipment_internal_frame)
                 equipment_choices["selections"].append(self.tracking_variable)
                 for i, options in enumerate(choices):
-                    print(f"Option {i}")
                     text = []
                     for j, item in enumerate(options):
                         if isinstance(item[0], tuple):
-                            # conditions = item[0]
-                            text.append("Multiple conditions")
-                            # print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
+                            conditions = item[0]
+                            # This assumes only two conditions, may prove to not be correct in the future but hey.
+                            parent_1 = set(list(conditions[0].__bases__))
+                            parent_2 = set(list(conditions[1].__bases__))
+
+                            common_parent = list(parent_1.intersection(parent_2)) # assume only one common parent
+
+                            text_entry = f'{conditions[0].__name__} {conditions[1].__name__} {common_parent[0].__name__}'.lower()
+                            if item[1] == 1:
+                                if len(options) > 1:
+                                    if text_entry[0].lower() in ["a", "e", "i", "o", "u", "h"]:
+                                        start = "an "
+                                    else:
+                                        start = "a "
+                                else:
+                                    start = "any "
+                                end = ""
+                            else:
+                                start = num2words(item[1]) + " "
+                                end = "s"
+                            text_entry = start + text_entry + end
+                            text.append(text_entry)
 
                         elif item[0].__subclasses__():
-                            text.append("Single condition")
-                            # print([item.name for item in item[0].__subclasses__()])
+                            text_entry = f'{item[0].__name__} {item[0].__bases__[0].__name__}'.lower()
+                            if item[1] == 1:
+                                if len(options) > 1:
+                                    if text_entry[0].lower() in ["a", "e", "i", "o", "u", "h"]:
+                                        start = "an "
+                                    else:
+                                        start = "a "
+                                else:
+                                    start = "any "
+                                end = ""
+                            else:
+                                start = num2words(item[1]) + " "
+                                end = "s"
+                            text_entry = start + text_entry + end
+                            text.append(text_entry)
                         else:
-                            text.append(item[0].name)
-                            # print(item[0].name)
+                            if item[1] == 1:
+                                if item[0].name[0].lower() in ["a", "e", "i", "o", "u", "h"]:
+                                    text_entry = "an"
+                                else:
+                                    text_entry = "a"
+                                text.append(f'{text_entry} {item[0].name.lower()}')
+                            else:
+                                text.append(f'{num2words(item[1])} {item[0].name.lower()}s')
 
-                    print(", ".join(text))
+                    if len(text) > 2:
+                        text[-1] = " and " + text[-1]
+                        text = ", ".join(text)
+                    elif len(text) == 2:
+                        text = " and ".join(text)
+                    else:
+                        text = " ".join(text)
+
+                    text = text[0].upper() + text[1:]
+                    text += "."
 
                     button = tk.Radiobutton(self.frame,
                                             value=i,
                                             variable=self.tracking_variable,
-                                            text=", ".join(text))
+                                            text=text)
                     button.grid(row=i, sticky=tk.W)
                     if i == 0:
                         button.select()
                 self.frame.update()
 
-                self.frame.pack(fill="both", expand=True)
-                ttk.Separator(class_equipment_internal_frame).pack(fill="x", expand=True)
+                self.frame.grid(row=index * 2, column=0, sticky=tk.EW)
+                ttk.Separator(class_equipment_internal_frame).grid(row=index * 2 + 1, column=0, columnspan=10,
+                                                                   sticky=tk.EW)
+
+            # # conditions = item[0]
+            # text.append("Multiple conditions")
+            # # print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
 
         for child_widget in class_equipment_internal_frame.winfo_children():
             child_widget.destroy()
@@ -1032,7 +1084,7 @@ def Class():
         for selection in equipment_list:
             num_options = len(selection)
             if num_options > 1:
-                # equipment_selection(num_selections, selection)
+                equipment_selection(num_selections, selection)
 
                 num_selections += 1
             else:

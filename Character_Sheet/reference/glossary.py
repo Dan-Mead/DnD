@@ -11,3 +11,5 @@ skills_dict = dict(acrobatics=["Acrobatics", "DEX"], animal_handling=["Animal Ha
                    perception=["Perception", "WIS"], performance=["Performance", "CHA"],
                    persuasion=["Persuasion", "CHA"], religion=["Religion", "INT"],
                    sleight_of_hand=["Sleight of Hand", "DEX"], stealth=["Stealth", "DEX"], survival=["Survival", "WIS"])
+
+alpha_numeric = dict(number_words=["zero", "one", "two"])

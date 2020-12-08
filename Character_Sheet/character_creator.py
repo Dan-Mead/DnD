@@ -526,7 +526,6 @@ def Race():
                 skill_chooser.set("")
                 skill_chooser.pack_forget()
 
-
         skill_chooser_frame.pack()
 
     def feat(valid_feats):
@@ -773,8 +772,6 @@ def Race():
     race_skill_choosers = [skill_chooser_1, skill_chooser_2]
     race_skills_choices = [race_skill_choice_1, race_skill_choice_2]
 
-
-
     feat_chooser_frame = tk.Frame(race_features_internal_frame)
 
     feat_chooser_label = tk.Label(feat_chooser_frame,
@@ -975,7 +972,6 @@ def Class():
             valid_skills = [skill.name for skill in current_class_instance.valid_skills]
 
         for n, skill_chooser in enumerate(class_skill_choosers_list):
-
             current_chooser_choice = class_skill_choices[n].get()
             invalid_choices = chosen_skills.copy()
             invalid_choices.remove(current_chooser_choice)
@@ -984,22 +980,61 @@ def Class():
             class_skill_choosers_list[n]["values"] = skills_options
 
     def equipment_selection(current_class):
-        equipment_list = current_class.equipment
 
-        for selection in equipment_list:
-            if len(selection) > 1:
-                for n, option in enumerate(selection):
-                    print(f'Option {n+1}:')
-                    for item in option:
+        class equipment_selection:
+
+            def __init__(self, index, choices):
+                self.index = index
+                self.tracking_variable = tk.IntVar()
+                self.frame = tk.Frame(class_equipment_internal_frame)
+                equipment_choices["selections"].append(self.tracking_variable)
+                for i, options in enumerate(choices):
+                    print(f"Option {i}")
+                    text = []
+                    for j, item in enumerate(options):
                         if isinstance(item[0], tuple):
-                            conditions = item[0]
-                            print("Multiple conditions")
-                            print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
+                            # conditions = item[0]
+                            text.append("Multiple conditions")
+                            # print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
 
                         elif item[0].__subclasses__():
-                            print([item.name for item in item[0].__subclasses__()])
+                            text.append("Single condition")
+                            # print([item.name for item in item[0].__subclasses__()])
                         else:
-                            print(item[0].name)
+                            text.append(item[0].name)
+                            # print(item[0].name)
+
+                    print(", ".join(text))
+
+                    button = tk.Radiobutton(self.frame,
+                                            value=i,
+                                            variable=self.tracking_variable,
+                                            text=", ".join(text))
+                    button.grid(row=i, sticky=tk.W)
+                    if i == 0:
+                        button.select()
+                self.frame.update()
+
+                self.frame.pack(fill="both", expand=True)
+                ttk.Separator(class_equipment_internal_frame).pack(fill="x", expand=True)
+
+        for child_widget in class_equipment_internal_frame.winfo_children():
+            child_widget.destroy()
+
+        equipment_list = current_class.equipment
+
+        equipment_choices = {"selections": [],
+                             "choices": []}
+
+        num_selections = 0
+        num_choices = 0
+
+        for selection in equipment_list:
+            num_options = len(selection)
+            if num_options > 1:
+                # equipment_selection(num_selections, selection)
+
+                num_selections += 1
             else:
                 print("Entry")
 
@@ -1117,12 +1152,19 @@ def Class():
 
     class_equipment_frame = tk.Frame(class_right_frame)
 
-    class_equipment_label = tk.Label(class_equipment_frame,
-                                     text="Class Equipment:",
-                                     font=default_font + " 8 bold")
+    tk.Label(class_equipment_frame,
+             text="Class Equipment:",
+             font=default_font + " 8 bold").pack()
+
+    tk.Label(class_equipment_frame,
+             text="You recieve the following items, plus any provided by your background:",
+             font=default_font + " 8",
+             wraplength=220).pack()
+
+    class_equipment_internal_frame = tk.Frame(class_equipment_frame)
 
     class_equipment_frame.pack()
-    class_equipment_label.pack()
+    class_equipment_internal_frame.pack(fill="x", expand=True)
 
     class_info_frame.pack()
     class_top_label.pack()
@@ -1190,6 +1232,7 @@ def resize_tabs():
     current_tab = tab_manager.nametowidget(tab_manager.select())
     tab_manager.configure(height=current_tab.winfo_reqheight(),
                           width=current_tab.winfo_reqwidth())
+
 
 tab_manager.bind("<<NotebookTabChanged>>", change_tabs)
 

@@ -3,4 +3,6 @@ from tkinter import ttk
 
 from num2words import num2words
 
-print(num2words(2))
+from Character_Sheet.reference.equipment import *
+
+print(Warhammer.syntax(1))

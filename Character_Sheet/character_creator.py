@@ -41,7 +41,19 @@ def import_info(filename):
 def update_character_info():
     character_data = {}
     for name, item in character.items():
-        character_data[name] = item.get()
+
+        if isinstance(item, (list, tuple)):
+            print("Alternative methods required")
+        elif isinstance(item, dict):
+            character_data[name] = {}
+            for key, value in item.items():
+                if not isinstance(value[0], (list, tuple)):
+                    character_data[name][key] = [val.get() for val in value]
+                else:
+                    character_data[name][key] = [[v.get() for v in val] for val in value]
+        else:
+            character_data[name] = item.get()
+
     return character_data
 
 
@@ -58,16 +70,36 @@ def load():
 
     character_data = import_info(filename)
 
-    for key, value in character.items():
+    second_stage_imports = []
+
+    for key, value in character_data.items():
         try:
-            text = character_data[key]
-            if isinstance(value, tk.ttk.Combobox) or isinstance(value, tk.StringVar):
-                value.set(text)
+            input = character_data[key]
+            destination = character[key]
+            if isinstance(destination, tk.ttk.Combobox) or isinstance(destination, tk.StringVar):
+                destination.set(input)
+            elif isinstance(destination, dict):
+                second_stage_imports.append((key, value))
             else:
-                value.delete(0, tk.END)
-                value.insert(0, text)
-        except:
-            pass
+                destination.delete(0, tk.END)
+                destination.insert(0, input)
+        except Exception as print_error:
+            print(key)
+            print(character[key])
+            print(value)
+            print(print_error)
+
+    for aspect in second_stage_imports:
+        key, value = aspect
+        for subkey, subvalue in value.items():
+            update_character_info()
+            if not isinstance(subvalue[0], (list, tuple)):
+                for n, variable in enumerate(character[key][subkey]):
+                    variable.set(subvalue[n])
+            else:
+                for i, sublist in enumerate(character[key][subkey]):
+                    for j, variable in enumerate(sublist):
+                        variable.set(subvalue[i][j])
 
     resize_tabs()
 
@@ -109,6 +141,19 @@ def exit():
 
 def get_chosen_skills(character):
     return [character[choice].get() for choice in character.keys() if "Skill" in choice]
+
+def text_join(text, capitalise, sentence_end):
+    if len(text) > 2:
+        text = ", ".join(text[:-1]) + f", and {text[-1]}"
+    else:
+        text = " and ".join(text)
+
+    text += sentence_end
+
+    if capitalise:
+        text = text[0].upper() + text[1:]
+
+    return text
 
 
 # Creation of Frames
@@ -665,20 +710,23 @@ def Race():
 
     def changed_subrace(*args):
         global current_subrace_instance
-        if race_list[current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
-            current_subrace_instance = \
-                {subrace.subrace_name: subrace for subrace in current_race_instance.__subclasses__()}[
-                    current_subrace.get()]
-            asi_frame.grid_forget()
-            bottom_divider.grid_forget()
-            ASI()
-            other_features()
 
-        elif current_subrace.get() == subrace_choice_prompt:
-            race_features_frame.grid_forget()
-            current_subrace_instance = None
+        if current_race.get() != 'Choose race: ':
 
-        resize_tabs()
+            if race_list[current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
+                current_subrace_instance = \
+                    {subrace.subrace_name: subrace for subrace in current_race_instance.__subclasses__()}[
+                        current_subrace.get()]
+                asi_frame.grid_forget()
+                bottom_divider.grid_forget()
+                ASI()
+                other_features()
+
+            elif current_subrace.get() == subrace_choice_prompt:
+                race_features_frame.grid_forget()
+                current_subrace_instance = None
+
+            resize_tabs()
 
     current_subrace.trace('w', changed_subrace)
 
@@ -911,38 +959,48 @@ def Class():
     def class_choice_changed(*args):
         global current_class_instance
 
-        current_class_instance = class_list[current_class_choice.get()]()
-        class_ = current_class_instance
-        class_.base_features()
-        class_top_label["text"] = f"{class_.name} features:"
-        text = ""
-        text += f"Hit Dice: {class_.hit_die}\n"
-        text += f"Level up HP: {class_.lvl_up_hp}\n"
+        if current_class_choice.get() != "":
+            current_class_instance = class_list[current_class_choice.get()]()
+            class_ = current_class_instance
+            class_.base_features()
+            class_top_label["text"] = f"{class_.name} features:"
+            text = ""
 
-        text += f"\nArmour Proficiencies:\n" \
-                f"{', '.join([class_.__name__ for class_ in class_.armour_proficiencies])}\n"
+            text += f"Primary Attribute{'s' if len(current_class_instance.primary_attr) > 1 else ''}:\n"
+            text += " and ".join([attr.name for attr in current_class_instance.primary_attr]) + "\n"
 
-        text += f"\nWeapon Proficiencies:\n" \
-                f"{', '.join([class_.name for class_ in class_.weapon_proficiencies])}\n"
+            text += f"\nSaving Throw Proficiencies:\n" \
+                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
 
-        text += f"\nTool Proficiencies:\n" \
-                f"{', '.join([class_.name if class_ else 'None' for class_ in class_.tool_proficiencies])}\n"
+            text += f"\nArmour Proficiencies:\n" \
+                    f"{', '.join([class_.__name__ if class_ else 'None' for class_ in class_.armour_proficiencies])}\n"
 
-        text += f"\nSaving Throw Proficiencies:\n" \
-                f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
-        class_basic_info_text["text"] = text
+            text += f"\nWeapon Proficiencies:\n" \
+                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.weapon_proficiencies])}\n"
 
-        class_left_frame.grid(column=0, row=0, sticky="n", padx=4)
-        class_central_frame.grid(column=2, row=0, sticky="n", padx=4)
-        class_right_frame.grid(column=4, row=0, sticky="n", padx=4)
+            text += f"\nTool Proficiencies:\n" \
+                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.tool_proficiencies])}\n"
 
-        class_divider_1.grid(column=1, row=0, rowspan=10, sticky="NS")
-        class_divider_2.grid(column=3, row=0, rowspan=10, sticky="NS")
+            text += f"\nHit Dice: {class_.hit_die}\n"
+            text += f"Level up HP: {class_.lvl_up_hp}\n"
 
-        skill_choosers(current_class_instance)
-        equipment_selection(current_class_instance)
+            class_basic_info_text["text"] = text
 
-        resize_tabs()
+            class_left_frame.grid(column=0, row=0, sticky="n", padx=4)
+            class_central_frame.grid(column=2, row=0, sticky="n", padx=4)
+            class_right_frame.grid(column=4, row=0, sticky="n", padx=4)
+
+            class_divider_1.grid(column=1, row=0, rowspan=10, sticky="NS")
+            class_divider_2.grid(column=3, row=0, rowspan=10, sticky="NS")
+
+            skill_choosers(current_class_instance)
+            equipment_selection(current_class_instance)
+
+            class_description.set(f'{class_.desc}\n\n\n{class_.rpgbot}')
+
+            class_subclass_lvl_label["text"] = f'\n{class_.name}s choose their {class_.subclass_name} at level {class_.subclass_lvl}, selecting from:\n{"LIST HERE"}'
+
+            resize_tabs()
 
     def skill_choosers(current_class):
         for chooser in class_skill_choosers_list:
@@ -989,6 +1047,7 @@ def Class():
                 self.tracking_variable = tk.IntVar()
                 self.frame = tk.Frame(class_equipment_internal_frame)
                 equipment_choices["selections"].append(self.tracking_variable)
+                equipment_choices["selection_options"].append(choices)
                 for i, options in enumerate(choices):
                     text = []
                     for j, item in enumerate(options):
@@ -998,77 +1057,98 @@ def Class():
                             parent_1 = set(list(conditions[0].__bases__))
                             parent_2 = set(list(conditions[1].__bases__))
 
-                            common_parent = list(parent_1.intersection(parent_2)) # assume only one common parent
+                            common_parent = list(parent_1.intersection(parent_2))  # assume only one common parent
 
-                            text_entry = f'{conditions[0].__name__} {conditions[1].__name__} {common_parent[0].__name__}'.lower()
-                            if item[1] == 1:
-                                if len(options) > 1:
-                                    if text_entry[0].lower() in ["a", "e", "i", "o", "u", "h"]:
-                                        start = "an "
-                                    else:
-                                        start = "a "
-                                else:
-                                    start = "any "
-                                end = ""
-                            else:
-                                start = num2words(item[1]) + " "
-                                end = "s"
-                            text_entry = start + text_entry + end
-                            text.append(text_entry)
-
+                            text_entry = f'{conditions[0].syntax_start(item[1])} {conditions[1].__name__} {common_parent[0].syntax_end(item[1])}'.lower()
                         elif item[0].__subclasses__():
-                            text_entry = f'{item[0].__name__} {item[0].__bases__[0].__name__}'.lower()
-                            if item[1] == 1:
-                                if len(options) > 1:
-                                    if text_entry[0].lower() in ["a", "e", "i", "o", "u", "h"]:
-                                        start = "an "
-                                    else:
-                                        start = "a "
-                                else:
-                                    start = "any "
-                                end = ""
-                            else:
-                                start = num2words(item[1]) + " "
-                                end = "s"
-                            text_entry = start + text_entry + end
-                            text.append(text_entry)
+                            text_entry = f'{item[0].syntax_start(item[1])} {item[0].__bases__[0].syntax_end(item[1])}'.lower()
                         else:
-                            if item[1] == 1:
-                                if item[0].name[0].lower() in ["a", "e", "i", "o", "u", "h"]:
-                                    text_entry = "an"
-                                else:
-                                    text_entry = "a"
-                                text.append(f'{text_entry} {item[0].name.lower()}')
-                            else:
-                                text.append(f'{num2words(item[1])} {item[0].name.lower()}s')
+                            text_entry = item[0].syntax(item[1])
 
-                    if len(text) > 2:
-                        text[-1] = " and " + text[-1]
-                        text = ", ".join(text)
-                    elif len(text) == 2:
-                        text = " and ".join(text)
-                    else:
-                        text = " ".join(text)
+                        text.append(text_entry)
 
-                    text = text[0].upper() + text[1:]
-                    text += "."
+                    text = text_join(text, True, "")
 
                     button = tk.Radiobutton(self.frame,
                                             value=i,
                                             variable=self.tracking_variable,
-                                            text=text)
+                                            text=text,
+                                            command=self.changed_selection)
                     button.grid(row=i, sticky=tk.W)
                     if i == 0:
                         button.select()
+
+                    self.tracking_variable.trace("w", self.changed_selection_auto)
+
                 self.frame.update()
 
-                self.frame.grid(row=index * 2, column=0, sticky=tk.EW)
-                ttk.Separator(class_equipment_internal_frame).grid(row=index * 2 + 1, column=0, columnspan=10,
+                self.frame.grid(row=index * 2, column=0, sticky=tk.W)
+                ttk.Separator(class_equipment_internal_frame).grid(row=index * 2 + 1, column=0, columnspan=3,
                                                                    sticky=tk.EW)
 
-            # # conditions = item[0]
-            # text.append("Multiple conditions")
-            # # print([item.name for item in conditions[0].__subclasses__() if issubclass(item, conditions[1])])
+            def changed_selection(self):
+                get_choice_options(self.index)
+
+            def changed_selection_auto(self, *args):
+                self.tracking_variable
+                get_choice_options(self.index)
+
+        def get_choice_options(selection_index):
+            current_selection_choice = equipment_choices["selections"][selection_index].get()
+
+            current_selection_options = equipment_choices["selection_options"][selection_index][
+                current_selection_choice]
+
+            for child_widget in class_equipment_internal_frame.grid_slaves():
+                if int(child_widget.grid_info()["column"]) > 0 and int(
+                        child_widget.grid_info()["row"]) == 2 * selection_index:
+                    for grandchild in child_widget.winfo_children():
+                        grandchild.destroy()
+                    child_widget.grid_forget()
+
+            chooser_frame = tk.Frame(class_equipment_internal_frame)
+
+            choices = []
+
+            for option in current_selection_options:
+
+                for n in range(option[1]):
+
+                    if isinstance(option[0], tuple):
+
+                        option_choice = tk.StringVar()
+                        choices.append(option_choice)
+
+                        conditions = option[0]
+                        choice_options = ([condition.name for condition in conditions[0].__subclasses__() if
+                                           issubclass(condition, conditions[1])])
+
+                        chooser = ttk.Combobox(chooser_frame,
+                                               state="readonly",
+                                               values=choice_options,
+                                               textvariable=option_choice)
+                        chooser.set(f"Choose {conditions[0].__bases__[0].__name__.lower()}:")
+                        chooser.pack(pady=2)
+
+                    else:
+                        if option[0].__subclasses__():
+                            option_choice = tk.StringVar()
+                            choices.append(option_choice)
+
+                            choice_options = ([option.name for option in option[0].__subclasses__()])
+
+                            chooser = ttk.Combobox(chooser_frame,
+                                                   state="readonly",
+                                                   values=choice_options,
+                                                   textvariable=option_choice)
+                            chooser.set(f"Choose {option[0].__bases__[0].__name__.lower()}:")
+                            chooser.pack(pady=2)
+
+            chooser_frame.grid(row=selection_index * 2, column=1)
+
+            equipment_choices["choices"][selection_index] = choices
+
+            resize_tabs()
 
         for child_widget in class_equipment_internal_frame.winfo_children():
             child_widget.destroy()
@@ -1076,23 +1156,31 @@ def Class():
         equipment_list = current_class.equipment
 
         equipment_choices = {"selections": [],
+                             "selection_options": [],
                              "choices": []}
 
         num_selections = 0
-        num_choices = 0
+        final_text = []
+        final_equipment.pack_forget()
 
         for selection in equipment_list:
             num_options = len(selection)
             if num_options > 1:
                 equipment_selection(num_selections, selection)
-
+                equipment_choices["choices"].append([])
+                get_choice_options(num_selections)
                 num_selections += 1
             else:
-                print("Entry")
+                num_items = selection[0][1]
+                final_text.append(selection[0][0]().syntax(num_items))
 
-            print("\n")
+        final_equipment["text"] = text_join(final_text, True, "")
+        final_equipment.pack(anchor="w")
 
-            # for choices in selection
+        export_choices = equipment_choices.copy()
+        del export_choices["selection_options"]
+
+        character["equipment_choices"] = export_choices
 
     class_frame = tk.Frame(class_tab,
                            relief=tk.SUNKEN,
@@ -1126,6 +1214,14 @@ def Class():
     class_top_label = tk.Label(class_info_frame,
                                font=default_font + " 10 bold")
 
+    class_description = tk.StringVar()
+
+    class_description_label = tk.Label(class_info_frame,
+                                       textvariable=class_description,
+                                       font=default_font + " 8",
+                                       wraplength=640)
+    class_description_label.pack(pady=8)
+
     class_features_internal_frame = tk.Frame(class_info_frame)
 
     class_left_frame = tk.Frame(class_features_internal_frame)
@@ -1133,7 +1229,7 @@ def Class():
     class_basic_info_text = tk.Label(class_left_frame,
                                      font=default_font + " 8",
                                      justify=tk.CENTER,
-                                     wraplength=240
+                                     wraplength=160
                                      )
 
     class_basic_info_label = tk.Label(class_left_frame,
@@ -1150,6 +1246,8 @@ def Class():
                                     orient=tk.VERTICAL)
 
     class_central_frame = tk.Frame(class_features_internal_frame)
+
+    class_primary_attributes = tk.StringVar()
 
     class_skills_frame = tk.Frame(class_central_frame)
 
@@ -1200,6 +1298,13 @@ def Class():
     class_skills_frame.pack()
     class_skills_choosers_frame.pack()
 
+    class_subclass_lvl_frame = tk.Frame(class_central_frame)
+    class_subclass_lvl_label = tk.Label(class_subclass_lvl_frame,
+                                        font=default_font+" 8",
+                                        wraplength=200)
+    class_subclass_lvl_label.pack()
+    class_subclass_lvl_frame.pack()
+
     class_right_frame = tk.Frame(class_features_internal_frame)
 
     class_equipment_frame = tk.Frame(class_right_frame)
@@ -1217,6 +1322,9 @@ def Class():
 
     class_equipment_frame.pack()
     class_equipment_internal_frame.pack(fill="x", expand=True)
+
+    final_equipment = tk.Label(class_equipment_frame,
+                               justify=tk.LEFT)
 
     class_info_frame.pack()
     class_top_label.pack()

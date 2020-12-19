@@ -2,13 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import pickle
-from num2words import num2words
+import textwrap
 
 from Character_Sheet.reference.races import race_list
 from Character_Sheet.reference.feats import feat_list, unpack_desc
 from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs
 from Character_Sheet.reference.classes import class_list
 from Character_Sheet.reference.skills_and_attributes import skills_list
+from Character_Sheet.reference.subclasses import *
+from Character_Sheet.reference.backgrounds import *
 
 # from Character_Sheet.reference.equipment import Martial, Simple, Ranged, Melee
 
@@ -141,6 +143,7 @@ def exit():
 
 def get_chosen_skills(character):
     return [character[choice].get() for choice in character.keys() if "Skill" in choice]
+
 
 def text_join(text, capitalise, sentence_end):
     if len(text) > 2:
@@ -998,7 +1001,12 @@ def Class():
 
             class_description.set(f'{class_.desc}\n\n\n{class_.rpgbot}')
 
-            class_subclass_lvl_label["text"] = f'\n{class_.name}s choose their {class_.subclass_name} at level {class_.subclass_lvl}, selecting from:\n{"LIST HERE"}'
+            subclass_list = "\n".join(
+                sorted([subclass.name for subclass in current_class_instance.__class__.__subclasses__()],
+                       key=str.lower))
+
+            class_subclass_lvl_label[
+                "text"] = f'\n{class_.name}s choose their {class_.subclass_name} at level {class_.subclass_lvl}, selecting from:\n\n{subclass_list}'
 
             resize_tabs()
 
@@ -1300,7 +1308,7 @@ def Class():
 
     class_subclass_lvl_frame = tk.Frame(class_central_frame)
     class_subclass_lvl_label = tk.Label(class_subclass_lvl_frame,
-                                        font=default_font+" 8",
+                                        font=default_font + " 8",
                                         wraplength=200)
     class_subclass_lvl_label.pack()
     class_subclass_lvl_frame.pack()
@@ -1339,6 +1347,75 @@ def Class():
     return class_frame
 
 
+def Background_():
+    def changed_background(*args):
+        background_choice_instance = background_list[background_choice.get()]()
+
+        background_name_text_var.set(background_choice_instance.name)
+
+        background_desc_text.delete('1.0', tk.END)
+        background_desc_text.insert(tk.END, background_choice_instance.feature)
+
+
+        # Check text height and adjust box
+        text_height = (len(textwrap.wrap(background_choice_instance.feature, background_desc_text['width']))
+                       + background_choice_instance.feature.count("\n"))
+        background_desc_text['height'] = text_height
+
+        background_desc_text.update()
+
+        background_name_text.pack()
+        background_desc_text.pack(pady=4)
+
+        resize_tabs()
+
+    background_frame = tk.Frame(background_tab,
+                                relief=tk.SUNKEN,
+                                borderwidth=4,
+                                )
+
+    background_label = tk.Label(background_frame,
+                                text="Background",
+                                font=default_font + " 12 bold")
+
+    background_label.pack(pady=8)
+
+    background_chooser_frame = tk.Frame(background_frame)
+
+    background_chooser_label = tk.Label(background_chooser_frame,
+                                        text="Choose background template:",
+                                        font=default_font + " 8")
+
+    background_choice = tk.StringVar()
+    background_choice.trace("w", changed_background)
+    background_chooser = ttk.Combobox(background_chooser_frame,
+                                      state='readonly',
+                                      values=[bg.name for bg in Background.__subclasses__()],
+                                      textvariable=background_choice)
+
+    background_chooser_label.pack()
+    background_chooser.pack()
+    background_chooser_frame.pack()
+
+    background_features_frame = tk.Frame(background_frame)
+    background_name_text_var = tk.StringVar()
+    background_name_text = tk.Entry(background_features_frame,
+                                    textvariable=background_name_text_var,
+                                    justify="center")
+
+    background_desc_text = tk.Text(background_features_frame,
+                                   height=10,
+                                   width=80,
+                                   wrap=tk.WORD)
+
+    background_features_frame.pack(pady=8)
+
+    background_features_dict = {'background_choice': background_chooser,
+                                'background_name': background_name_text}
+
+    return background_frame
+
+
 window = tk.Tk()
 window.title("Character Creator")
 default_font = "Verdana"
@@ -1359,11 +1436,17 @@ class_tab = ttk.Frame(tab_manager,
                       relief=tk.FLAT,
                       borderwidth=5)
 
+background_tab = ttk.Frame(tab_manager,
+                           relief=tk.FLAT,
+                           borderwidth=5)
+
 tab_manager.add(info_tab, text="Info")
 
 tab_manager.add(race_tab, text="Race")
 
 tab_manager.add(class_tab, text="Class")
+
+tab_manager.add(background_tab, text="Background")
 
 
 def change_tabs(event):
@@ -1371,11 +1454,6 @@ def change_tabs(event):
     current_tab = event.widget.nametowidget(event.widget.select())
     event.widget.configure(height=current_tab.winfo_reqheight(),
                            width=current_tab.winfo_reqwidth())
-
-    # tab_manager.update_idletasks()
-    # current_tab = tab_manager.nametowidget(tab_manager.select())
-    # tab_manager.configure(height=current_tab.winfo_reqheight(),
-    #                       width=current_tab.winfo_reqwidth())
 
     character_creator.update_idletasks()
     tab_manager.update_idletasks()
@@ -1403,6 +1481,7 @@ Title()
 Info().pack()
 Class().pack()
 Race().pack()
+Background_().pack()
 
 tab_manager.pack()
 character_creator.pack()
@@ -1414,47 +1493,8 @@ style.configure('TNotebook', tabposition='n')
 
 windowWidth = window.winfo_reqwidth()
 windowHeight = window.winfo_reqheight()
-position_right = int(window.winfo_screenwidth() / 2 - windowHeight / 2)
-position_down = int(window.winfo_screenheight() / 3 - windowHeight / 2)
+position_right = int(window.winfo_screenwidth() / 3 - windowHeight / 2)
+position_down = int(window.winfo_screenheight() / 4 - windowHeight / 2)
 window.geometry(f"+{position_right}+{position_down}")
-
-# character_creation_frame = tk.Frame(window,
-#                                     relief=tk.FLAT,
-#                                     borderwidth=5)
-
-# ## Frames list
-#
-# middle_frames = [Info,
-#                  Race,
-#                  Class]
-#
-# middle_frames = [Class,
-#                  Info,
-#                  Race]
-
-# form_data = [None] * len(middle_frames)
-#
-# for n, frame in enumerate(middle_frames):
-#     middle_frames[n] = frame(n)
-#     middle_frames[n].pack_forget()
-#
-# character = {}
-#
-# ## Packing Character Creation
-
-# Title()
-# middle_frame_index = 0
-# middle_frames[middle_frame_index].pack(fill=tk.X)
-#
-# page_number_text = tk.StringVar()
-# page_number_text.set(f'Page {middle_frame_index + 1} of {len(middle_frames)}')
-#
-# page_number = tk.Label(character_creation_frame, textvariable=page_number_text)
-# page_number.pack()
-# Buttons()
-
-# Packing Main Page
-
-# character_creation_frame.pack()
 
 window.mainloop()

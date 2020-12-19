@@ -1,10 +1,10 @@
 import inspect
 import sys
 
-class feat:
+class Feat:
     pass
 
-class Actor(feat):
+class Actor(Feat):
     name = "Actor"
     prereq = False
     desc = {"Skilled at mimicry and dramatics, you gain the "
@@ -22,7 +22,7 @@ class Actor(feat):
                       ]}
 
 
-class Heavily_Armored(feat):
+class Heavily_Armored(Feat):
     name = "Heavily Armored"
     prereq = ['armor', 'medium']
     desc = {"You have trained to master the use of heavy armor, "
@@ -31,7 +31,7 @@ class Heavily_Armored(feat):
                           'Heavy Armour proficiency']}
 
 
-class Shield_Master(feat):
+class Shield_Master(Feat):
     name = "Shield Master"
     prereq = False
     desc = {"You use shields not just for protection but also for "
@@ -51,7 +51,7 @@ class Shield_Master(feat):
                           "interposing your shield between yourself and the "
                           "source of the effect."]}
 
-feat_list = dict([(feat.name, feat) for feat in feat.__subclasses__()])
+feat_list = dict([(feat.name, feat) for feat in Feat.__subclasses__()])
 
 def unpack_desc(entry):
     text = list(entry.keys())

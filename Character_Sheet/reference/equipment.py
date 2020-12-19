@@ -35,6 +35,15 @@ class Ammo(Equipment):
 class Tools(Equipment):
     pass
 
+class GamingSet(Tools):
+    name = "Gaming Set"
+    plural = 0
+
+
+class Instrument(Tools):
+    name = "Musical Instrument"
+    plural = 0
+
 
 # Weapons
 
@@ -252,7 +261,7 @@ class Shield(Shields):
     plural = 0
 
 
-# Misc.
+# Magic.
 
 class HolySymbol(Magic):
     name = "Holy Symbol"
@@ -307,6 +316,33 @@ class ThievesTools(Tools):
     name = "Thieves' Tools"
     plural = 1
 
+class DeckofCards(GamingSet):
+    name = "Deck of Cards"
+    plural = 3
+    plural_actual = "Decks of Cards"
+
+class Horn(Instrument):
+    name = "Horn"
+    plural = 0
+
+class TravellersClothes(Misc):
+    name = "Traveller's Clothes"
+    plural = 1
+
+class Pouch(Misc):
+    name = "Pouch"
+    plural = 3
+    plural_actual = "Pouches"
+
+
+
+class Custom_Misc(Misc):
+    def __init__(self, name, desc, plural = 0, *plural_actual):
+        self.name = name
+        self.desc = desc
+        self.plural = plural
+        if plural == 3:
+            self.plural_actual = plural_actual
 
 if __name__ == '__main__':
     pass

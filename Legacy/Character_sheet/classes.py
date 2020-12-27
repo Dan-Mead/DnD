@@ -1,8 +1,6 @@
 import inspect
 import sys
 
-from addict import Dict
-
 import helper_functions as f
 from features import get_feature
 from items import get_item

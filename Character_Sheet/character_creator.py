@@ -1,16 +1,15 @@
-import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
 import pickle
 import textwrap
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
 
-from Character_Sheet.reference.races import race_list
-from Character_Sheet.reference.feats import feat_list, unpack_desc
-from Character_Sheet.reference.glossary import common_languages, exotic_languages, attrs
-from Character_Sheet.reference.classes import class_list
-from Character_Sheet.reference.skills_and_attributes import skills_list
-from Character_Sheet.reference.subclasses import *
 from Character_Sheet.reference.backgrounds import *
+from Character_Sheet.reference.feats import feat_list, unpack_desc
+from Character_Sheet.reference.glossary import common_languages, \
+    exotic_languages
+from Character_Sheet.reference.races import race_list
+from Character_Sheet.reference.subclasses import *
 
 # from Character_Sheet.reference.equipment import Martial, Simple, Ranged, Melee
 
@@ -52,7 +51,8 @@ def update_character_info():
                 if not isinstance(value[0], (list, tuple)):
                     character_data[name][key] = [val.get() for val in value]
                 else:
-                    character_data[name][key] = [[v.get() for v in val] for val in value]
+                    character_data[name][key] = [[v.get() for v in val] for val
+                                                 in value]
         else:
             character_data[name] = item.get()
 
@@ -67,8 +67,9 @@ def save():
 def load():
     filename = tk.filedialog.askopenfilename(initialdir="saves/",
                                              title="Select save file",
-                                             filetypes=(("Pickled Files", "*.pkl"),
-                                                        ("all files", "*.*")))
+                                             filetypes=(
+                                                 ("Pickled Files", "*.pkl"),
+                                                 ("all files", "*.*")))
 
     character_data = import_info(filename)
 
@@ -78,7 +79,8 @@ def load():
         try:
             input = character_data[key]
             destination = character[key]
-            if isinstance(destination, tk.ttk.Combobox) or isinstance(destination, tk.StringVar):
+            if isinstance(destination, tk.ttk.Combobox) or isinstance(
+                    destination, tk.StringVar):
                 destination.set(input)
             elif isinstance(destination, dict):
                 second_stage_imports.append((key, value))
@@ -125,12 +127,15 @@ def exit():
         exit_window.destroy()
 
     exit_window = tk.Tk()
-    exit_label = tk.Label(exit_window, text="Would you like to save?", font=default_font + " 10")
+    exit_label = tk.Label(exit_window, text="Would you like to save?",
+                          font=default_font + " 10")
     exit_label.pack()
     exit_buttons = tk.Frame(exit_window)
-    yes_button = tk.Button(exit_buttons, width=8, text="Yes", command=exit_save_and_close)
+    yes_button = tk.Button(exit_buttons, width=8, text="Yes",
+                           command=exit_save_and_close)
     no_button = tk.Button(exit_buttons, width=8, text="No", command=exit_close)
-    cancel_button = tk.Button(exit_buttons, width=8, text="Cancel", command=exit_window.destroy)
+    cancel_button = tk.Button(exit_buttons, width=8, text="Cancel",
+                              command=exit_window.destroy)
 
     yes_button.grid(row=1, column=0, padx=4)
     no_button.grid(row=1, column=1, padx=4, pady=8)
@@ -142,7 +147,8 @@ def exit():
 # Helper Functions
 
 def get_chosen_skills(character):
-    return [character[choice].get() for choice in character.keys() if "Skill" in choice]
+    return [character[choice].get() for choice in character.keys() if
+            "Skill" in choice]
 
 
 def text_join(text, capitalise, sentence_end):
@@ -374,7 +380,8 @@ def Race():
 
     def languages():
 
-        language_list = [language for language in current_race_instance.languages]
+        language_list = [language for language in
+                         current_race_instance.languages]
 
         choices_num = language_list.count("choice")
 
@@ -396,7 +403,8 @@ def Race():
 
     def ASI():
 
-        bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
+        bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW",
+                            pady=(4, 0))
 
         if current_subrace_instance is None:
             ASI = current_race_instance.ASI
@@ -446,7 +454,8 @@ def Race():
             asi_choice_1["textvariable"] = asi_choice_1_val
             asi_choice_1["values"] = asi_options
         if num_choices == 2:
-            asi_choice_label["text"] = "Choose ability scores to increase by +1:"
+            asi_choice_label[
+                "text"] = "Choose ability scores to increase by +1:"
             asi_choice_2.grid(row=2)
             asi_choice_2_val = tk.StringVar()
             asi_choice_2["textvariable"] = asi_choice_2_val
@@ -488,7 +497,7 @@ def Race():
         else:
             race_features = None
 
-        if current_subrace_instance:
+        if current_subrace_instance and current_subrace_instance.features:
             subrace_features = current_subrace_instance.features.copy()
             try:
                 subrace_features += current_subrace_instance.features_chosen
@@ -559,7 +568,8 @@ def Race():
                 invalid_skills.remove(race_skills_choices[n].get())
 
                 if isinstance(valid_skill, str) and valid_skill == "any":
-                    valid_choices = [skill for skill in skills_list if skill not in invalid_skills]
+                    valid_choices = [skill for skill in skills_list if
+                                     skill not in invalid_skills]
 
                 race_skill_choosers[n]["value"] = valid_choices
 
@@ -568,7 +578,8 @@ def Race():
 
         for n, skill_chooser in enumerate(race_skill_choosers):
             try:
-                if valid_skills[n] != "any" and skill_chooser.get() not in valid_skills[n]:
+                if valid_skills[n] != "any" and skill_chooser.get() not in \
+                        valid_skills[n]:
                     race_skills_choices[n].set(skill_chooser.get())
                 skill_chooser.pack()
             except:
@@ -621,7 +632,8 @@ def Race():
     current_subrace = tk.StringVar()
 
     def get_subclasses():
-        subrace_choice["values"] = [subrace.subrace_name for subrace in current_race_instance.__subclasses__()]
+        subrace_choice["values"] = [subrace.subrace_name for subrace in
+                                    current_race_instance.__subclasses__()]
 
     subrace_choice = ttk.Combobox(race_frame,
                                   postcommand=get_subclasses,
@@ -687,7 +699,8 @@ def Race():
     race_languages_label.grid(row=2, column=0, sticky="NE")
     race_languages_value.grid(row=2, column=2, sticky="NW")
 
-    divider.grid(column=1, row=0, rowspan=race_base_info.grid_size()[1], sticky="NS")
+    divider.grid(column=1, row=0, rowspan=race_base_info.grid_size()[1],
+                 sticky="NS")
 
     bottom_divider = ttk.Separator(race_base_info)
     bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
@@ -716,9 +729,11 @@ def Race():
 
         if current_race.get() != 'Choose race: ':
 
-            if race_list[current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
+            if race_list[
+                current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
                 current_subrace_instance = \
-                    {subrace.subrace_name: subrace for subrace in current_race_instance.__subclasses__()}[
+                    {subrace.subrace_name: subrace for subrace in
+                     current_race_instance.__subclasses__()}[
                         current_subrace.get()]
                 asi_frame.grid_forget()
                 bottom_divider.grid_forget()
@@ -758,7 +773,9 @@ def Race():
         asi_automatic_values[n] = value
 
     ttk.Separator(asi_attributes_frame,
-                  orient=tk.VERTICAL).grid(column=1, row=0, sticky="NS", rowspan=asi_attributes_frame.grid_size()[1])
+                  orient=tk.VERTICAL).grid(column=1, row=0, sticky="NS",
+                                           rowspan=
+                                           asi_attributes_frame.grid_size()[1])
 
     asi_choice_frame = tk.Frame(asi_frame)
 
@@ -892,7 +909,8 @@ def Race():
 
         if race_feature_chosen.get():
 
-            feature_value = current_race_instance.choice_features[race_feature_chosen.get()]
+            feature_value = current_race_instance.choice_features[
+                race_feature_chosen.get()]
 
             current_race_instance.features_chosen = []
 
@@ -913,7 +931,8 @@ def Race():
     def subrace_feature_changed(*args):
         if subrace_feature_chosen.get():
 
-            feature_value = current_subrace_instance.choice_features[subrace_feature_chosen.get()]
+            feature_value = current_subrace_instance.choice_features[
+                subrace_feature_chosen.get()]
 
             current_subrace_instance.features_chosen = []
 
@@ -970,7 +989,8 @@ def Class():
             text = ""
 
             text += f"Primary Attribute{'s' if len(current_class_instance.primary_attr) > 1 else ''}:\n"
-            text += " and ".join([attr.name for attr in current_class_instance.primary_attr]) + "\n"
+            text += " and ".join([attr.name for attr in
+                                  current_class_instance.primary_attr]) + "\n"
 
             text += f"\nSaving Throw Proficiencies:\n" \
                     f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
@@ -1002,7 +1022,8 @@ def Class():
             class_description.set(f'{class_.desc}\n\n\n{class_.rpgbot}')
 
             subclass_list = "\n".join(
-                sorted([subclass.name for subclass in current_class_instance.__class__.__subclasses__()],
+                sorted([subclass.name for subclass in
+                        current_class_instance.__class__.__subclasses__()],
                        key=str.lower))
 
             class_subclass_lvl_label[
@@ -1017,12 +1038,14 @@ def Class():
         for n, option in enumerate(class_skill_choices):
             try:
                 if current_class.skills[n] == "choose":
-                    class_skill_choosers_list[n]["postcommand"] = class_skill_chooser_prep
+                    class_skill_choosers_list[n][
+                        "postcommand"] = class_skill_chooser_prep
                     class_skill_choosers_list[n].grid(row=n + 1, pady=1, padx=4)
                 else:
                     pass
 
-                if option.get() not in [skill.name for skill in current_class.valid_skills]:
+                if option.get() not in [skill.name for skill in
+                                        current_class.valid_skills]:
                     option.set("")
             except:
                 option.set("")
@@ -1036,14 +1059,16 @@ def Class():
         if isinstance(current_class_instance.valid_skills, str):
             valid_skills = [skill.key() for skill in skills_list]
         else:
-            valid_skills = [skill.name for skill in current_class_instance.valid_skills]
+            valid_skills = [skill.name for skill in
+                            current_class_instance.valid_skills]
 
         for n, skill_chooser in enumerate(class_skill_choosers_list):
             current_chooser_choice = class_skill_choices[n].get()
             invalid_choices = chosen_skills.copy()
             invalid_choices.remove(current_chooser_choice)
 
-            skills_options = [skill for skill in valid_skills if skill not in invalid_choices]
+            skills_options = [skill for skill in valid_skills if
+                              skill not in invalid_choices]
             class_skill_choosers_list[n]["values"] = skills_options
 
     def equipment_selection(current_class):
@@ -1065,7 +1090,8 @@ def Class():
                             parent_1 = set(list(conditions[0].__bases__))
                             parent_2 = set(list(conditions[1].__bases__))
 
-                            common_parent = list(parent_1.intersection(parent_2))  # assume only one common parent
+                            common_parent = list(parent_1.intersection(
+                                parent_2))  # assume only one common parent
 
                             text_entry = f'{conditions[0].syntax_start(item[1])} {conditions[1].__name__} {common_parent[0].syntax_end(item[1])}'.lower()
                         elif item[0].__subclasses__():
@@ -1086,13 +1112,15 @@ def Class():
                     if i == 0:
                         button.select()
 
-                    self.tracking_variable.trace("w", self.changed_selection_auto)
+                    self.tracking_variable.trace("w",
+                                                 self.changed_selection_auto)
 
                 self.frame.update()
 
                 self.frame.grid(row=index * 2, column=0, sticky=tk.W)
-                ttk.Separator(class_equipment_internal_frame).grid(row=index * 2 + 1, column=0, columnspan=3,
-                                                                   sticky=tk.EW)
+                ttk.Separator(class_equipment_internal_frame).grid(
+                    row=index * 2 + 1, column=0, columnspan=3,
+                    sticky=tk.EW)
 
             def changed_selection(self):
                 get_choice_options(self.index)
@@ -1102,10 +1130,12 @@ def Class():
                 get_choice_options(self.index)
 
         def get_choice_options(selection_index):
-            current_selection_choice = equipment_choices["selections"][selection_index].get()
+            current_selection_choice = equipment_choices["selections"][
+                selection_index].get()
 
-            current_selection_options = equipment_choices["selection_options"][selection_index][
-                current_selection_choice]
+            current_selection_options = \
+                equipment_choices["selection_options"][selection_index][
+                    current_selection_choice]
 
             for child_widget in class_equipment_internal_frame.grid_slaves():
                 if int(child_widget.grid_info()["column"]) > 0 and int(
@@ -1128,14 +1158,17 @@ def Class():
                         choices.append(option_choice)
 
                         conditions = option[0]
-                        choice_options = ([condition.name for condition in conditions[0].__subclasses__() if
-                                           issubclass(condition, conditions[1])])
+                        choice_options = ([condition.name for condition in
+                                           conditions[0].__subclasses__() if
+                                           issubclass(condition,
+                                                      conditions[1])])
 
                         chooser = ttk.Combobox(chooser_frame,
                                                state="readonly",
                                                values=choice_options,
                                                textvariable=option_choice)
-                        chooser.set(f"Choose {conditions[0].__bases__[0].__name__.lower()}:")
+                        chooser.set(
+                            f"Choose {conditions[0].__bases__[0].__name__.lower()}:")
                         chooser.pack(pady=2)
 
                     else:
@@ -1143,13 +1176,15 @@ def Class():
                             option_choice = tk.StringVar()
                             choices.append(option_choice)
 
-                            choice_options = ([option.name for option in option[0].__subclasses__()])
+                            choice_options = ([option.name for option in
+                                               option[0].__subclasses__()])
 
                             chooser = ttk.Combobox(chooser_frame,
                                                    state="readonly",
                                                    values=choice_options,
                                                    textvariable=option_choice)
-                            chooser.set(f"Choose {option[0].__bases__[0].__name__.lower()}:")
+                            chooser.set(
+                                f"Choose {option[0].__bases__[0].__name__.lower()}:")
                             chooser.pack(pady=2)
 
             chooser_frame.grid(row=selection_index * 2, column=1)
@@ -1288,9 +1323,11 @@ def Class():
                                          state="readonly",
                                          textvariable=class_skill_4)
 
-    class_skill_choosers_list = [class_skill_chooser_1, class_skill_chooser_2, class_skill_chooser_3,
+    class_skill_choosers_list = [class_skill_chooser_1, class_skill_chooser_2,
+                                 class_skill_chooser_3,
                                  class_skill_chooser_4]
-    class_skill_choices = [class_skill_1, class_skill_2, class_skill_3, class_skill_4]
+    class_skill_choices = [class_skill_1, class_skill_2, class_skill_3,
+                           class_skill_4]
 
     for n, skill_choice in enumerate(class_skill_choices):
         name = f'Class Skill {n + 1}'
@@ -1356,9 +1393,9 @@ def Background_():
         background_desc_text.delete('1.0', tk.END)
         background_desc_text.insert(tk.END, background_choice_instance.feature)
 
-
         # Check text height and adjust box
-        text_height = (len(textwrap.wrap(background_choice_instance.feature, background_desc_text['width']))
+        text_height = (len(textwrap.wrap(background_choice_instance.feature,
+                                         background_desc_text['width']))
                        + background_choice_instance.feature.count("\n"))
         background_desc_text['height'] = text_height
 
@@ -1383,14 +1420,17 @@ def Background_():
     background_chooser_frame = tk.Frame(background_frame)
 
     background_chooser_label = tk.Label(background_chooser_frame,
-                                        text="Choose background template:",
+                                        text="Choose background template:\n"
+                                             "(Name and description can be "
+                                             "altered if desired)",
                                         font=default_font + " 8")
 
     background_choice = tk.StringVar()
     background_choice.trace("w", changed_background)
     background_chooser = ttk.Combobox(background_chooser_frame,
                                       state='readonly',
-                                      values=[bg.name for bg in Background.__subclasses__()],
+                                      values=[bg.name for bg in
+                                              Background.__subclasses__()],
                                       textvariable=background_choice)
 
     background_chooser_label.pack()
@@ -1410,8 +1450,7 @@ def Background_():
 
     background_features_frame.pack(pady=8)
 
-    background_features_dict = {'background_choice': background_chooser,
-                                'background_name': background_name_text}
+    background_features_dict = {'background_choice': background_chooser}
 
     return background_frame
 
@@ -1460,7 +1499,8 @@ def change_tabs(event):
     if character_creator.winfo_width() > tab_manager.winfo_reqwidth():
         tab_manager.configure(width=character_creator.winfo_width())
 
-        current_tab_contents = tab_manager.nametowidget(tab_manager.select()).winfo_children()[0]
+        current_tab_contents = \
+            tab_manager.nametowidget(tab_manager.select()).winfo_children()[0]
 
         current_tab_contents.pack(fill="both", expand=True)
 

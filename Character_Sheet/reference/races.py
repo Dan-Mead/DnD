@@ -1,5 +1,6 @@
-from .glossary import attrs
 from .features import *
+from .glossary import all_languages
+from .skills_and_attributes import *
 
 
 class Race:
@@ -7,10 +8,10 @@ class Race:
 
 
 class Human(Race):
-    name = "Human"
+    race_name = "Human"
     speed = 30
     size = "Medium"
-    languages = ("Common", "choice")
+    languages = ("Common", all_languages)
     features = None
 
     @staticmethod
@@ -20,24 +21,24 @@ class Human(Race):
 
 class HumanBase(Human):
     subrace_name = "Base"
-    ASI = tuple(zip(attrs, [1] * len(attrs)))
+    ASI = tuple(zip(attr_list.values(), [1] * len(attr_list)))
     features = None
 
 
 class HumanVariant(Human):
     subrace_name = "Variant"
-    ASI = (("choice", "any"), ("choice", "any"))
+    ASI = ((list(attr_list.values()), 2),)
     features = ["skills", "feat"]
     skills = ("any",)
     feats = "any"
 
 
 class HalfOrc(Race):
-    name = "Half-Orc"
+    race_name = "Half-Orc"
     speed = 30
     size = "Medium"
     languages = ("Common", "Orc")
-    ASI = (("STR", +2), ("CON", +1))
+    ASI = ((STR, +2), (CON, +1))
     features = ["other"]
     other_features = {'Darkvision': Darkvision("Orc", 60),
                       'Menacing': Menacing(),
@@ -47,11 +48,11 @@ class HalfOrc(Race):
 
 
 class HalfElf(Race):
-    name = "Half-Elf"
+    race_name = "Half-Elf"
     speed = 30
     size = "Medium"
-    languages = ("Common", "Elvish", "choice")
-    ASI = (("CHA", +2), ("choice", "CHA"), ("choice", "CHA"))
+    languages = ("Common", "Elvish", all_languages)
+    ASI = ((CHA, +2), ([a for a in (attr_list.values()) if a is not CHA], 2))
     features = ["other"]
     other_features = {'Darkvision': Darkvision("Elf", 60),
                       'Fey Ancestry': FeyAncestry()
@@ -107,7 +108,7 @@ class AquaticElfDescent(HalfElf):
     skills = ("any", "any")
 
 
-race_list = dict([(race.name, race) for race in Race.__subclasses__()])
+race_list = dict([(race.race_name, race) for race in Race.__subclasses__()])
 
 if __name__ == '__main__':
     pass

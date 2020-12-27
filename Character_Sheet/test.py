@@ -1,8 +1,10 @@
-import tkinter as tk
-from tkinter import ttk
 
-from num2words import num2words
+class Test:
+    test = True
+    tribulation = False
+    trial = ("test", "tribulation")
 
-from Character_Sheet.reference.equipment import *
 
-print(Warhammer.syntax(1))
+for t in Test.trial:
+    print(t)
+    print(getattr(Test, t))

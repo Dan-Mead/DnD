@@ -1,9 +1,4 @@
-import inspect
-import sys
-from Character_Sheet.reference.glossary import attrs
-from Character_Sheet.reference.features import *
 from Character_Sheet.reference.proficiencies import *
-from num2words import num2words
 
 
 # Types
@@ -34,6 +29,7 @@ class Ammo(Equipment):
 
 class Tools(Equipment):
     pass
+
 
 class GamingSet(Tools):
     name = "Gaming Set"
@@ -279,9 +275,11 @@ class ArcaneFocus(Magic):
     plural = 2
     plural_actual = "Arcane Foci"
 
+
 class Spellbook(Magic):
     name = "Spellbook"
     plural = 0
+
 
 # Packs
 
@@ -316,18 +314,81 @@ class ThievesTools(Tools):
     name = "Thieves' Tools"
     plural = 1
 
-class DeckofCards(GamingSet):
-    name = "Deck of Cards"
-    plural = 3
-    plural_actual = "Decks of Cards"
+
+class DiceSet(GamingSet):
+    name = "Dice Set"
+    plural = 0
+
+
+class DragonchessSet(GamingSet):
+    name = "Dragonchess Set"
+    plural = 0
+
+
+class PlayingCards(GamingSet):
+    name = "Playing Card Set"
+    plural = 0
+
+
+class ThreeDragonAnte(GamingSet):
+    name = "Three-Dragon Ante Set"
+    plural = 0
+
+
+class Bagpipes(Instrument):
+    name = "Bagpipes"
+    plural = 1
+
+
+class Drum(Instrument):
+    name = "Drum"
+    plural = 0
+
+
+class Dulcimer(Instrument):
+    name = "Dulcimer"
+    plural = 0
+
+
+class Flute(Instrument):
+    name = "Flute"
+    plural = 0
+
 
 class Horn(Instrument):
     name = "Horn"
     plural = 0
 
+
+class Lute(Instrument):
+    name = "Lute"
+    plural = 0
+
+
+class Lyre(Instrument):
+    name = "Lyre"
+    plural = 0
+
+
+class PanFlute(Instrument):
+    name = "Pan Flute"
+    plural = 0
+
+
+class Shawm(Instrument):
+    name = "Shawm"
+    plural = 0
+
+
+class Viol(Instrument):
+    name = "Viol"
+    plural = 0
+
+
 class TravellersClothes(Misc):
     name = "Traveller's Clothes"
     plural = 1
+
 
 class Pouch(Misc):
     name = "Pouch"
@@ -335,14 +396,14 @@ class Pouch(Misc):
     plural_actual = "Pouches"
 
 
-
 class Custom_Misc(Misc):
-    def __init__(self, name, desc, plural = 0, *plural_actual):
+    def __init__(self, name, desc, plural=0, *plural_actual):
         self.name = name
         self.desc = desc
         self.plural = plural
         if plural == 3:
             self.plural_actual = plural_actual
+
 
 if __name__ == '__main__':
     pass

@@ -1,13 +1,12 @@
-from Character_Sheet.reference.skills_and_attributes import *
 from Character_Sheet.reference.equipment import *
+from Character_Sheet.reference.skills_and_attributes import *
 
 
 class Background():
     pass
 
-
 class KnighlyOrder(Background):
-    name = 'Knightly Order'
+    name = 'Knight of the Order'
     skills = (Persuasion, "choose")
     skill_choices = (Arcana, History, Nature, Religion)
     tools = ([GamingSet, Instrument])

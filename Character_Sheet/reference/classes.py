@@ -4,7 +4,7 @@ from Character_Sheet.reference.skills_and_attributes import *
 
 # Character descriptions from https://www.tribality.com/2019/01/08/brief-description-of-5e-classes-and-subclasses-ideal-to-show-to-your-players/
 # RPGbot hosts my personal favourite character guides, https://rpgbot.net/dnd5/characters/classes/. It focuses probably too heavily on character optimisation, so take it with a large pinch of salt and
-# remember that any build is valid if it's fun, but not every build is fun just because it's optimised.
+# remember that optimised builds are entirely valid, but ANY build is valid if it's fun.
 
 class CharacterClass:
     pass

@@ -4,6 +4,8 @@ common_languages = ["Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin"
 exotic_languages = ["Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal", "Primordial", "Sylvan",
                     "Undercommon"]
 
+all_languages = common_languages + exotic_languages
+
 skills_dict = dict(acrobatics=["Acrobatics", "DEX"], animal_handling=["Animal Handling", "WIS"],
                    arcana=["Arcana", "INT"], athletics=["Athletics", "STR"], deception=["Deception", "CHA"],
                    history=["History", "INT"], insight=["Insight", "WIS"], intimidation=["Intimidation", "CHA"],
@@ -11,5 +13,3 @@ skills_dict = dict(acrobatics=["Acrobatics", "DEX"], animal_handling=["Animal Ha
                    perception=["Perception", "WIS"], performance=["Performance", "CHA"],
                    persuasion=["Persuasion", "CHA"], religion=["Religion", "INT"],
                    sleight_of_hand=["Sleight of Hand", "DEX"], stealth=["Stealth", "DEX"], survival=["Survival", "WIS"])
-
-alpha_numeric = dict(number_words=["zero", "one", "two"])

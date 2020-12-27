@@ -119,4 +119,6 @@ class Survival(Skill):
     name = "Survival"
     attr = WIS
 
+
 skills_list = {skill.name: skill for skill in Skill.__subclasses__()}
+attr_list = {attr.__name__: attr for attr in Attribute.__subclasses__()}

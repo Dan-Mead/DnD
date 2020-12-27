@@ -1,8 +1,13 @@
-#Plan:
+# Plan:
+
+Current Work:
+
+Save / Load Overhaul. Allow for better information to be stored. Plan to use...
+database.
 
 ## Character Creation
 
-* Name and info, alignment etc. 
+* Name and info, alignment etc.
 * Base Stats
 * Race
     * Languages

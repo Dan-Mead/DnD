@@ -1,10 +1,3 @@
+from Character_Sheet.reference.skills_and_attributes import *
 
-class Test:
-    test = True
-    tribulation = False
-    trial = ("test", "tribulation")
-
-
-for t in Test.trial:
-    print(t)
-    print(getattr(Test, t))
+print()

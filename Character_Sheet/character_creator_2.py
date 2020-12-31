@@ -51,6 +51,8 @@ class AspectTypes:
     skill = "skill"
     language = "language"
     asi = "asi"
+    feat = "feat"
+    race_feature_choice = "race feature choice"
 
 
 class Tabs:
@@ -76,8 +78,13 @@ class ValueChooserGenerator:
         self.grid = grid
 
         if label:
-            tk.Label(self.frame,
-                     label).pack()
+
+            self.label = tk.Label(self.frame, label)
+            self.label_text = tk.StringVar()
+            self.label_text.set(self.label['text'])
+            self.label["textvariable"] = self.label_text
+
+            self.label.pack()
 
         for i in range(num_choosers):
             variable = tk.StringVar()
@@ -135,13 +142,13 @@ class ValueChooserGenerator:
             self.aspects[n].active = False
             widget.pack_forget()
             if (num and n + 1 <= num) or not num:
-                widget.pack()
+                widget.pack(pady=1)
                 self.aspects[n].active = True
 
         if self.grid:
             self.frame.grid(self.grid)
         else:
-            self.frame.pack()
+            self.frame.pack(pady=4)
 
     def deactivate(self):
 
@@ -437,14 +444,14 @@ class CharacterCreator:
 
             self.character_race.trace_add('write', race_changed)
 
-            self.race_chooser.grid(row=1, columnspan=2, pady=2)
+            self.race_chooser.grid(row=1, columnspan=3, pady=2)
 
         def race_changed(*args):
             self.race_instance = races.race_list[self.character_race.get()]
 
             if self.race_instance.__subclasses__():
 
-                self.subrace_chooser.grid(row=2, columnspan=2, pady=2)
+                self.subrace_chooser.grid(row=2, columnspan=3, pady=2)
                 subraces_list = [subrace.subrace_name for subrace in self.race_instance.__subclasses__()]
                 if self.character_subrace.get() not in subraces_list:
                     self.character_subrace.trace_remove('write', self.character_subrace.trace_info()[0][1])
@@ -515,71 +522,9 @@ class CharacterCreator:
                 pack_race_languages(instance)
 
             if hasattr(instance, "features"):
-                print(instance.features)
+                pack_other_features(instance)
 
             self.resize_tabs()
-
-        def pack_race_info():
-            self.race_info_frame.grid(row=3, column=0)
-
-            self.race_size_text.set(self.race_instance.size)
-            self.race_speed_text.set(f'{self.race_instance.speed} ft.')
-
-        def pack_race_languages(instance):
-
-            default_languages = []
-
-            num_language_choice = 0
-
-            for lang in instance.languages:
-                if isinstance(lang, str):
-                    default_languages.append(lang)
-                else:
-                    num_language_choice += 1
-
-            self.race_language_text.set("\n".join(default_languages))
-
-            if num_language_choice:
-                self.character_race_language.activate(num_language_choice)
-                self.character_race_language.invalid_options = default_languages
-            else:
-                self.character_race_language.deactivate()
-
-        def pack_race_asi(instance):
-
-            for asi in self.asi_automatic_values:
-                asi['text'] = ""
-
-            self.asi_frame.grid(row=2, column=0)
-            self.bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
-
-            try:
-                asi_list = list(instance.ASI)
-            except Exception as e:
-                print(e)
-
-            all_asi = asi_list  # + subrace specifics
-
-            asi_choice = False
-
-            for asi in all_asi:
-                if isinstance(asi[0], list):
-                    asi_choice = asi[1]
-                    asi_choice_options = asi[0]
-                    if asi[1] <= 1:
-                        self.asi_choice_text.set("Choose ability score to increase by +1:")
-                    elif asi[1] > 1:
-                        self.asi_choice_text.set("Choose ability scores to increase by +1:")
-                else:
-                    self.asi_attributes_frame.grid(row=1)
-                    attr_index = (glossary.attrs.index(asi[0].__name__))
-                    self.asi_automatic_values[attr_index].configure(text=f'{asi[1]:+d}')
-
-            if asi_choice:
-                self.race_asi_choice.activate(asi_choice)
-                self.race_asi_choice.values = [attr.__name__ for attr in asi_choice_options]
-            else:
-                self.race_asi_choice.deactivate()
 
         def race_info_config():
 
@@ -636,16 +581,6 @@ class CharacterCreator:
                                                                  grid=dict(row=3, column=2, sticky="NW"),
                                                                  check_global=True)
 
-            # self.character_race_language = tk.StringVar()
-            #
-            # self.race_languages_choice = ttk.Combobox(self.race_base_info,
-            #                                           textvariable=self.character_race_language,
-            #                                           state="readonly",
-            #                                           width=16)
-            # self.race_languages_choice.set("Choose language: ")
-
-            # Aspect("Race Language", Tabs.race, AspectTypes.language, self.character_race_language, self.race_languages_choice, False, False).add(self)
-
             race_size_label.grid(row=0, column=0, sticky="E")
             race_size_value.grid(row=0, column=2, sticky="W")
             race_speed_label.grid(row=1, column=0, sticky="E")
@@ -659,6 +594,12 @@ class CharacterCreator:
 
             race_info_label.grid(row=0)
             self.race_base_info.grid(row=1, column=0, sticky="N")
+
+        def pack_race_info():
+            self.race_info_frame.grid(row=3, column=0, sticky="N", padx=4)
+
+            self.race_size_text.set(self.race_instance.size)
+            self.race_speed_text.set(f'{self.race_instance.speed} ft.')
 
         def race_asi_config():
 
@@ -722,6 +663,167 @@ class CharacterCreator:
             # self.asi_attributes_frame.grid(row=1)
             # asi_choice_frame.grid(row=2)
 
+        def pack_race_languages(instance):
+
+            default_languages = []
+
+            num_language_choice = 0
+
+            for lang in instance.languages:
+                if isinstance(lang, str):
+                    default_languages.append(lang)
+                else:
+                    num_language_choice += 1
+
+            self.race_language_text.set("\n".join(default_languages))
+
+            if num_language_choice:
+                self.character_race_language.activate(num_language_choice)
+                self.character_race_language.invalid_options = default_languages
+            else:
+                self.character_race_language.deactivate()
+
+        def pack_race_asi(instance):
+
+            for asi in self.asi_automatic_values:
+                asi['text'] = ""
+
+            self.asi_frame.grid(row=2, column=0)
+            self.bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
+
+            try:
+                asi_list = list(instance.ASI)
+            except Exception as e:
+                print(e)
+
+            all_asi = asi_list  # + subrace specifics
+
+            asi_choice = False
+
+            for asi in all_asi:
+                if isinstance(asi[0], list):
+                    asi_choice = asi[1]
+                    asi_choice_options = asi[0]
+                    if asi[1] <= 1:
+                        self.asi_choice_text.set("Choose ability score to increase by +1:")
+                    elif asi[1] > 1:
+                        self.asi_choice_text.set("Choose ability scores to increase by +1:")
+                else:
+                    self.asi_attributes_frame.grid(row=1)
+                    attr_index = (glossary.attrs.index(asi[0].__name__))
+                    self.asi_automatic_values[attr_index].configure(text=f'{asi[1]:+d}')
+
+            if asi_choice:
+                self.race_asi_choice.activate(asi_choice)
+                self.race_asi_choice.values = [attr.__name__ for attr in asi_choice_options]
+            else:
+                self.race_asi_choice.deactivate()
+
+        def race_other_features_config():
+
+            self.divider_2 = ttk.Separator(self.race_frame, orient=tk.VERTICAL)
+
+            self.race_features_frame = tk.Frame(self.race_frame)
+
+            self.race_features_label = tk.Label(self.race_features_frame,
+                                                text="Racial Features:",
+                                                font=default_font + " 10 bold",
+                                                anchor="n")
+
+            self.race_other_features_chooser = ValueChooserGenerator(character=self,
+                                                                     master=self.race_features_frame,
+                                                                     num_choosers=1,
+                                                                     variable_name="Race Features Choice",
+                                                                     value_tab=Tabs.race,
+                                                                     value_type=AspectTypes.race_feature_choice,
+                                                                     label=dict(text=f"Choose race feature:",
+                                                                                font=default_font + " 8",
+                                                                                anchor=tk.CENTER),
+                                                                     grid=dict(row=1))
+
+            self.other_features_internal_frame = tk.Frame(self.race_features_frame)
+
+            self.race_skills_chooser = ValueChooserGenerator(character=self,
+                                                            master=self.other_features_internal_frame,
+                                                            num_choosers=2,
+                                                            variable_name="Race Skill",
+                                                            value_tab=Tabs.race,
+                                                            value_type=AspectTypes.skill,
+                                                            label=dict(text=f"Choose race skill:",
+                                                                       font=default_font + " 8",
+                                                                       anchor=tk.CENTER),
+                                                            check_global=True
+                                                            )
+
+            self.race_feat_chooser = ValueChooserGenerator(character=self,
+                                                          master=self.other_features_internal_frame,
+                                                          num_choosers=1,
+                                                          variable_name="Race Feat",
+                                                          value_tab=Tabs.race,
+                                                          value_type=AspectTypes.feat,
+                                                          label=dict(text=f"Choose starting feat:",
+                                                                     font=default_font + " 8",
+                                                                     anchor=tk.CENTER),
+                                                          check_global=True)
+
+            self.other_features_text = tk.Label(self.other_features_internal_frame,
+                                                text="")
+
+        def pack_other_features(instance):
+
+            def feature_checker(feature_type, obj):
+                if feature_type in instance.features:
+                    num_features = len(getattr(instance, feature_type))
+                    suffix = ":"
+                    if num_features > 1:
+                        suffix = "s:"
+                        if not all(a == getattr(instance, feature_type)[0] for a in getattr(instance, feature_type)):
+                            print("Error setting values!")
+
+                    obj.values = getattr(instance, feature_type)[0]
+
+                    obj.label_text.set(f'{obj.label_text.get()[:-1]}{suffix}')
+                    obj.activate(num_features)
+
+                else:
+                    obj.deactivate()
+
+            if instance.features:
+
+                Ftype = races.FeatureType
+
+                self.divider_2.grid(row=3, column=1, sticky="NS", rowspan=8)
+                self.race_features_label.grid(row=0, sticky="N")
+                self.other_features_internal_frame.grid(row=2)
+                self.race_features_frame.grid(row=3, column=2, sticky="N", padx=4)
+
+                if Ftype.choice in instance.features:
+                    self.race_other_features_chooser.activate()
+
+                else:
+                    self.race_other_features_chooser.deactivate()
+
+                    feature_checker(Ftype.skills, self.race_skills_chooser)
+                    feature_checker(Ftype.feats, self.race_feat_chooser)
+            else:
+                self.divider_2.grid_forget()
+                self.race_features_label.grid_forget()
+                self.other_features_internal_frame.grid_forget()
+                self.race_features_frame.grid_forget()
+
+                self.race_other_features_chooser.deactivate()
+                self.race_skills_chooser.deactivate()
+                self.race_feat_chooser.deactivate()
+
+
+
+
+
+            # self.race_skills_choser.activate()  # remember to change label to number
+            # self.race_feat_choser.activate()
+
+        ### Begin Code
+
         self.reset_tab_aspects(Tabs.race)
 
         self.race_frame = tk.Frame(self.race_tab,
@@ -731,12 +833,13 @@ class CharacterCreator:
 
         self.race_label = tk.Label(self.race_frame,
                                    text="Race",
-                                   font=default_font + " 12 bold").grid(row=0, columnspan=2, pady=8)
+                                   font=default_font + " 12 bold").grid(row=0, columnspan=3, pady=8)
 
         race_choice_config()
         subrace_choice_config()
         race_info_config()
         race_asi_config()
+        race_other_features_config()
 
         self.race_frame.pack(fill="both", expand=True)
 
@@ -803,9 +906,9 @@ if __name__ == "__main__":
     style = ttk.Style(window)
     style.configure('TNotebook', tabposition='n')
 
-    style.map('TCombobox', fieldbackground=[('readonly', 'white')])
-    style.map('TCombobox', selectbackground=[('readonly', 'white')])
-    style.map('TCombobox', selectforeground=[('readonly', 'black')])
-    style.map('TCombobox', selectborderwidth=[('readonly', '0')])
+    # style.map('TCombobox', fieldbackground=[('readonly', 'white')])
+    # style.map('TCombobox', selectbackground=[('readonly', 'white')])
+    # style.map('TCombobox', selectforeground=[('readonly', 'black')])
+    # style.map('TCombobox', selectborderwidth=[('readonly', '0')])
 
     window.mainloop()

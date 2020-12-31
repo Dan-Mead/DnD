@@ -7,7 +7,7 @@ from tkinter import ttk
 from Character_Sheet.reference.backgrounds import *
 from Character_Sheet.reference.feats import feat_list, unpack_desc
 from Character_Sheet.reference.glossary import common_languages, \
-    exotic_languages
+    exotic_languages, attrs
 from Character_Sheet.reference.races import race_list
 from Character_Sheet.reference.subclasses import *
 
@@ -430,7 +430,7 @@ def Race():
                 asi_value.configure(text="")
 
             for attribute, attr_value in ASI_automatic.items():
-                attr_index = attrs.index(attribute)
+                attr_index = attrs.index(attribute.__name__)
 
                 text_value = f'{attr_value:+d}'
 

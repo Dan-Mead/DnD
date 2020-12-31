@@ -1,10 +1,17 @@
 from .features import *
 from .glossary import all_languages
 from .skills_and_attributes import *
+from .feats import feat_list
 
 
 class Race:
     pass
+
+class FeatureType:
+    choice = "choice"
+    other = "other"
+    skills = "skills"
+    feats = "feats"
 
 
 class Human(Race):
@@ -18,7 +25,6 @@ class Human(Race):
     def prereq():
         return False
 
-
 class HumanBase(Human):
     subrace_name = "Base"
     ASI = tuple(zip(attr_list.values(), [1] * len(attr_list)))
@@ -28,9 +34,9 @@ class HumanBase(Human):
 class HumanVariant(Human):
     subrace_name = "Variant"
     ASI = ((list(attr_list.values()), 2),)
-    features = ["skills", "feat"]
-    skills = ("any",)
-    feats = "any"
+    features = [FeatureType.skills, FeatureType.feats]
+    skills = (list(skills_list.keys()),)
+    feats = (list(feat_list.keys()),)
 
 
 class HalfOrc(Race):
@@ -39,7 +45,7 @@ class HalfOrc(Race):
     size = "Medium"
     languages = ("Common", "Orc")
     ASI = ((STR, +2), (CON, +1))
-    features = ["other"]
+    features = [FeatureType.other]
     other_features = {'Darkvision': Darkvision("Orc", 60),
                       'Menacing': Menacing(),
                       'Relentless Endurance': RelentlessEndurance(),
@@ -53,7 +59,7 @@ class HalfElf(Race):
     size = "Medium"
     languages = ("Common", "Elvish", all_languages)
     ASI = ((CHA, +2), ([a for a in (attr_list.values()) if a is not CHA], 2))
-    features = ["other"]
+    features = [FeatureType.other]
     other_features = {'Darkvision': Darkvision("Elf", 60),
                       'Fey Ancestry': FeyAncestry()
                       }
@@ -61,51 +67,51 @@ class HalfElf(Race):
 
 class WoodElfDescent(HalfElf):
     subrace_name = "Wood Elf Descent"
-    features = ["choice"]
+    features = [FeatureType.choice]
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Fleet of Foot": FleetOfFoot(),
                        "Mask of the Wild": MaskOfTheWild()}
-    skills = ("any", "any")
+    skills = (list(skills_list.keys()), list(skills_list.keys()))
 
 
 class MoonElfDescent(HalfElf):
     subrace_name = "Moon Elf Descent"
-    features = ["choice"]
+    features = [FeatureType.choice]
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Cantrip": Catrip("one", "Wizard", "Intelligence")}
-    skills = ("any", "any")
+    skills = (list(skills_list.keys()), list(skills_list.keys()))
 
 
 class SunElfDescent(HalfElf):
     subrace_name = "Sun Elf Descent"
-    features = ["choice"]
+    features = [FeatureType.choice]
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Elf Weapon Training": ElfWeaponTraining(),
                        "Cantrip": Catrip("one", "Wizard", "Intelligence")}
-    skills = ("any", "any")
+    skills = (list(skills_list.keys()), list(skills_list.keys()))
 
 
 class DrowDescent(HalfElf):
     subrace_name = "Drow Descent"
-    features = ["choice"]
+    features = [FeatureType.choice]
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Drow Magic": DrowMagic()}
-    skills = ("any", "any")
+    skills = (list(skills_list.keys()), list(skills_list.keys()))
 
 
 class AquaticElfDescent(HalfElf):
     subrace_name = "Aquatic Elf Descent"
-    features = ["choice"]
+    features = [FeatureType.choice]
     choice_features = {"Skill Versatility": "skills",
                        "Keen Senses": KeenSenses(),
                        "Swim": Swim()}
-    skills = ("any", "any")
+    skills = (list(skills_list.keys()), list(skills_list.keys()))
 
 
 race_list = dict([(race.race_name, race) for race in Race.__subclasses__()])

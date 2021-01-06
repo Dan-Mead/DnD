@@ -1,3 +1,8 @@
-from Character_Sheet.reference.skills_and_attributes import *
+class Master:
+    value = True
 
-print()
+class Slave(Master):
+    value = False
+
+
+print(Slave.value)

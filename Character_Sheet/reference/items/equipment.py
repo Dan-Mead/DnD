@@ -1,48 +1,7 @@
-from Character_Sheet.reference.proficiencies import *
-
-
-# Types
-
-class Ranged(Weapon):
-    pass
-
-
-class Melee(Weapon):
-    pass
-
-
-class Pack(Equipment):
-    pass
-
-
-class Magic(Equipment):
-    pass
-
-
-class Misc(Equipment):
-    pass
-
-
-class Ammo(Equipment):
-    pass
-
-
-class Tools(Equipment):
-    pass
-
-
-class GamingSet(Tools):
-    name = "Gaming Set"
-    plural = 0
-
-
-class Instrument(Tools):
-    name = "Musical Instrument"
-    plural = 0
+from Character_Sheet.reference.item_types import *
 
 
 # Weapons
-
 class Club(Simple, Melee):
     name = "Club"
     plural = 0
@@ -259,7 +218,7 @@ class Shield(Shields):
 
 # Magic.
 
-class HolySymbol(Magic):
+class HolySymbol(Magic): # doesn't really fit here.
     name = "Holy Symbol"
     plural = 0
 
@@ -279,130 +238,6 @@ class ArcaneFocus(Magic):
 class Spellbook(Magic):
     name = "Spellbook"
     plural = 0
-
-
-# Packs
-
-class PriestPack(Pack):
-    name = "Priest's Pack"
-    plural = 0
-
-
-class ExplorerPack(Pack):
-    name = "Explorer's Pack"
-    plural = 0
-
-
-class BurglarPack(Pack):
-    name = "Burglar's Pack"
-    plural = 0
-
-
-class DungeoneerPack(Pack):
-    name = "Dungeoneer's Pack"
-    plural = 0
-
-
-class ScholarPack(Pack):
-    name = "Scholar's Pack"
-    plural = 0
-
-
-# Tools
-
-class ThievesTools(Tools):
-    name = "Thieves' Tools"
-    plural = 1
-
-
-class DiceSet(GamingSet):
-    name = "Dice Set"
-    plural = 0
-
-
-class DragonchessSet(GamingSet):
-    name = "Dragonchess Set"
-    plural = 0
-
-
-class PlayingCards(GamingSet):
-    name = "Playing Card Set"
-    plural = 0
-
-
-class ThreeDragonAnte(GamingSet):
-    name = "Three-Dragon Ante Set"
-    plural = 0
-
-
-class Bagpipes(Instrument):
-    name = "Bagpipes"
-    plural = 1
-
-
-class Drum(Instrument):
-    name = "Drum"
-    plural = 0
-
-
-class Dulcimer(Instrument):
-    name = "Dulcimer"
-    plural = 0
-
-
-class Flute(Instrument):
-    name = "Flute"
-    plural = 0
-
-
-class Horn(Instrument):
-    name = "Horn"
-    plural = 0
-
-
-class Lute(Instrument):
-    name = "Lute"
-    plural = 0
-
-
-class Lyre(Instrument):
-    name = "Lyre"
-    plural = 0
-
-
-class PanFlute(Instrument):
-    name = "Pan Flute"
-    plural = 0
-
-
-class Shawm(Instrument):
-    name = "Shawm"
-    plural = 0
-
-
-class Viol(Instrument):
-    name = "Viol"
-    plural = 0
-
-
-class TravellersClothes(Misc):
-    name = "Traveller's Clothes"
-    plural = 1
-
-
-class Pouch(Misc):
-    name = "Pouch"
-    plural = 3
-    plural_actual = "Pouches"
-
-
-class Custom_Misc(Misc):
-    def __init__(self, name, desc, plural=0, *plural_actual):
-        self.name = name
-        self.desc = desc
-        self.plural = plural
-        if plural == 3:
-            self.plural_actual = plural_actual
 
 
 if __name__ == '__main__':

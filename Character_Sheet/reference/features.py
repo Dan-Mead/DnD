@@ -73,3 +73,66 @@ class DrowMagic:
 class Swim:
     def __init__(self):
         self.desc = f"You gain a swimming speed of 30 feet."
+
+
+class PowerfulBuild:
+    def __init__(self):
+        self.desc = f"You count as one size larger when determining your carrying capacity and the weight you can " \
+                    f"push, drag, or lift. "
+
+
+class LoxodonSerenity:
+    def __init__(self):
+        self.desc = f"You have advantage against being charmed or frightened."
+
+
+class NaturalArmour:
+    def __init__(self):
+        self.desc = f"You have thick, leathery skin. When you aren't wearing armor, your AC is 12 + your Constitution " \
+                    f"modifier. You can use your natural armor to determine your AC if the armor you wear would leave " \
+                    f"you with a lower AC. A shield's benefits apply as normal while you use your natural armor. "
+
+
+class Trunk:
+    def __init__(self):
+        self.desc = f"You can grasp things with your trunk, and you can use it as a snorkel. It has a reach of 5 " \
+                    f"feet, and it can lift a number of pounds equal to five times your Strength score. You can use " \
+                    f"it to do the following simple tasks: lift, drop, hold, push, or pull an object or a creature; " \
+                    f"open or close a door or a container; grapple someone; or make an unarmed strike. Your DM might " \
+                    f"allow other simple tasks to be added to that list of options. It can't wield weapons or shields " \
+                    f"or do anything that requires manual precision, such as using tools or magic items or performing " \
+                    f"the somatic components of a spell. "
+
+
+class KeenSmell:
+    def __init__(self):
+        self.desc = f"Thanks to your sensitive trunk, you have advantage on Wisdom (Perception), Wisdom (Survival), " \
+                    f"and Intelligence (Investigation) checks that involve smell."
+
+
+class ConstructedResilience:
+    def __init__(self):
+        self.desc = f"You were created to have remarkable fortitude, represented by the following benefits:" \
+                    f"\n \u2022 You have advantage on saving throws against being poisoned, and you have resistance to poison " \
+                    f"damage." \
+                    f"\n \u2022 You don’t need to eat, drink, or breathe." \
+                    f"\n \u2022 You are immune to disease." \
+                    f"\n \u2022 You don't need to sleep, and magic can't put you to sleep."
+
+
+class SentrysRest:
+    def __init__(self):
+        self.desc = f"When you take a long rest, you must spend at least six hours in an inactive, motionless state, " \
+                    f"rather than sleeping. In this state, you appear inert, but it doesn’t render you unconscious, " \
+                    f"and you can see and hear as normal. "
+
+
+class IntegratedProtection:
+    def __init__(self):
+        self.desc = f"Your body has built-in defensive layers, which can be enhanced with armor." \
+                    f"\n \u2022 You gain a +1 bonus to Armor Class." \
+                    f"\n \u2022 You can don only armor with which you have proficiency. To don armor, you must incorporate it " \
+                    f"into your body over the course of 1 hour, during which you must remain in contact with the " \
+                    f"armor. To doff armor, you must spend 1 hour removing it. You can rest while donning or doffing " \
+                    f"armor in this way." \
+                    f"\n \u2022 While you live, your armor can't be removed from your body against your will."

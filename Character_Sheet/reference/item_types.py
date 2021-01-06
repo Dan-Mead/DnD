@@ -1,6 +1,5 @@
 from num2words import num2words
 
-
 def syntax(entry, num):
     if not (isinstance(entry, (tuple, list))):
         return entry.syntax_start(num) + entry.syntax_end(num)
@@ -9,7 +8,7 @@ def syntax(entry, num):
     else:
         return entry[0].syntax_start(num) + " ".join([item.name for item in entry[1:-1]]) + entry[1].syntax_end(num)
 
-class Equipment:
+class Item:
 
     @classmethod
     def syntax_start(cls, num):
@@ -26,6 +25,7 @@ class Equipment:
                 return f"a set of {cls.name}".lower()
             else:
                 return f"{num2words(num)} sets of {cls.name}"
+
     @classmethod
     def syntax_end(cls, num):
         if cls.plural == 0:
@@ -35,9 +35,8 @@ class Equipment:
                 return f"{cls.name}s".lower()
         elif cls.plural == 1:
             return f"{cls.name}".lower()
-        elif cls.plural ==2:
+        elif cls.plural == 2:
             return f'{num2words(num)} {cls.plural_actual}'.lower()
-
 
     @classmethod
     def syntax(cls, num):
@@ -63,48 +62,80 @@ class Equipment:
             else:
                 return f'{num2words(num)} {cls.plural_actual}'.lower()
 
+### Weapon Types
 
-
-class Weapon(Equipment):
+class Weapon(Item):
     name = "Weapon"
-    plural = True
-
+    plural = 0
 
 class Martial(Weapon):
-    name = "Martial"
-    plural = True
-
+    pass
 
 class Simple(Weapon):
-    name = "Simple"
-    plural = True
+    pass
 
+class Ranged(Weapon):
+    pass
 
-class Armour(Equipment):
+class Melee(Weapon):
+    pass
+
+### Armour Types
+
+class Armour(Item):
     name = "Armour"
-    plural = False
+    plural = 1
+
 
 class Light(Armour):
     name = "Light"
-    plural = False
+
 
 class Medium(Armour):
     name = "Medium"
-    plural = False
+
 
 class Heavy(Armour):
     name = "Heavy"
-    plural = False
+
 
 class Shields(Armour):
     name = "Shields"
-    plural = True
 
-class Tools:
-    plural = False
+### Tool Types
 
-class Thieves(Tools):
-    name = "Thieves' tools"
+class Tool(Item):
+    name = "Tool"
+    plural = 0
+
+class ArtisanTools(Tool):
+    name = "Artisan's tools"
+    plural = 1
+
+class GamingSet(Tool):
+    name = "Gaming Set"
+    plural = 0
+
+class Instrument(Tool):
+    name = "Musical Instrument"
+    plural = 0
+
+### Other Types
+class Pack(Item):
+    pass
+
+
+class Magic(Item):
+    pass
+
+
+class Misc(Item):
+    pass
+
+
+class Ammo(Item):
+    pass
+
 
 if __name__ == '__main__':
     pass

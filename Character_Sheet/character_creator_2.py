@@ -53,6 +53,7 @@ class AspectTypes:
     asi = "asi"
     feat = "feat"
     race_feature_choice = "race feature choice"
+    prof = "proficiency"
 
 
 class Tabs:
@@ -74,11 +75,11 @@ class ValueChooserGenerator:
         self.aspects = []
         self.value_type = value_type
         self.values = values
+        self.default_value = default_value
         self.invalid_options = invalid_options
         self.grid = grid
 
         if label:
-
             self.label = tk.Label(self.frame, label)
             self.label_text = tk.StringVar()
             self.label_text.set(self.label['text'])
@@ -93,7 +94,7 @@ class ValueChooserGenerator:
                                    textvariable=variable,
                                    state="readonly",
                                    width=16,
-                                   font=default_font + " 10",
+                                   font=default_font + " 8",
                                    postcommand=partial(self.checker, i, char.aspects, check_global)
                                    )
 
@@ -121,16 +122,18 @@ class ValueChooserGenerator:
 
         chosen_local = self.invalid_options.copy()
 
-        for n, widget in enumerate(self.widgets):
-            if n != index:
-                chosen_local.append(self.variables[n].get())
+        if len(self.widgets) > 1:
+            for n, widget in enumerate(self.widgets):
+                if n != index:
+                    chosen_local.append(self.variables[n].get())
 
         chosen_global = []
 
         if check_global:
             for aspect in aspects_list.values():
                 if aspect.type == self.value_type and aspect.active == True:
-                    chosen_global.append(aspect.variable.get())
+                    if len(self.widgets) > 1 or self.aspects[index] != aspect:
+                        chosen_global.append(aspect.variable.get())
 
         chosen_all = chosen_local + chosen_global
 
@@ -139,6 +142,10 @@ class ValueChooserGenerator:
     def activate(self, num=None):
 
         for n, widget in enumerate(self.widgets):
+
+            if widget.get() != self.default_value and widget.get() not in self.values:
+                widget.set(self.default_value)
+
             self.aspects[n].active = False
             widget.pack_forget()
             if (num and n + 1 <= num) or not num:
@@ -148,7 +155,7 @@ class ValueChooserGenerator:
         if self.grid:
             self.frame.grid(self.grid)
         else:
-            self.frame.pack(pady=4)
+            self.frame.pack(pady=1)
 
     def deactivate(self):
 
@@ -426,6 +433,9 @@ class CharacterCreator:
 
     def create_race_tab(self):
 
+        """Can do Tasha's optionals in the future"""
+        """https://thetrove.is/Books/Dungeons%20%26%20Dragons%20%5Bmulti%5D/5th%20Edition%20%285e%29/Core/Tasha%E2%80%99s%20Cauldron%20of%20Everything%20%28HQ%2C%20Both%20Covers%29.pdf"""
+
         def race_choice_config():
 
             self.character_race = tk.StringVar()
@@ -503,10 +513,10 @@ class CharacterCreator:
 
         def feature_constructor(instance):
 
-            if instance.__subclasses__():
-                is_subclass = False
+            if instance not in races.Race.__subclasses__():
+                is_subrace = True
             else:
-                is_subclass = True
+                is_subrace = False
 
             if hasattr(instance, "ASI"):
                 self.asi_frame.grid_forget()
@@ -522,7 +532,7 @@ class CharacterCreator:
                 pack_race_languages(instance)
 
             if hasattr(instance, "features"):
-                pack_other_features(instance)
+                pack_other_features(instance, is_subrace)
 
             self.resize_tabs()
 
@@ -606,7 +616,7 @@ class CharacterCreator:
             self.asi_frame = tk.Frame(self.race_info_frame)
 
             asi_label = tk.Label(self.asi_frame,
-                                 text="Ability score increases",
+                                 text="Ability score increases:",
                                  font=default_font + " 10 bold")
 
             asi_label.grid(row=0, sticky="N")
@@ -639,29 +649,10 @@ class CharacterCreator:
                                                          variable_name="Race ASI",
                                                          value_tab=Tabs.race,
                                                          value_type=AspectTypes.asi,
-                                                         grid=dict(row=2),
+                                                         grid=dict(row=2, sticky=tk.N),
                                                          check_global=False,
-                                                         label=dict(textvariable=self.asi_choice_text))
-
-            # asi_choice_frame = tk.Frame(self.asi_frame)
-            #
-            # asi_choice_label = tk.Label(asi_choice_frame,
-            #                             text="Choose ability score to increase by +1:")
-            #
-            # asi_choice_1 = ttk.Combobox(asi_choice_frame,
-            #                             state="readonly",
-            #                             width=12)
-            #
-            # asi_choice_2 = ttk.Combobox(asi_choice_frame,
-            #                             state="readonly",
-            #                             width=12)
-            #
-            # asi_choice_label.grid(row=0)
-            # asi_choice_1.grid(row=1)
-            # asi_choice_2.grid(row=2)
-
-            # self.asi_attributes_frame.grid(row=1)
-            # asi_choice_frame.grid(row=2)
+                                                         label=dict(textvariable=self.asi_choice_text,
+                                                                    font=default_font + " 8"))
 
         def pack_race_languages(instance):
 
@@ -705,9 +696,10 @@ class CharacterCreator:
                     asi_choice = asi[1]
                     asi_choice_options = asi[0]
                     if asi[1] <= 1:
-                        self.asi_choice_text.set("Choose ability score to increase by +1:")
+                        self.race_asi_choice.label_text.set("Choose ability score to increase by +1:")
                     elif asi[1] > 1:
-                        self.asi_choice_text.set("Choose ability scores to increase by +1:")
+                        self.race_asi_choice.label_text.set("Choose ability scores to increase by +1:")
+
                 else:
                     self.asi_attributes_frame.grid(row=1)
                     attr_index = (glossary.attrs.index(asi[0].__name__))
@@ -725,102 +717,307 @@ class CharacterCreator:
 
             self.race_features_frame = tk.Frame(self.race_frame)
 
-            self.race_features_label = tk.Label(self.race_features_frame,
+            self.race_features_title = tk.Label(self.race_features_frame,
                                                 text="Racial Features:",
                                                 font=default_font + " 10 bold",
                                                 anchor="n")
 
-            self.race_other_features_chooser = ValueChooserGenerator(character=self,
-                                                                     master=self.race_features_frame,
-                                                                     num_choosers=1,
-                                                                     variable_name="Race Features Choice",
-                                                                     value_tab=Tabs.race,
-                                                                     value_type=AspectTypes.race_feature_choice,
-                                                                     label=dict(text=f"Choose race feature:",
-                                                                                font=default_font + " 8",
-                                                                                anchor=tk.CENTER),
-                                                                     grid=dict(row=1))
+            self.race_features_title_frame = tk.Frame(self.race_features_frame)
+            self.race_features_chooser_frame = tk.Frame(self.race_features_title_frame)
+            self.race_features_general_frame = tk.Frame(self.race_features_frame)
 
-            self.other_features_internal_frame = tk.Frame(self.race_features_frame)
+            self.subrace_features_title_frame = tk.Frame(self.race_features_frame)
+            self.subrace_features_chooser_frame = tk.Frame(self.subrace_features_title_frame)
+            self.subrace_features_general_frame = tk.Frame(self.race_features_frame)
 
-            self.race_skills_chooser = ValueChooserGenerator(character=self,
-                                                            master=self.other_features_internal_frame,
-                                                            num_choosers=2,
-                                                            variable_name="Race Skill",
-                                                            value_tab=Tabs.race,
-                                                            value_type=AspectTypes.skill,
-                                                            label=dict(text=f"Choose race skill:",
-                                                                       font=default_font + " 8",
-                                                                       anchor=tk.CENTER),
-                                                            check_global=True
-                                                            )
+            self.race_features_label = tk.Label(self.race_features_title_frame,
+                                                text="Race Features:",
+                                                font=default_font + " 8 bold",
+                                                anchor="n")
+            self.subrace_features_label = tk.Label(self.subrace_features_title_frame,
+                                                   text="Subrace Features:",
+                                                   font=default_font + " 8 bold",
+                                                   anchor="n")
 
-            self.race_feat_chooser = ValueChooserGenerator(character=self,
-                                                          master=self.other_features_internal_frame,
-                                                          num_choosers=1,
-                                                          variable_name="Race Feat",
-                                                          value_tab=Tabs.race,
-                                                          value_type=AspectTypes.feat,
-                                                          label=dict(text=f"Choose starting feat:",
-                                                                     font=default_font + " 8",
-                                                                     anchor=tk.CENTER),
-                                                          check_global=True)
+            self.race_features_label.pack()
+            self.subrace_features_label.pack()
+            self.race_features_chooser_frame.pack()
+            self.subrace_features_chooser_frame.pack()
 
-            self.other_features_text = tk.Label(self.other_features_internal_frame,
-                                                text="")
+            self.racial_features = dict(race=[], subrace=[])
+            self.racial_widgets_activatable = []
+            self.racial_feature_choosers = dict(race=[], subrace=[])
 
-        def pack_other_features(instance):
+        def feature_changed(*args):
 
-            def feature_checker(feature_type, obj):
-                if feature_type in instance.features:
-                    num_features = len(getattr(instance, feature_type))
-                    suffix = ":"
-                    if num_features > 1:
-                        suffix = "s:"
-                        if not all(a == getattr(instance, feature_type)[0] for a in getattr(instance, feature_type)):
-                            print("Error setting values!")
+            pack_features_list()
 
-                    obj.values = getattr(instance, feature_type)[0]
+        def pack_other_features(instance, is_subrace):
 
-                    obj.label_text.set(f'{obj.label_text.get()[:-1]}{suffix}')
-                    obj.activate(num_features)
+            if is_subrace:
+                key = 'subrace'
+                chooser_frame = self.subrace_features_chooser_frame
+            else:
+                key = 'race'
+                chooser_frame = self.race_features_chooser_frame
 
-                else:
-                    obj.deactivate()
+            self.racial_features['subrace'] = []
+            if not is_subrace:
+                self.racial_features['race'] = []
 
             if instance.features:
-
-                Ftype = races.FeatureType
-
                 self.divider_2.grid(row=3, column=1, sticky="NS", rowspan=8)
-                self.race_features_label.grid(row=0, sticky="N")
-                self.other_features_internal_frame.grid(row=2)
+                self.race_features_title.grid(row=0)
                 self.race_features_frame.grid(row=3, column=2, sticky="N", padx=4)
 
-                if Ftype.choice in instance.features:
-                    self.race_other_features_chooser.activate()
+                if not is_subrace:
+                    self.race_features_title_frame.grid(row=1, sticky="N")
+                    self.race_features_general_frame.grid(row=2)
+
+                    self.subrace_features_title_frame.grid_forget()
+                    self.subrace_features_general_frame.grid_forget()
 
                 else:
-                    self.race_other_features_chooser.deactivate()
+                    self.subrace_features_title_frame.grid(row=3, sticky="N")
+                    self.subrace_features_general_frame.grid(row=4)
 
-                    feature_checker(Ftype.skills, self.race_skills_chooser)
-                    feature_checker(Ftype.feats, self.race_feat_chooser)
-            else:
+                # If choices to be made
+
+                if races.FeatureType.choice in instance.features.types:
+
+                    for child in chooser_frame.winfo_children():
+                        child.destroy()
+
+                    if not is_subrace:
+                        for chooser in self.racial_feature_choosers['race']:
+                            chooser[0].deactivate()
+                        self.racial_feature_choosers['race'] = []
+
+                    for chooser in self.racial_feature_choosers['subrace']:
+                        chooser[0].deactivate()
+                    self.racial_feature_choosers['subrace'] = []
+
+
+
+                    for feature_name, feature_vals in instance.features.all.items():
+                        if feature_vals[0] == races.FeatureType.choice:
+                            chooser_label = tk.Label(chooser_frame,
+                                                     text=feature_name,
+                                                     font=default_font + " 8")
+                            chooser_label.pack()
+
+                            chooser = ValueChooserGenerator(character=self,
+                                                            master=chooser_frame,
+                                                            num_choosers=1,
+                                                            variable_name="Race Features Choice",
+                                                            value_tab=Tabs.race,
+                                                            value_type=AspectTypes.race_feature_choice,
+                                                            default_value=f"Choose {key} feature:",
+                                                            values=feature_vals[1],
+                                                            check_global=True
+                                                            )
+                            chooser.widgets[0]["width"] = 20
+
+                            chooser.activate()
+
+                            chooser_feature_frame = tk.Frame(chooser_frame)
+
+                            choice_variable = chooser.variables[0]
+
+                            self.racial_feature_choosers[key].append((chooser, choice_variable, feature_vals[1], chooser_feature_frame))
+
+                            choice_variable.trace_add("write", feature_changed)
+
+                else:
+                    for chooser in self.racial_feature_choosers['subrace']:
+                        chooser[0].deactivate()
+                    self.racial_feature_choosers['subrace'] = []
+
+                    for child in self.subrace_features_chooser_frame.winfo_children():
+                        child.destroy()
+
+                    tk.Frame(self.subrace_features_chooser_frame).pack()
+
+                    if not is_subrace:
+
+                        for chooser in self.racial_feature_choosers['race']:
+                            chooser[0].deactivate()
+                        self.racial_feature_choosers['race'] = []
+
+                        for child in self.race_features_chooser_frame.winfo_children():
+                            child.destroy()
+
+                        tk.Frame(self.race_features_chooser_frame).pack()
+
+                self.racial_features[key] = instance.features.all
+
+                pack_features_list()
+
+            elif not is_subrace or not self.race_instance.features:
+
                 self.divider_2.grid_forget()
-                self.race_features_label.grid_forget()
-                self.other_features_internal_frame.grid_forget()
+                self.race_features_title.grid_forget
                 self.race_features_frame.grid_forget()
 
-                self.race_other_features_chooser.deactivate()
-                self.race_skills_chooser.deactivate()
-                self.race_feat_chooser.deactivate()
+                self.race_features_title_frame.grid_forget()
+                self.race_features_general_frame.grid_forget()
+                self.subrace_features_title_frame.grid_forget()
+                self.subrace_features_general_frame.grid_forget()
+            elif is_subrace:
+
+                self.subrace_features_title_frame.grid_forget()
+                self.subrace_features_general_frame.grid_forget()
+
+        def pack_features_list():
+
+            class FeatureWidgets:
+                def __init__(self, char):
+                    self.char = char
+
+                def chooser(self, feature_frame, feature_values):
+                    pass
+
+                def other(self, feature_frame, feature_values):
+                    widget = tk.Label(feature_frame,
+                                      text=f'{feature_values.desc}\n',
+                                      wraplength=400,
+                                      justify=tk.LEFT,
+                                      anchor="w",
+                                      font=default_font + " 8"
+                                      )
+                    widget.pack(side=tk.LEFT)
+
+                def skill(self, feature_frame, feature_values):
+                    for values in feature_values:
+                        widget = ValueChooserGenerator(character=self.char,
+                                                       master=feature_frame,
+                                                       num_choosers=1,
+                                                       variable_name="Race Skill",
+                                                       value_tab=Tabs.race,
+                                                       value_type=AspectTypes.skill,
+                                                       default_value=f"Choose skill:",
+                                                       values=values,
+                                                       check_global=True
+                                                       )
+                        widget.activate()
+                        self.char.racial_widgets_activatable.append(widget)
+
+                def feat(self, feature_frame, feature_values):
+                    for values in feature_values:
+                        widget = ValueChooserGenerator(character=self.char,
+                                                       master=feature_frame,
+                                                       num_choosers=1,
+                                                       variable_name="Race Feat",
+                                                       value_tab=Tabs.race,
+                                                       value_type=AspectTypes.feat,
+                                                       default_value=f"Choose feat:",
+                                                       values=values,
+                                                       check_global=True)
+                        widget.activate()  # Add prereq here
+                        self.char.racial_widgets_activatable.append(widget)
+
+                def prof(self, feature_frame, feature_values):
+                    prof_type = feature_values[0]
+                    feature_vals = feature_values[1]
+
+                    widget = ValueChooserGenerator(character=self.char,
+                                                   master=feature_frame,
+                                                   num_choosers=1,
+                                                   variable_name=f"Race {prof_type}",
+                                                   value_tab=Tabs.race,
+                                                   value_type=AspectTypes.prof,
+                                                   default_value=f"Choose {prof_type} proficiency:",
+                                                   values=feature_vals,
+                                                   check_global=True)
+
+                    widget.widgets[0]["width"] = len(widget.default_value) - 4
+
+                    widget.activate()
+                    self.char.racial_widgets_activatable.append(widget)
+
+            for widget in self.racial_widgets_activatable:
+                widget.deactivate()
+
+            packer = FeatureWidgets(self)
+
+            feature_switcher = {
+                races.FeatureType.choice: packer.chooser,
+                races.FeatureType.other: packer.other,
+                races.FeatureType.skills: packer.skill,
+                races.FeatureType.feats: packer.feat,
+                races.FeatureType.proficiencies: packer.prof
+            }
+
+            class FeatureSet:
+                def __init__(self, name, master_frame, features):
+                    self.name = name
+                    self.master = master_frame
+                    self.features = features
+
+            race_set = FeatureSet('race', self.race_features_general_frame, self.racial_features['race'])
+            subrace_set = FeatureSet('subrace', self.subrace_features_general_frame, self.racial_features['subrace'])
+
+            for set in [race_set, subrace_set]:
+
+                for child in set.master.winfo_children():
+                    child.destroy()
+
+                if set.features:
+                    for feature_name, feature_val in set.features.items():
+                        feature_frame = tk.Frame(set.master)
+                        feature_label = tk.Label(feature_frame,
+                                                 text=feature_name,
+                                                 font=default_font + " 8")
+
+                        if not isinstance(feature_val, list):
+                            feature_type, feature_values = feature_val
+                            if feature_type != races.FeatureType.choice:
+                                feature_label.pack()
+                            try:
+                                feature_switcher[feature_type](feature_frame, feature_values)
+                            except Exception as e:
+                                print(f'Error on {e} key for {feature_name}')
+
+                        else:
+                            feature_label.pack()
+                            for pair in feature_val:
+                                feature_type, feature_values = pair
+                                try:
+                                    feature_switcher[feature_type](feature_frame, feature_values)
+                                except Exception as e:
+                                    print(f'Error on {e} key for {feature_name}')
+
+                        feature_frame.pack(fill="x", expand=True)
+
+            for info_set, choosers in self.racial_feature_choosers.items():
+                if choosers:
+
+                    for choice_info in choosers:
+                        chooser, choice_variable, feature_options, chooser_frame = choice_info
+                        default = chooser.default_value
+                        choice_name = choice_variable.get()
+
+                        for child in chooser_frame.winfo_children():
+                            child.destroy()
 
 
+                        if choice_name != default:
+
+                            choice_options = feature_options[choice_name]
+                            if isinstance(choice_options, list):
+                                for options in choice_options:
+                                    choice_type = options[0]
+                                    choice_values = options[1]
+                                    feature_switcher[choice_type](chooser_frame, choice_values)
+                            else:
+                                choice_type = choice_options[0]
+                                choice_values = choice_options[1]
+                                feature_switcher[choice_type](chooser_frame, choice_values)
+
+                            chooser_frame.pack()
 
 
-
-            # self.race_skills_choser.activate()  # remember to change label to number
-            # self.race_feat_choser.activate()
+            self.resize_tabs()
 
         ### Begin Code
 

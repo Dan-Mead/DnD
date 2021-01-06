@@ -65,7 +65,7 @@ class Tabs:
 
 class ValueChooserGenerator:
     def __init__(self, character, master, num_choosers, variable_name, value_tab, value_type,
-                 invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False):
+                 invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False, aspect_order = 1):
         char = character
         master_frame = master
 
@@ -110,7 +110,7 @@ class ValueChooserGenerator:
             else:
                 aspect_variable_name = variable_name
 
-            Aspect(aspect_variable_name, value_tab, value_type, variable, chooser, False, False).add(char)
+            Aspect(aspect_variable_name, value_tab, value_type, variable, chooser, aspect_order, False).add(char)
 
             self.aspects.append(char.aspects[aspect_variable_name])
 
@@ -170,13 +170,13 @@ class ValueChooserGenerator:
 
 
 class Aspect:
-    def __init__(self, aspect_id, aspect_tab, aspect_type, variable, widget, eternal, active):
+    def __init__(self, aspect_id, aspect_tab, aspect_type, variable, widget, order, active):
         self.id = aspect_id
         self.tab = aspect_tab
         self.type = aspect_type
         self.variable = variable
         self.widget = widget
-        self.eternal = eternal
+        self.order = order
         self.active = active
 
     def add(self, character):
@@ -210,12 +210,12 @@ class CharacterCreator:
                                                      ("all files", "*.*")))
 
         character_import_dict = import_info(filename)
-
-        for condition in [True, False]:
+        num_layers = max([aspect.order for aspect in self.aspects.values()]) + 1
+        for condition in range(num_layers):
             for key, value in character_import_dict.items():
                 try:
                     aspect = self.aspects[key]
-                    if aspect.eternal == condition:
+                    if aspect.order == condition:
                         aspect.variable.set(value)
                         aspect.active = True
                 except:
@@ -249,6 +249,18 @@ class CharacterCreator:
 
         exit_buttons.pack()
 
+    def sanitise(self):
+        print([aspect.order for aspect in self.aspects.values()])
+        # character_export_dict = {}
+        #
+        # for aspect_id, aspect in self.aspects.items():
+        #     print(aspect_id, aspect.variable.get(), aspect.active)
+        #
+        #     # if aspect.active:
+        #     #     character_export_dict[aspect_id] = (aspect.variable.get())
+        #
+        # # export_data(character_export_dict)
+
     def reset_tab_aspects(self, tab_hash):
 
         for aspect in self.aspects.values():
@@ -268,6 +280,7 @@ class CharacterCreator:
         self.file_menu = tk.Menu(self.main_menu, tearoff=0)
         self.file_menu.add_command(label="Save", command=self.save)
         self.file_menu.add_command(label="Load", command=self.load)
+        self.file_menu.add_command(label="Sanitise", command=self.sanitise)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.exit)
         self.main_menu.add_cascade(label="File", menu=self.file_menu)
@@ -308,7 +321,7 @@ class CharacterCreator:
             name_entry.config(width=24,
                               justify="center")
 
-            Aspect("Name", Tabs.info, AspectTypes.info, character_name, name_entry, True, True).add(self)
+            Aspect("Name", Tabs.info, AspectTypes.info, character_name, name_entry, 0, True).add(self)
 
             name_frame.pack(padx=8, pady=(8, 16))
 
@@ -326,7 +339,7 @@ class CharacterCreator:
 
             age_entry.config(width=8,
                              justify="center")
-            Aspect("Age", Tabs.info, AspectTypes.info, character_age, age_entry, False, True).add(self)
+            Aspect("Age", Tabs.info, AspectTypes.info, character_age, age_entry, 1, True).add(self)
 
             # Gender
 
@@ -337,7 +350,7 @@ class CharacterCreator:
             gender_entry.grid(row=1)
             gender_entry.config(width=8,
                                 justify="center")
-            Aspect("Gender", Tabs.info, AspectTypes.info, character_gender, gender_entry, False, True).add(self)
+            Aspect("Gender", Tabs.info, AspectTypes.info, character_gender, gender_entry, 1, True).add(self)
 
             # Physical Attributes
 
@@ -365,7 +378,7 @@ class CharacterCreator:
                     label.grid(row=1, column=j, pady=(2, 1), padx=4)
                     entry.grid(row=2, column=j, padx=8)
 
-                    Aspect(aspects[k][j], Tabs.info, AspectTypes.info, aspect_var, entry, False, True).add(self)
+                    Aspect(aspects[k][j], Tabs.info, AspectTypes.info, aspect_var, entry, 1, True).add(self)
 
             age_frame.grid(row=0, column=0, padx=(0, 4), sticky="E")
             gender_frame.grid(row=0, column=1, padx=(4, 0), sticky="W")
@@ -383,7 +396,7 @@ class CharacterCreator:
             faith_entry.config(width=16,
                                justify="center")
 
-            Aspect("Faith", Tabs.info, AspectTypes.info, character_faith, faith_entry, False, True).add(self)
+            Aspect("Faith", Tabs.info, AspectTypes.info, character_faith, faith_entry, 1, True).add(self)
 
             faith_frame.pack(pady=2)
 
@@ -409,8 +422,8 @@ class CharacterCreator:
                                     width=8,
                                     justify="center")
 
-            Aspect("Ethics", Tabs.info, AspectTypes.info, character_ethics, ethics, False, True).add(self)
-            Aspect("Morality", Tabs.info, AspectTypes.info, character_morality, morality, False, True).add(self)
+            Aspect("Ethics", Tabs.info, AspectTypes.info, character_ethics, ethics, 1, True).add(self)
+            Aspect("Morality", Tabs.info, AspectTypes.info, character_morality, morality, 1, True).add(self)
 
             alignment_label.grid(row=0, columnspan=2)
             ethics.grid(row=1, column=0, padx=(0, 2))
@@ -447,7 +460,7 @@ class CharacterCreator:
                                              textvariable=self.character_race,
                                              justify="center")
 
-            Aspect("Race", Tabs.race, AspectTypes.info, self.character_race, self.race_chooser, True, True).add(self)
+            Aspect("Race", Tabs.race, AspectTypes.info, self.character_race, self.race_chooser, 0, True).add(self)
 
             race_choice_prompt = "Choose race: "
             self.race_chooser.set(race_choice_prompt)
@@ -492,11 +505,11 @@ class CharacterCreator:
                                                 textvariable=self.character_subrace,
                                                 justify="center")
 
-            Aspect("Subrace", Tabs.race, AspectTypes.info, self.character_subrace, self.subrace_chooser, True,
+            Aspect("Subrace", Tabs.race, AspectTypes.info, self.character_subrace, self.subrace_chooser, 0,
                    True).add(self)
 
-            subrace_choice_prompt = "Choose subrace: "
-            self.subrace_chooser.set(subrace_choice_prompt)
+            self.subrace_choice_prompt = "Choose subrace: "
+            self.subrace_chooser.set(self.subrace_choice_prompt)
 
             self.character_subrace.trace_add('write', subrace_changed)
 
@@ -506,10 +519,12 @@ class CharacterCreator:
 
         def subrace_changed(*args):
 
-            self.subrace_instance = {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
-                self.character_subrace.get()]
 
-            feature_constructor(self.subrace_instance)
+            if self.character_subrace.get() != self.subrace_choice_prompt:
+                self.subrace_instance = {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
+                    self.character_subrace.get()]
+
+                feature_constructor(self.subrace_instance)
 
         def feature_constructor(instance):
 
@@ -756,9 +771,12 @@ class CharacterCreator:
             if is_subrace:
                 key = 'subrace'
                 chooser_frame = self.subrace_features_chooser_frame
+                aspect_label = self.subrace_instance.subrace_name
+
             else:
                 key = 'race'
                 chooser_frame = self.race_features_chooser_frame
+                aspect_label = self.race_instance.race_name
 
             self.racial_features['subrace'] = []
             if not is_subrace:
@@ -795,9 +813,6 @@ class CharacterCreator:
                     for chooser in self.racial_feature_choosers['subrace']:
                         chooser[0].deactivate()
                     self.racial_feature_choosers['subrace'] = []
-
-
-
                     for feature_name, feature_vals in instance.features.all.items():
                         if feature_vals[0] == races.FeatureType.choice:
                             chooser_label = tk.Label(chooser_frame,
@@ -808,7 +823,7 @@ class CharacterCreator:
                             chooser = ValueChooserGenerator(character=self,
                                                             master=chooser_frame,
                                                             num_choosers=1,
-                                                            variable_name="Race Features Choice",
+                                                            variable_name=f"{aspect_label} Features Choice",
                                                             value_tab=Tabs.race,
                                                             value_type=AspectTypes.race_feature_choice,
                                                             default_value=f"Choose {key} feature:",
@@ -823,7 +838,8 @@ class CharacterCreator:
 
                             choice_variable = chooser.variables[0]
 
-                            self.racial_feature_choosers[key].append((chooser, choice_variable, feature_vals[1], chooser_feature_frame))
+                            self.racial_feature_choosers[key].append(
+                                (chooser, choice_variable, feature_vals[1], chooser_feature_frame))
 
                             choice_variable.trace_add("write", feature_changed)
 
@@ -873,10 +889,10 @@ class CharacterCreator:
                 def __init__(self, char):
                     self.char = char
 
-                def chooser(self, feature_frame, feature_values):
+                def chooser(self, feature_name, feature_frame, feature_values):
                     pass
 
-                def other(self, feature_frame, feature_values):
+                def other(self, feature_name, feature_frame, feature_values):
                     widget = tk.Label(feature_frame,
                                       text=f'{feature_values.desc}\n',
                                       wraplength=400,
@@ -886,47 +902,50 @@ class CharacterCreator:
                                       )
                     widget.pack(side=tk.LEFT)
 
-                def skill(self, feature_frame, feature_values):
-                    for values in feature_values:
+                def skill(self, feature_name, feature_frame, feature_values):
+                    for n, values in enumerate(feature_values):
                         widget = ValueChooserGenerator(character=self.char,
                                                        master=feature_frame,
                                                        num_choosers=1,
-                                                       variable_name="Race Skill",
+                                                       variable_name=f"{feature_name} Skill {n}",
                                                        value_tab=Tabs.race,
                                                        value_type=AspectTypes.skill,
                                                        default_value=f"Choose skill:",
                                                        values=values,
+                                                       aspect_order=2,
                                                        check_global=True
                                                        )
                         widget.activate()
                         self.char.racial_widgets_activatable.append(widget)
 
-                def feat(self, feature_frame, feature_values):
-                    for values in feature_values:
+                def feat(self, feature_name, feature_frame, feature_values):
+                    for n, values in enumerate(feature_values):
                         widget = ValueChooserGenerator(character=self.char,
                                                        master=feature_frame,
                                                        num_choosers=1,
-                                                       variable_name="Race Feat",
+                                                       variable_name=f"{feature_name} Feat {n}",
                                                        value_tab=Tabs.race,
                                                        value_type=AspectTypes.feat,
                                                        default_value=f"Choose feat:",
                                                        values=values,
+                                                       aspect_order=2,
                                                        check_global=True)
                         widget.activate()  # Add prereq here
                         self.char.racial_widgets_activatable.append(widget)
 
-                def prof(self, feature_frame, feature_values):
+                def prof(self, feature_name, feature_frame, feature_values):
                     prof_type = feature_values[0]
                     feature_vals = feature_values[1]
 
                     widget = ValueChooserGenerator(character=self.char,
                                                    master=feature_frame,
                                                    num_choosers=1,
-                                                   variable_name=f"Race {prof_type}",
+                                                   variable_name=f"{feature_name} {prof_type}",
                                                    value_tab=Tabs.race,
                                                    value_type=AspectTypes.prof,
                                                    default_value=f"Choose {prof_type} proficiency:",
                                                    values=feature_vals,
+                                                   aspect_order=2,
                                                    check_global=True)
 
                     widget.widgets[0]["width"] = len(widget.default_value) - 4
@@ -973,7 +992,7 @@ class CharacterCreator:
                             if feature_type != races.FeatureType.choice:
                                 feature_label.pack()
                             try:
-                                feature_switcher[feature_type](feature_frame, feature_values)
+                                feature_switcher[feature_type](feature_name, feature_frame, feature_values)
                             except Exception as e:
                                 print(f'Error on {e} key for {feature_name}')
 
@@ -982,7 +1001,7 @@ class CharacterCreator:
                             for pair in feature_val:
                                 feature_type, feature_values = pair
                                 try:
-                                    feature_switcher[feature_type](feature_frame, feature_values)
+                                    feature_switcher[feature_type](feature_name, feature_frame, feature_values)
                                 except Exception as e:
                                     print(f'Error on {e} key for {feature_name}')
 
@@ -999,7 +1018,6 @@ class CharacterCreator:
                         for child in chooser_frame.winfo_children():
                             child.destroy()
 
-
                         if choice_name != default:
 
                             choice_options = feature_options[choice_name]
@@ -1007,14 +1025,13 @@ class CharacterCreator:
                                 for options in choice_options:
                                     choice_type = options[0]
                                     choice_values = options[1]
-                                    feature_switcher[choice_type](chooser_frame, choice_values)
+                                    feature_switcher[choice_type](feature_name, chooser_frame, choice_values)
                             else:
                                 choice_type = choice_options[0]
                                 choice_values = choice_options[1]
-                                feature_switcher[choice_type](chooser_frame, choice_values)
+                                feature_switcher[choice_type](feature_name, chooser_frame, choice_values)
 
                             chooser_frame.pack()
-
 
             self.resize_tabs()
 

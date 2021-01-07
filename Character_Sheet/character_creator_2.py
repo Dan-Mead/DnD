@@ -168,6 +168,8 @@ class ValueChooserGenerator:
             self.aspects[n].active = False
             widget.pack_forget()
 
+    def update_master(self, new_master):
+        self.frame["master"] = new_master
 
 class Aspect:
     def __init__(self, aspect_id, aspect_tab, aspect_type, variable, widget, order, active):
@@ -519,7 +521,6 @@ class CharacterCreator:
 
         def subrace_changed(*args):
 
-
             if self.character_subrace.get() != self.subrace_choice_prompt:
                 self.subrace_instance = {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
                     self.character_subrace.get()]
@@ -547,7 +548,8 @@ class CharacterCreator:
                 pack_race_languages(instance)
 
             if hasattr(instance, "features"):
-                pack_other_features(instance, is_subrace)
+                pass
+                # pack_other_features(instance, is_subrace)
 
             self.resize_tabs()
 
@@ -883,75 +885,75 @@ class CharacterCreator:
                 self.subrace_features_title_frame.grid_forget()
                 self.subrace_features_general_frame.grid_forget()
 
-        def pack_features_list():
+        class FeatureWidgets:
+            def __init__(self, char):
+                self.char = char
 
-            class FeatureWidgets:
-                def __init__(self, char):
-                    self.char = char
+            def chooser(self, feature_name, feature_frame, feature_values):
+                pass
 
-                def chooser(self, feature_name, feature_frame, feature_values):
-                    pass
+            def other(self, feature_name, feature_frame, feature_values):
+                widget = tk.Label(feature_frame,
+                                  text=f'{feature_values.desc}\n',
+                                  wraplength=400,
+                                  justify=tk.LEFT,
+                                  anchor="w",
+                                  font=default_font + " 8"
+                                  )
+                widget.pack(side=tk.LEFT)
 
-                def other(self, feature_name, feature_frame, feature_values):
-                    widget = tk.Label(feature_frame,
-                                      text=f'{feature_values.desc}\n',
-                                      wraplength=400,
-                                      justify=tk.LEFT,
-                                      anchor="w",
-                                      font=default_font + " 8"
-                                      )
-                    widget.pack(side=tk.LEFT)
-
-                def skill(self, feature_name, feature_frame, feature_values):
-                    for n, values in enumerate(feature_values):
-                        widget = ValueChooserGenerator(character=self.char,
-                                                       master=feature_frame,
-                                                       num_choosers=1,
-                                                       variable_name=f"{feature_name} Skill {n}",
-                                                       value_tab=Tabs.race,
-                                                       value_type=AspectTypes.skill,
-                                                       default_value=f"Choose skill:",
-                                                       values=values,
-                                                       aspect_order=2,
-                                                       check_global=True
-                                                       )
-                        widget.activate()
-                        self.char.racial_widgets_activatable.append(widget)
-
-                def feat(self, feature_name, feature_frame, feature_values):
-                    for n, values in enumerate(feature_values):
-                        widget = ValueChooserGenerator(character=self.char,
-                                                       master=feature_frame,
-                                                       num_choosers=1,
-                                                       variable_name=f"{feature_name} Feat {n}",
-                                                       value_tab=Tabs.race,
-                                                       value_type=AspectTypes.feat,
-                                                       default_value=f"Choose feat:",
-                                                       values=values,
-                                                       aspect_order=2,
-                                                       check_global=True)
-                        widget.activate()  # Add prereq here
-                        self.char.racial_widgets_activatable.append(widget)
-
-                def prof(self, feature_name, feature_frame, feature_values):
-                    prof_type = feature_values[0]
-                    feature_vals = feature_values[1]
-
+            def skill(self, feature_name, feature_frame, feature_values):
+                for n, values in enumerate(feature_values):
                     widget = ValueChooserGenerator(character=self.char,
                                                    master=feature_frame,
                                                    num_choosers=1,
-                                                   variable_name=f"{feature_name} {prof_type}",
+                                                   variable_name=f"{feature_name} Skill {n}",
                                                    value_tab=Tabs.race,
-                                                   value_type=AspectTypes.prof,
-                                                   default_value=f"Choose {prof_type} proficiency:",
-                                                   values=feature_vals,
+                                                   value_type=AspectTypes.skill,
+                                                   default_value=f"Choose skill:",
+                                                   values=values,
                                                    aspect_order=2,
-                                                   check_global=True)
-
-                    widget.widgets[0]["width"] = len(widget.default_value) - 4
-
+                                                   check_global=True
+                                                   )
                     widget.activate()
                     self.char.racial_widgets_activatable.append(widget)
+
+            def feat(self, feature_name, feature_frame, feature_values):
+                for n, values in enumerate(feature_values):
+                    widget = ValueChooserGenerator(character=self.char,
+                                                   master=feature_frame,
+                                                   num_choosers=1,
+                                                   variable_name=f"{feature_name} Feat {n}",
+                                                   value_tab=Tabs.race,
+                                                   value_type=AspectTypes.feat,
+                                                   default_value=f"Choose feat:",
+                                                   values=values,
+                                                   aspect_order=2,
+                                                   check_global=True)
+                    widget.activate()  # Add prereq here
+                    self.char.racial_widgets_activatable.append(widget)
+
+            def prof(self, feature_name, feature_frame, feature_values):
+                prof_type = feature_values[0]
+                feature_vals = feature_values[1]
+
+                widget = ValueChooserGenerator(character=self.char,
+                                               master=feature_frame,
+                                               num_choosers=1,
+                                               variable_name=f"{feature_name} {prof_type}",
+                                               value_tab=Tabs.race,
+                                               value_type=AspectTypes.prof,
+                                               default_value=f"Choose {prof_type} proficiency:",
+                                               values=feature_vals,
+                                               aspect_order=2,
+                                               check_global=True)
+
+                widget.widgets[0]["width"] = len(widget.default_value) - 4
+
+                widget.activate()
+                self.char.racial_widgets_activatable.append(widget)
+
+        def pack_features_list():
 
             for widget in self.racial_widgets_activatable:
                 widget.deactivate()
@@ -1035,6 +1037,94 @@ class CharacterCreator:
 
             self.resize_tabs()
 
+        def add_dynamic_aspects():
+
+            def get_feature_info(name, feature_name, feature, origin):
+
+                Ftype = races.FeatureType
+
+                feature_type = feature[0]
+                if feature_type in chooser_widgets:
+                    if feature_type == Ftype.proficiencies:
+                        feature_type += f" {feature[1][0]}"
+                        feature_opts = feature[1][1]
+                    else:
+                        feature_opts = feature[1]
+
+                    return (origin, name, feature_name, feature_type, feature_opts)
+
+            def feature_splitter(feature_list, name, origin):
+
+                features = []
+
+                for feature in feature_list.items():
+                    feature_name = feature[0]
+                    if not isinstance(feature[1], list):
+                        features.append(get_feature_info(name, feature_name, feature[1], origin))
+                    else:
+                        for feature_set in feature[1]:
+                            features.append(get_feature_info(name, feature_name, feature_set, origin))
+                return features
+
+            def list_features(name, instance, origin):
+
+                feature_list = []
+
+                if instance.features:
+                    feature_list.extend(feature_splitter(instance.features.all, name, origin))
+                    if hasattr(instance, Ftype.choice):
+                        origin += " choice"
+                        feature_list.extend(feature_splitter(instance.choice_features, name, origin))
+
+                return feature_list
+
+            self.race_feature_widgets = {}
+
+            Ftype = races.FeatureType
+
+            chooser_widgets = [Ftype.choice, Ftype.skills, Ftype.feats, Ftype.proficiencies]
+
+            widgets_set = FeatureWidgets(self)
+
+            feature_switcher = {
+                Ftype.choice: widgets_set.chooser,
+                Ftype.other: widgets_set.other,
+                Ftype.skills: widgets_set.skill,
+                Ftype.feats: widgets_set.feat,
+                Ftype.proficiencies: widgets_set.prof
+            }
+
+            all_features = []
+
+            all_races = [race for race in races.Race.__subclasses__()]
+            for race in all_races:
+                race_name = race.race_name
+                origin = "race"
+                all_features.extend(list_features(race_name, race, origin))
+
+                subraces = [subrace for subrace in race.__subclasses__()]
+                for subrace in subraces:
+                    subrace_name = subrace.subrace_name
+                    origin = "subrace"
+                    all_features.extend(list_features(race_name + " " + subrace_name, subrace, origin))
+
+            all_features = [feature for feature in all_features if feature is not None]
+
+            for feature in all_features:
+                feature_key = f"{feature[1]} {feature[2]} {feature[3]} feature"
+
+                # self.race_feature_widgets[feature_key] = ""
+
+            print(self.race_feature_widgets)
+
+
+            print("All dynamic aspects generate")
+
+            # Go through and generate all possible choosers and aspects. When actually packing, call them appropriately. Not nice but it should work.
+
+
+
+
         ### Begin Code
 
         self.reset_tab_aspects(Tabs.race)
@@ -1053,6 +1143,8 @@ class CharacterCreator:
         race_info_config()
         race_asi_config()
         race_other_features_config()
+        add_dynamic_aspects()
+
 
         self.race_frame.pack(fill="both", expand=True)
 
@@ -1094,10 +1186,6 @@ class CharacterCreator:
         self.create_tab_manager()
         self.create_info_tab()
         self.create_race_tab()
-        # Info().pack()
-        # Class().pack()
-        # Race().pack()
-        # Background_().pack()
 
         # Move window to centre
 

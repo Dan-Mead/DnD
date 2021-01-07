@@ -166,7 +166,7 @@ class Warforged(Race):
                              "Sentry's Rest": (FeatureType.other, SentrysRest()),
                              "Integrated Protection": (FeatureType.other, IntegratedProtection()),
                              "Specialised Design": [(FeatureType.skills, skills),
-                                                    (FeatureType.proficiencies, (FeatureType.tools, [tool.name for tool in helpers.list_end_values(item_types.Tool)]))]
+                                                    (FeatureType.proficiencies, (FeatureType.tools, ([tool.name for tool in helpers.list_end_values(item_types.Tool)],)))]
                              })
 
 

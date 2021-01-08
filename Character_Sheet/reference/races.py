@@ -160,8 +160,9 @@ class Warforged(Race):
     race_name = "Warforged"
     speed = 30
     size = "Medium"
-    ASI = ((CON, 2), (list(attr_list.values()), 1))
+    ASI = ((CON, 2), ([a for a in (attr_list.values()) if a is not CON], 1))
     skills = (list(skills_list.keys()),)
+    languages = ("Common", all_languages)
     features = RaceFeatures({"Constructed Resilience": (FeatureType.other, ConstructedResilience()),
                              "Sentry's Rest": (FeatureType.other, SentrysRest()),
                              "Integrated Protection": (FeatureType.other, IntegratedProtection()),

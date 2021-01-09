@@ -465,7 +465,7 @@ class CharacterCreator:
             self.character_race = tk.StringVar()
 
             self.race_chooser = ttk.Combobox(self.race_frame,
-                                             values=[race for race in races.race_list],
+                                             values=sorted([race for race in races.race_list]),
                                              state="readonly",
                                              width=16,
                                              textvariable=self.character_race,
@@ -569,7 +569,7 @@ class CharacterCreator:
                 self.asi_frame.grid_forget()
                 self.asi_attributes_frame.grid_forget()
                 self.race_asi_choice.deactivate()
-                pack_race_asi(instance)
+                pack_race_asi(instance, is_subrace)
             else:
                 self.asi_frame.grid_forget()
                 self.asi_attributes_frame.grid_forget()
@@ -720,7 +720,7 @@ class CharacterCreator:
             else:
                 self.character_race_language.deactivate()
 
-        def pack_race_asi(instance):
+        def pack_race_asi(instance, is_subrace):
 
             for asi in self.asi_automatic_values:
                 asi['text'] = ""
@@ -733,7 +733,13 @@ class CharacterCreator:
             except Exception as e:
                 print(e)
 
-            all_asi = asi_list  # + subrace specifics
+            all_asi = asi_list
+
+            if is_subrace:
+                if hasattr(self.race_instance, "ASI"):
+                    all_asi += list(self.race_instance.ASI)
+
+
 
             asi_choice = False
 
@@ -828,7 +834,7 @@ class CharacterCreator:
 
             def other(self, feature_name, feature_frame, feature_values):
                 widget = tk.Label(feature_frame,
-                                  text=f'{feature_values.desc}\n',
+                                  text=f'{feature_values.desc}',
                                   wraplength=400,
                                   justify=tk.LEFT,
                                   anchor="w",
@@ -1008,7 +1014,7 @@ class CharacterCreator:
                             feature_frame = tk.Frame(top_frame)
                             feature_label = tk.Label(feature_frame,
                                                      text=feature_name,
-                                                     font=default_font + " 8")
+                                                     font=default_font + " 8 italic")
                             self.race_feature_widgets[feature_key] = {"frame": feature_frame,
                                                                       "label": feature_label}
                             # feature_frame.pack()
@@ -1032,10 +1038,10 @@ class CharacterCreator:
                                 self.race_feature_widgets[feature_key]["choice_widgets"] = {}
                                 for opt_name, (opt_type, opt_vals) in feature_opts.items():
                                     opt_frame = tk.Frame(feature_frame)
-                                    opt_label = tk.Label(opt_frame,
-                                                         text=opt_name,
-                                                         font=default_font + " 8")
-                                    opt_label.pack()
+                                    # opt_label = tk.Label(opt_frame,
+                                    #                      text=opt_name,
+                                    #                      font=default_font + " 8 italic")
+                                    # opt_label.pack()
                                     opt_aspect_name = aspect_name + [opt_name]
 
                                     opt_widget = feature_switcher[opt_type](opt_aspect_name, opt_frame, opt_vals)

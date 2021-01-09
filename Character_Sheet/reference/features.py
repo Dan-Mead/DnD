@@ -1,10 +1,21 @@
 class Darkvision:
     def __init__(self, race, distance):
-        self.race = race
-        self.distance = distance
-        self.desc = f'Thanks to your {self.race} blood, you have superior vision in dark and dim Conditions. You can ' \
-                    f'see in dim light within {self.distance} feet of you as if it were bright light, and in Darkness ' \
+        self.desc = f'Thanks to your {race} blood, you have superior vision in dark and dim Conditions. You can ' \
+                    f'see in dim light within {distance} feet of you as if it were bright light, and in Darkness ' \
                     f'as if it were dim light. You can’t discern color in Darkness, only Shades of Gray. '
+
+
+class Darkvision2:
+    def __init__(self, reason, distance):
+        self.desc = f'{reason}, you have superior vision in dark and dim Conditions. You can ' \
+                    f'see in dim light within {distance} feet of you as if it were bright light, and in Darkness ' \
+                    f'as if it were dim light. You can’t discern color in Darkness, only Shades of Gray. '
+
+
+class SuperiorDarvision:
+    def __init__(self, distance):
+        self.desc = f"You can see in dim light within {distance} feet of you as if it were bright light, and in " \
+                    f"darkness as if it were dim light. You can't discern color in darkness, only Shades of Gray. "
 
 
 class Menacing:
@@ -136,3 +147,53 @@ class IntegratedProtection:
                     f"armor. To doff armor, you must spend 1 hour removing it. You can rest while donning or doffing " \
                     f"armor in this way." \
                     f"\n \u2022 While you live, your armor can't be removed from your body against your will."
+
+
+class DwarvenStoutness:
+    def __init__(self):
+        self.desc = f"Your speed is not reduced by wearing heavy armour."
+
+
+class DwarvenResilience:
+    def __init__(self):
+        self.desc = f"You have advantage on saving throws against poison, and you have resistance against poison damage."
+
+
+class DwarvenCombatTraining:
+    def __init__(self):
+        self.desc = f"You have proficiency with the battleaxe, handaxe, light hammer, and warhammer."
+
+
+class Stonecunning:
+    def __init__(self):
+        self.desc = f"Whenever you make an Intelligence (History) check related to the origin of stonework, " \
+                    f"you are considered proficient in the History skill and add double your proficiency bonus to the " \
+                    f"check, instead of your normal proficiency bonus. "
+
+
+class DwarvenToughness:
+    def __init__(self):
+        self.desc = f"Your hit point maximum increases by 1, and it increases by 1 every time you gain a level."
+
+
+class DwarvenArmourTraining:
+    def __init__(self):
+        self.desc = f"You have proficiency with light and medium armour."
+
+class DuergarResilience:
+    def __init__(self):
+        self.desc = f"You have advantage on saving throws against illusions and against being charmed or paralyzed."
+
+class DuergarMagic:
+    def __init__(self):
+        self.desc = f"When you reach 3rd level, you can cast the Enlarge/Reduce spell on yourself once with this " \
+                    f"trait, using only the spell's enlarge option. When you reach 5th level, you can cast the " \
+                    f"Invisibility spell on yourself once with this trait. You don't need material components for " \
+                    f"either spell, and you can't cast them while you're in direct sunlight, although sunlight has no " \
+                    f"effect on them once cast. You regain the ability to cast these spells with this trait when you " \
+                    f"finish a long rest. Intelligence is your spellcasting ability for these spells. "
+
+class SunlightSensitivity:
+    def __init__(self):
+        self.desc = f"You have disadvantage on Attack rolls and Wisdom (Perception) checks that rely on sight when " \
+                    f"you, the target of your attack, or whatever you are trying to perceive is in direct sunlight. "

@@ -1,5 +1,3 @@
-import Character_Sheet.reference.item_types as item_types
-from Character_Sheet.reference.items import equipment, other_items
 
 def list_all(class_value):
     list = []
@@ -21,3 +19,14 @@ def list_end_values(class_value):
             new_list.append(item)
 
     return new_list
+
+def list_syntax(items):
+    if items:
+        if len(items) == 1:
+            return items[0]
+        elif len(items) == 2:
+            return " and ".join(items)
+        else:
+            return ", ".join(items[:-1]) + f", and {items[-1]}"
+    else:
+        return ""

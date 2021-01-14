@@ -195,7 +195,7 @@ class character:
                 equippable[item_name] = [get_bases(item), item.num]
             if isclasstype(item, 'Weapon'):
                 equippable[item_name] = [get_bases(item), item.weapon_type,
-                                         item.properties, item.num]
+                                         item.add_properties, item.num]
 
         hands = 0
 

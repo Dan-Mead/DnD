@@ -1,43 +1,17 @@
-from Character_Sheet.reference.item_types import *
+from Character_Sheet.reference.items.items_key import Item, Tool
 
 
-class Custom_Misc(Misc):
-    def __init__(self, name, desc, plural=0, *plural_actual):
-        self.name = name
-        self.desc = desc
-        self.plural = plural
-        if plural == 3:
-            self.plural_actual = plural_actual
+class ArtisanTools(Tool):
+    pass
 
 
-### Packs
-
-class PriestPack(Pack):
-    name = "Priest's Pack"
-    plural = 0
+class GamingSet(Tool):
+    pass
 
 
-class ExplorerPack(Pack):
-    name = "Explorer's Pack"
-    plural = 0
+class Instrument(Tool):
+    pass
 
-
-class BurglarPack(Pack):
-    name = "Burglar's Pack"
-    plural = 0
-
-
-class DungeoneerPack(Pack):
-    name = "Dungeoneer's Pack"
-    plural = 0
-
-
-class ScholarPack(Pack):
-    name = "Scholar's Pack"
-    plural = 0
-
-
-###### Tools
 
 ### Artisan Tools
 
@@ -197,20 +171,19 @@ class Viol(Instrument):
 
 ### Other Tools
 
-
 class Disguise(Tool):
     name = "Disguise kit"
-    plural = True
+    plural = 0
 
 
 class Forgery(Tool):
     name = "Forgery kit"
-    plural = True
+    plural = 0
 
 
 class Herbalism(Tool):
     name = "Herbalism kit"
-    plural = True
+    plural = 0
 
 
 class Navigator(Tool):
@@ -226,16 +199,3 @@ class Poisoner(Tool):
 class ThievesTools(Tool):
     name = "Thieves' Tools"
     plural = 1
-
-
-### Misc
-
-class TravellersClothes(Misc):
-    name = "Traveller's Clothes"
-    plural = 1
-
-
-class Pouch(Misc):
-    name = "Pouch"
-    plural = 2
-    plural_actual = "Pouches"

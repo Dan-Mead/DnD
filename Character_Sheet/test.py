@@ -1,26 +1,28 @@
-import tkinter as tk
+from dataclasses import dataclass
 
-window = tk.Tk()
+@dataclass
+class Parent:
 
-frame_1 = tk.Frame(window)
-tk.Label(frame_1,
-         text="Frame 1").pack()
-
-frame_1.grid(row=0,column=0, padx=4)
-
-frame_2 = tk.Frame(window)
-tk.Label(frame_2,
-         text="Frame 2").pack()
-
-frame_2.grid(row=0, column=1, padx=4)
-
-test_label = tk.Label(master=frame_1,
-                      text="Test is here")
-
-test_label.configure(master=frame_2)
+    temperament: str = "Calm"
+    cost_num: int = 0
+    cost_type: str = "gp"
 
 
+    def __post_init__(self):
+        self.cost = (self.cost_num, self.cost_type)
 
-test_label.pack()
+    def test_func(self):
+        print("Test sucessful")
+        print(self.cost)
 
-window.mainloop()
+@dataclass
+class Child(Parent):
+
+    eyecolour: str = "Blue"
+
+# @dataclass
+# class Child(Parent):
+#     pass
+#
+#
+print(Child())

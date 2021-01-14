@@ -2,8 +2,8 @@ from Character_Sheet.reference.features import *
 from Character_Sheet.reference.glossary import all_languages
 from Character_Sheet.reference.skills_and_attributes import *
 from Character_Sheet.reference.feats import feat_list
-import Character_Sheet.reference.item_types as item_types
-import Character_Sheet.reference.items.other_items as other_items
+import Character_Sheet.reference.items.tools as tools
+
 import Character_Sheet.helpers as helpers
 
 
@@ -168,8 +168,11 @@ class Warforged(Race):
                              "Sentry's Rest": (FeatureType.other, SentrysRest()),
                              "Integrated Protection": (FeatureType.other, IntegratedProtection()),
                              "Specialised Design": [(FeatureType.skills, skills),
-                                                    (FeatureType.proficiencies, (FeatureType.tools, ([tool.name for tool in helpers.list_end_values(item_types.Tool)],)))]
+                                                    (FeatureType.proficiencies, (FeatureType.tools, (
+                                                    [tool.name for tool in
+                                                     helpers.list_end_values(tools.Tool)],)))]
                              })
+
 
 class Dwarf(Race):
     race_name = "Dwarf"
@@ -178,26 +181,27 @@ class Dwarf(Race):
     ASI = ((CON, 2),)
     languages = ("Common", "Dwarvish")
 
-
-
     features = RaceFeatures({"Darkvision": (FeatureType.other, Darkvision2("Accustomed to life underground", 60)),
                              "Dwarven Resilience": (FeatureType.other, DwarvenResilience()),
                              "Dwarven Stoutness": (FeatureType.other, DwarvenStoutness()),
                              "Dwarven Combat Training": (FeatureType.other, DwarvenCombatTraining()),
-                             "Tool Proficiency": (FeatureType.proficiencies, (FeatureType.tools, ([other_items.Smith.name,
-                                                                                                   other_items.Brewer.name,
-                                                                                                   other_items.Mason.name],))),
+                             "Tool Proficiency": (FeatureType.proficiencies, (FeatureType.tools, ([tools.Smith.name,
+                                                                                                   tools.Brewer.name,
+                                                                                                   tools.Mason.name],))),
                              "Stonecunning": (FeatureType.other, Stonecunning())})
+
 
 class HillDwarf(Dwarf):
     subrace_name = "Hill Dwarf"
     ASI = ((WIS, 1),)
     features = RaceFeatures({"Dwarven Toughness": (FeatureType.other, DwarvenToughness())})
 
+
 class MountainDwarf(Dwarf):
     subrace_name = "Mountain Dwarf"
     ASI = ((STR, 2),)
     features = RaceFeatures({"Dwarven Armour Training": (FeatureType.other, DwarvenArmourTraining())})
+
 
 class Duergar(Dwarf):
     subrace_name = "Duergar (Grey Dwarf)"
@@ -206,6 +210,7 @@ class Duergar(Dwarf):
                              "Duergar Resilience": (FeatureType.other, DuergarResilience()),
                              "Duergar Magic": (FeatureType.other, DuergarMagic()),
                              "Sunlight Sensitivity": (FeatureType.other, SunlightSensitivity())})
+
 
 if __name__ == '__main__':
     pass

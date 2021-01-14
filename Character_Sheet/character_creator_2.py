@@ -6,6 +6,8 @@ from tkinter import ttk
 
 import Character_Sheet.reference.glossary as glossary
 import Character_Sheet.reference.races as races
+import Character_Sheet.reference.classes as classes
+import Character_Sheet.helpers as helpers
 
 default_font = "Verdana"
 
@@ -46,6 +48,27 @@ def label_entry_pair(master, label_text, textvar, font_mod=" 8", pack=False):
     return label, entry
 
 
+def label_values_pair(master, label_text, textvar, font_mod=" 8", pack=True, wrap=False):
+    frame = tk.Frame(master)
+    label = tk.Label(frame,
+                     text=label_text,
+                     font=default_font + font_mod + " italic")
+    text = tk.Label(frame,
+                    textvariable=textvar,
+                    font=default_font + font_mod)
+
+    if wrap:
+        text['wraplength'] = wrap
+
+    label.pack()
+    text.pack()
+
+    if pack:
+        frame.pack(pady=4)
+
+    return frame, label, text
+
+
 class AspectTypes:
     info = "info"
     skill = "skill"
@@ -54,18 +77,20 @@ class AspectTypes:
     feat = "feat"
     race_feature_choice = "race feature choice"
     prof = "proficiency"
+    equipment = "equipment"
 
 
 class Tabs:
     info = "info"
     race = "race"
-    _class = "class"
+    class_ = "class"
     background = "background"
 
 
 class ValueChooserGenerator:
     def __init__(self, character, master, num_choosers, variable_name, value_tab, value_type,
-                 invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False, aspect_order = 1):
+                 invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False,
+                 aspect_order=1):
         char = character
         master_frame = master
 
@@ -178,6 +203,7 @@ class ValueChooserGenerator:
         for n, widget in enumerate(self.widgets):
             self.aspects[n].active = False
 
+
 class Aspect:
     def __init__(self, aspect_id, aspect_tab, aspect_type, variable, widget, order, active):
         self.id = aspect_id
@@ -226,7 +252,6 @@ class CharacterCreator:
                     aspect = self.aspects[key]
 
                     if aspect.order == condition:
-                        print(key)
                         aspect.variable.set(value)
                         aspect.active = True
                 except:
@@ -553,8 +578,9 @@ class CharacterCreator:
         def subrace_changed(*args):
 
             if self.character_subrace.get() != self.subrace_choice_prompt:
-                self.subrace_instance = {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
-                    self.character_subrace.get()]
+                self.subrace_instance = \
+                    {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
+                        self.character_subrace.get()]
 
                 feature_constructor(self.subrace_instance)
 
@@ -738,8 +764,6 @@ class CharacterCreator:
             if is_subrace:
                 if hasattr(self.race_instance, "ASI"):
                     all_asi += list(self.race_instance.ASI)
-
-
 
             asi_choice = False
 
@@ -1180,11 +1204,391 @@ class CharacterCreator:
         race_other_features_config()
         add_dynamic_aspects()
 
-
         self.race_frame.pack(fill="both", expand=True)
 
         self.race_frame.grid_rowconfigure(0, weight=1)
         self.race_frame.grid_columnconfigure(0, weight=1)
+
+    def create_class_tab(self):
+
+        def class_choice_config():
+            self.character_class = tk.StringVar()
+            self.class_chooser = ttk.Combobox(self.class_frame,
+                                              values=sorted(
+                                                  [c.class_name for c in classes.CharacterClass.__subclasses__()]),
+                                              state="readonly",
+                                              width=16,
+                                              textvariable=self.character_class,
+                                              justify="center")
+
+            Aspect("Class", Tabs.class_, AspectTypes.info, self.character_class, self.class_chooser, 0, True).add(self)
+
+            self.class_choice_prompt = "Choose class: "
+            self.class_chooser.set(self.class_choice_prompt)
+
+            self.character_class.trace_add('write', class_changed)
+
+            self.class_chooser.grid(row=1, pady=2)
+
+            self.class_features_frame = tk.Frame(self.class_frame)
+
+            self.left_frame = tk.Frame(self.class_features_frame)
+            tk.Label(self.left_frame,
+                     text="Class Proficiencies:",
+                     font=default_font + " 9 bold").pack()
+            self.left_frame.grid(row=1, column=0, sticky="N")
+
+            self.central_frame = tk.Frame(self.class_features_frame)
+            tk.Label(self.central_frame,
+                     text="Class Something:",
+                     font=default_font + " 9 bold").pack()
+            self.central_frame.grid(row=1, column=1, sticky="N")
+
+            self.right_frame = tk.Frame(self.class_features_frame)
+            tk.Label(self.right_frame,
+                     text="Class Equipment:",
+                     font=default_font + " 9 bold").pack()
+            self.right_frame.grid(row=1, column=2, sticky="N")
+
+        def class_info_config():
+            self.class_info_frame = tk.Frame(self.class_features_frame)
+
+            self.class_desc = tk.Label(self.class_info_frame,
+                                       wraplength=600,
+                                       justify=tk.CENTER,
+                                       # anchor="w",
+                                       font=default_font + " 8"
+                                       )
+
+            self.class_rpgbot = tk.Label(self.class_info_frame,
+                                         wraplength=600,
+                                         justify=tk.CENTER,
+                                         # anchor="w",
+                                         font=default_font + " 8"
+                                         )
+
+            # tk.Label(self.class_info_frame,
+            #          text = "Class Description:",
+            #          font=default_font+ " 8 italic").pack()
+            self.class_desc.pack()
+            tk.Label(self.class_info_frame,
+                     text="Class Design:",
+                     font=default_font + " 8 italic").pack(pady=(8, 2))
+            self.class_rpgbot.pack(pady=(2, 8))
+
+            self.class_info_frame.grid(row=0, columnspan=3)
+
+        def class_stats_config():
+
+            self.class_primary_attr = tk.StringVar()
+            frame, self.class_attr_label, text = label_values_pair(self.left_frame, "Primary Attribute:",
+                                                                   self.class_primary_attr)
+
+            self.class_hit_die = tk.StringVar()
+            label_values_pair(self.left_frame, "Hit Die:", self.class_hit_die)
+
+            self.class_armour_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Armour Proficiencies:", self.class_armour_profs, wrap=200)
+
+            self.class_weapon_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Weapon Proficiencies:", self.class_weapon_profs, wrap=200)
+
+            self.class_tool_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Tool Proficiencies:", self.class_tool_profs, wrap=200)
+
+            self.class_saving_throws = tk.StringVar()
+            label_values_pair(self.left_frame, "Saving Throws:", self.class_saving_throws, wrap=200)
+
+        def class_skills_config():
+
+            self.class_skills_chooser = ValueChooserGenerator(character=self,
+                                                              master=self.central_frame,
+                                                              num_choosers=4,
+                                                              variable_name="Class Skill",
+                                                              value_tab=Tabs.class_,
+                                                              value_type=AspectTypes.skill,
+                                                              label=dict(text="Choose skill proficiencies:",
+                                                                         font=default_font + " 8"),
+                                                              check_global=True)
+
+        def class_equipment_config():
+
+            class EquipmentChooser:
+
+                def __init__(self, char):
+
+                    self.update_size = char.resize_tabs
+
+                    self.char_temp = char
+
+                    self.chooser_frame = tk.Frame(char.right_frame)
+                    tk.Label(self.chooser_frame,
+                             text="You recieve the following items, plus any provided by your background:",
+                             font=default_font + " 8",
+                             wraplength=220).pack()
+                    self.chooser_internal_frame = tk.Frame(self.chooser_frame)
+                    self.chooser_internal_frame.pack(fill="x", expand=True)
+
+                    # tk.Label(self.chooser_frame,
+                    #          text="Additionally, you will also receive:",
+                    #          font=default_font + " 8").pack()
+
+                    self.end_label = tk.Label(self.chooser_frame,
+                                              font=default_font + " 8")
+
+                    self.end_label.pack(anchor=tk.W)
+
+                    self.chooser_frame.pack()  # padx=(0,8))
+
+                    self.selectors = {}
+
+                def selector_packer(self, n_import, choice, variable):
+
+                    frame = tk.Frame(self.chooser_internal_frame)
+                    frame.pack(fill="x", expand=True)
+
+                    self.selectors[n_import]["choosers"] = {}
+
+                    self.chooser_frame_dummies = []
+
+                    for n, option in enumerate(choice):
+
+                        c_frame = tk.Frame(frame)
+
+                        rdb = tk.Radiobutton(frame,
+                                             variable=variable,
+                                             value=n,
+                                             command=self.chooser_checker)
+
+                        text = []
+
+                        for item in option:
+                            item_value = item[0]
+                            item_num = item[1]
+
+                            if not isinstance(item_value, (tuple, list)):
+                                if not item_value.__subclasses__():
+                                    text.append(item_value.syntax(item_num))
+                                else:
+                                    """Plot a chooser and get options"""
+                                    option_name = item_value.syntax(item_num)
+                                    text.append(option_name)
+                                    self.chooser_packer((n_import, n), c_frame, item_num, (item_value,))
+                            else:
+                                option_name = item_value[0].syntax_start(item_num) + " " + \
+                                              item_value[1].syntax_end(item_num)
+                                text.append(option_name)
+
+                                self.chooser_packer((n_import, n), c_frame, item_num, item_value)
+
+                        true_text = helpers.list_syntax(text).capitalize()
+                        rdb.config(text=true_text)
+                        rdb.pack(anchor=tk.W)
+                        if n == 0:
+                            rdb.select()
+                        rdb.update()
+
+                        c_frame.pack(anchor=tk.W, padx=(23, 0))
+
+                    ttk.Separator(self.chooser_internal_frame,
+                                  orient=tk.HORIZONTAL).pack(pady=4, fill="x", expand=True)
+
+                def chooser_packer(self, n_values, frame, num, conditions):
+
+                    if len(conditions) == 1:
+                        condition, = conditions
+                        options = [option.name for option in condition.__subclasses__()]
+                    else:
+                        values_1 = [option.name for option in conditions[0].__subclasses__()]
+                        values_2 = [option.name for option in conditions[1].__subclasses__()]
+
+                        options = [value for value in values_1 if value in values_2]
+
+                    # options.sort()
+
+                    choosers = []
+
+                    for n in range(num):
+                        choosers.append(ttk.Combobox(frame,
+                                                     state="readonly",
+                                                     width=16,
+                                                     values=options))
+
+                    n1, n2 = n_values
+
+                    self.selectors[n1]["choosers"][n2] = (choosers, options)
+
+                def chooser_checker(self):
+
+                    for keys, values in self.selectors.items():
+                        current_choice = values["current_choice"].get()
+
+                        for keys_2, values_2 in values["choosers"].items():
+                            widgets = values_2[0]
+                            for widget in widgets:
+                                parent_widget = widget._nametowidget(widget.winfo_parent())
+                                widget.pack_forget()
+
+                            if current_choice == keys_2:
+                                for widget in widgets:
+                                    widget.pack(pady=2)
+                            else:
+                                dummy = tk.Frame(parent_widget)
+                                dummy.pack()
+                                self.chooser_frame_dummies.append(dummy)
+
+                    self.update_size()
+
+                    self.get()
+
+                def update(self, char, equipment_choices):
+                    for child in self.chooser_internal_frame.winfo_children():
+                        child.destroy()
+
+                    end_text = []
+
+                    self.selectors = {}
+
+                    for n, choice in enumerate(equipment_choices):
+                        if len(choice) > 1:
+                            selection_variable = tk.IntVar()
+                            self.selectors[n] = {"current_choice": selection_variable}
+                            self.selector_packer(n, choice, selection_variable)
+                        else:
+                            end_text.append(choice[0][0].syntax(choice[0][1]))
+
+                    self.end_label['text'] = helpers.list_syntax(end_text).capitalize()
+
+                    self.chooser_checker()
+
+                    # self.chooser_internal_frame.update()
+                    # self.chooser_frame.update()
+                    #
+                    # self.chooser_internal_frame.config(relief=tk.RIDGE,
+                    #                                    borderwidth=2)
+                    # # self.chooser_internal_frame.pack_propagate(0)
+                    # # self.chooser_internal_frame.config(width=self.chooser_frame.winfo_width())
+                    #
+                    # self.chooser_frame.config(width=400)
+
+                    # print(self.chooser_internal_frame.winfo_reqwidth())
+                    # print(self.chooser_frame.winfo_reqwidth())
+
+                def get(self):
+
+                    selected = []
+                    chosen = []
+
+                    for index, vals in self.selectors.items():
+                        selected.append(vals["current_choice"].get())
+                        for key, vals2 in vals["choosers"].items():
+                            chosen.append([widget.get() for widget in vals2[0]])
+
+                    values = {"selected": selected,
+                              "chosen": chosen}
+
+                    return values
+
+                def set(self, values):
+                    i = 0
+                    j = 0
+                    for index, vals in self.selectors.items():
+                        vals["current_choice"].set(values["selected"][i])
+                        i += 1
+                        for key, vals2 in vals["choosers"].items():
+                            for widget in vals2[0]:
+                                widget.set(values["chosen"][j])
+                                j += 1
+
+                    self.chooser_checker()
+
+            self.class_equipment_chooser = EquipmentChooser(self)
+
+            Aspect(aspect_id="Class Equipment",
+                   aspect_tab=Tabs.class_,
+                   aspect_type=AspectTypes.equipment,
+                   variable=self.class_equipment_chooser,
+                   widget=self.right_frame, # ???
+                   order=1,
+                   active=True).add(self)
+
+        def class_changed(*args):
+            self.class_features_frame.grid_forget()
+
+            self.class_instance = {c.class_name: c for c in classes.CharacterClass.__subclasses__()}[
+                self.character_class.get()]
+
+            self.class_desc['text'] = self.class_instance.desc
+            self.class_rpgbot['text'] = self.class_instance.rpgbot
+            self.class_hit_die.set(f"d{self.class_instance.hit_die}")
+
+            if len(self.class_instance.primary_attr) > 1:
+                self.class_attr_label['text'] = "Primary Attributes:"
+            else:
+                self.class_attr_label['text'] = "Primary Attribute:"
+
+            self.class_primary_attr.set(helpers.list_syntax([attr.name for attr in self.class_instance.primary_attr]))
+
+            profs = {"class_armour_profs": "armour_proficiencies",
+                     "class_weapon_profs": "weapon_proficiencies",
+                     "class_tool_profs": "tool_proficiencies"}
+
+            for prof_string, prof_vals in profs.items():
+
+                prof_string = getattr(self, prof_string)
+                prof_vals = getattr(self.class_instance, prof_vals)
+
+                if prof_vals:
+
+                    names = []
+
+                    for val in prof_vals:
+                        names.append(val.uncountable())
+
+                    vals = helpers.list_syntax(names)
+                    vals = vals.lower().capitalize()
+                else:
+                    vals = None
+                prof_string.set(vals)
+
+            # Saves
+            self.class_saving_throws.set(" and ".join([save.name for save in self.class_instance.saving_throws]))
+
+            # Skills
+            self.class_skills_chooser.deactivate()
+            self.class_skills_chooser.values = [skill.name for skill in self.class_instance.valid_skills]
+            self.class_skills_chooser.activate(self.class_instance.num_skills)
+
+            # Equipment
+            self.class_equipment_chooser.update(self, self.class_instance.equipment)
+
+            self.class_features_frame.grid(row=2, padx=8)
+
+            self.resize_tabs()
+
+        ### Begin Code
+
+        self.reset_tab_aspects(Tabs.class_)
+
+        self.class_frame = tk.Frame(self.class_tab,
+                                    relief=tk.SUNKEN,
+                                    borderwidth=4,
+                                    )
+
+        self.class_label = tk.Label(self.class_frame,
+                                    text="Class",
+                                    font=default_font + " 12 bold").grid(row=0, columnspan=3, pady=8)
+
+        class_choice_config()
+        class_info_config()
+        class_stats_config()
+        class_skills_config()
+        class_equipment_config()
+
+        self.class_frame.pack(fill="both", expand=True)
+
+        self.class_frame.grid_rowconfigure(0, weight=1)
+        self.class_frame.grid_columnconfigure(0, weight=1)
 
     def changed_tabs(self, event):
         event.widget.update_idletasks()
@@ -1221,6 +1625,7 @@ class CharacterCreator:
         self.create_tab_manager()
         self.create_info_tab()
         self.create_race_tab()
+        self.create_class_tab()
 
         # Move window to centre
 

@@ -109,7 +109,7 @@ class atk_option:
                       }
 
         for property, values in properties.items():
-            if property in weapon.properties:
+            if property in weapon.add_properties:
                 func = values[0]
                 if len(values) > 1:
                     args = values[1:]

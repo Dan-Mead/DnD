@@ -1,4 +1,4 @@
-from reference.items.equipment import *
+from reference.items.weapons import *
 from Character_Sheet.reference.skills_and_attributes import *
 
 

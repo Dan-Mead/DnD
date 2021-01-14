@@ -1,0 +1,6 @@
+cp = "cp"
+sp = "sp"
+gp = "gp"
+b = "bludgeoning"
+s = "slashing"
+p = "piercing"

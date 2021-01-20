@@ -1,4 +1,5 @@
 from num2words import num2words
+from Character_Sheet import helpers as helpers
 from Character_Sheet.reference.items.jargon import *
 
 
@@ -10,6 +11,7 @@ class Types:
     potions = "potions"
     gear = "gear"
     pack = "pack"
+    container = "container"
     misc = "misc"
     other = "other"
     notable = "notable"
@@ -34,18 +36,19 @@ class Proficiencies:
 
 class Item:
 
-    def __init__(self, name=None):
+    def __init__(self, num, name=None):
+        self.num = num
         if name:
             self.name = name
 
-    def __repr__(self):
-        return repr(self.name)
+    # def __repr__(self):
+    #     return repr(self.name)
 
     @classmethod
     def uncountable(cls):
 
         if hasattr(cls, "suffix") and cls.__subclasses__():
-            suffix = " "+cls.suffix
+            suffix = " " + cls.suffix
         else:
             suffix = ""
 
@@ -57,7 +60,11 @@ class Item:
             return f"{cls.plural_actual + suffix}"
 
     @classmethod
-    def syntax_start(cls, num):
+    def syntax_start(cls, num=None):
+
+        if not num:
+            num = cls.num
+
         if cls.plural == 0 or cls.plural == 2:
             if num == 1:
                 if cls.name[0].lower() in ["a", "e", "i", "o", "u", "h"]:
@@ -73,10 +80,13 @@ class Item:
                 return f"{num2words(num)} sets of {cls.name}"
 
     @classmethod
-    def syntax_end(cls, num):
+    def syntax_end(cls, num=None):
+
+        if not num:
+            num = cls.num
 
         if hasattr(cls, "suffix") and cls.__subclasses__():
-            suffix = " "+cls.suffix
+            suffix = " " + cls.suffix
         else:
             suffix = ""
 
@@ -90,15 +100,17 @@ class Item:
         elif cls.plural == 2:
             return f'{num2words(num)} {cls.plural_actual}'.lower()
 
-    @classmethod
-    def syntax(cls, num):
+    # @classmethod
+    def syntax(self, num=None):
 
-        name = cls.name
+        if not num:
+            num = self.num
+        name = self.name
 
-        if hasattr(cls, "suffix") and cls.__subclasses__():
-            name += " "+cls.suffix
+        if hasattr(self, "suffix") and self.__class__.__subclasses__():
+            name += " " + self.suffix
 
-        if cls.plural == 0:
+        if self.plural == 0:
             if num == 1:
                 if name[0].lower() in ["a", "e", "i", "o", "u", "h"]:
                     return f"an {name}".lower()
@@ -106,19 +118,19 @@ class Item:
                     return f"a {name}".lower()
             else:
                 return f"{num2words(num)} {name}s".lower()
-        elif cls.plural == 1:
+        elif self.plural == 1:
             if num == 1:
                 return f"{name}".lower()
             else:
                 return f"{num2words(num)} sets of {name}".lower()
-        elif cls.plural == 2:
+        elif self.plural == 2:
             if num == 1:
                 if name[0].lower() in ["a", "e", "i", "o", "u", "h"]:
                     return f"an {name}".lower()
                 else:
                     return f"a {name}".lower()
             else:
-                return f'{num2words(num)} {cls.plural_actual}'.lower()
+                return f'{num2words(num)} {self.plural_actual}'.lower()
 
     Types = Types
     Proficiencies = Proficiencies
@@ -126,9 +138,6 @@ class Item:
 
 class Weapon(Item):
     item_type = Item.Types.weapon
-
-    def __init__(self):
-        super().__init__(name=self.name)
 
     class PropertyKeys:
 
@@ -183,6 +192,18 @@ class Misc(Item):
 
 class Pack(Item):
     item_type = Item.Types.pack
+
+
+class Container(Item):
+    item_type = Item.Types.container
+
+    def __init__(self, num, *contents):
+        contents = [item.name for item in contents]
+        contents_list = helpers.list_syntax(contents)
+        self.num = num,
+        super().__init__(num, self.name)
+        self.name = F"{self.name} containing {contents_list}."
+
 
 
 class Other(Item):

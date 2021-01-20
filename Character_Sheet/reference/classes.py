@@ -1,8 +1,4 @@
-from Character_Sheet.reference.items.weapons import *
-from Character_Sheet.reference.items.armour import *
-from Character_Sheet.reference.items.equipment import *
-from Character_Sheet.reference.items.other import *
-from Character_Sheet.reference.items.tools import *
+from Character_Sheet.reference.items import *
 from Character_Sheet.reference.skills_and_attributes import *
 
 
@@ -38,17 +34,30 @@ class Barbarian(CharacterClass):
     num_skills = 2
     valid_skills = AnimalHandling, Athletics, Intimidation, Nature, Perception, Survival
     equipment = (
-        ([(Greataxe, 1)],
+        ([(Greataxe(1))],
          [((Martial, Melee), 1)]
          ),
-        ([(Handaxe, 2)],
-         [(Simple, 1)]
+        ([(Handaxe(2))],
+         [(Simple(1))]
          ),
-        ([(ExplorerPack, 1)]),
-        ([(Javelin, 4)])
+        ([(ExplorerPack(1))]),
+        ([(Javelin(4))])
     )
+
+    game_aspects = dict(Combat="Barbarians are built for combat, focusing on melee builds and great amounts of "
+                               "endurance.",
+                        Spellcasting="Aside from a few subclass features, Barbarians have effectively no spellcasting"
+                                     "capability",
+                        Skills="Barbarian skills lean towards an attunement with nature; the rest emphasise physical "
+                               "prowess and effective intimidation.")
+
+    # Combat
+    # Spellcasting
+    # Skills
+    # Roleplay
+
     subclass_lvl = 3
-    subclass_name = "Primal Path"
+    subclass_title = "Primal Path"
 
 
 class Paladin(CharacterClass):
@@ -80,21 +89,30 @@ class Paladin(CharacterClass):
     saving_throws = WIS, CHA
     num_skills = 2
     valid_skills = Athletics, Insight, Intimidation, Medicine, Persuasion, Religion
-    subclass_lvl = 3
+
     equipment = (
-        ([(Martial, 1), (Shield, 1)],
-         [(Martial, 2)]
+        ([(Martial(1)), (Shield(1))],
+         [(Martial(2))]
          ),
-        ([(Javelin, 5)],
+        ([(Javelin(5))],
          [((Simple, Melee), 1)]
          ),
-        ([(PriestPack, 1)],
-         [(ExplorerPack, 1)]
+        ([(PriestPack(1))],
+         [(ExplorerPack(1))]
          ),
-        ([(ChainMail, 1)]),
-        ([(HolySymbol, 1)])
+        ([(ChainMail(1))]),
+        ([(HolySymbol(1))])
     )
-    subclass_name = "Sacred Oath"
+
+    game_aspects = dict(Combat="Heavily armed and armoured, Paladins are excellent front-liners in combat, "
+                               "often specialising in single-target damage.",
+                        Spellcasting="Paladins are divine half-casters, with spells focused on utility and support. "
+                                     "They gain thematic spells from their subclasses.",
+                        Skills="Paladin skills support social interaction and physical prowess, with a lesser "
+                               "emphasis on religious lore and medical knowledge.")
+
+    subclass_lvl = 3
+    subclass_title = "Sacred Oath"
 
 
 class Rogue(CharacterClass):
@@ -130,22 +148,32 @@ class Rogue(CharacterClass):
     valid_skills = Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, \
                    Persuasion, SleightOfHand, Stealth
     equipment = (
-        ([(Rapier, 1)],
-         [(Shortsword, 1)]
+        ([(Rapier(1))],
+         [(Shortsword(1))]
          ),
-        ([(Shortbow, 1), (Arrow, 20)],
-         [(Shortsword, 1)]
+        ([(Shortbow(1)), (Arrow(20))],
+         [(Shortsword(1))]
          ),
-        ([(BurglarPack, 1)],
-         [(DungeoneerPack, 1)],
-         [(ExplorerPack, 1)]
+        ([(BurglarPack(1))],
+         [(DungeoneerPack(1))],
+         [(ExplorerPack(1))]
          ),
-        ([(LeatherArmour, 1)]),
-        ([(Dagger, 2)]),
-        ([(ThievesTools, 1)])
+        ([(LeatherArmour(1))]),
+        ([(Dagger(2))]),
+        ([(ThievesTools(1))])
     )
+
+    game_aspects = dict(Combat="Rogues work best in combat when not the centre of attention. Ranged or melee builds "
+                               "are both equally valid, but they should generally avoid being put in a position to "
+                               "take damage.",
+                        Spellcasting="Arcane Tricksters are third-casters, with spells focusing almost entirely on "
+                                     "utility.",
+                        Skills="Rogue skills are numerous and varied. Aside from abilities supporting subterfuge ("
+                               "namely stealth and sleight-of-hand), they also gain several social and analytical "
+                               "skills, as well as anything regarding physical ability.")
+
     subclass_lvl = 3
-    subclass_name = "Roguish Archetype"
+    subclass_title = "Roguish Archetype"
 
 
 class Wizard(CharacterClass):
@@ -176,19 +204,23 @@ class Wizard(CharacterClass):
     num_skills = 2
     valid_skills = Arcana, History, Insight, Investigation, Medicine, Religion
     equipment = (
-        ([(Quarterstaff, 1)],
-         [(Dagger, 1)]
+        ([(Quarterstaff(1))],
+         [(Dagger(1))]
          ),
-        ([(ComponentPouch, 1)],
-         [(ArcaneFocus, 1)]
+        ([(ComponentPouch(1))],
+         [(ArcaneFocus(1))]
          ),
-        ([(ScholarPack, 1)],
-         [(ExplorerPack, 1)]
+        ([(ScholarPack(1))],
+         [(ExplorerPack(1))]
          ),
-        ([(Spellbook, 1)])
+        ([(Spellbook(1))])
     )
     subclass_lvl = 2
-    subclass_name = "Arcane Tradition"
+    subclass_title = "Arcane Tradition"
+
+    game_aspects = dict(Combat="Wizards should be kept out of physical combat, relying on their spellcasting.",
+                        Spellcasting="Arguably the most varied and potent spellcaster out there, Wizards generally have a spell for any situation, and can learn a huge number.",
+                        Skills="Generally Wizards specialise in Lore, with supporting analytical skills.")
 
 
 class_list = {class_.class_name: class_ for class_ in CharacterClass.__subclasses__()}

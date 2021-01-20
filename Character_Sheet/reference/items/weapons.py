@@ -1,6 +1,7 @@
 from Character_Sheet.reference.items.items_key import Item, Weapon
 from Character_Sheet.reference.items.jargon import *
 
+
 Props = Weapon.PropertyKeys
 
 class Simple(Weapon):
@@ -32,7 +33,7 @@ class Melee(Weapon):
 class Club(Simple, Melee):
     name = "Club"
     plural = 0
-    cost = (1, sp)
+    cost = sp(1)
     dmg = (1, 4, b)
     weight = 2
     properties = Weapon.properties(Props.light)

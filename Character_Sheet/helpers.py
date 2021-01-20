@@ -1,3 +1,4 @@
+import inspect
 
 def list_all(class_value):
     list = []
@@ -30,3 +31,10 @@ def list_syntax(items):
             return ", ".join(items[:-1]) + f", and {items[-1]}"
     else:
         return ""
+
+def subclasses(object):
+
+    if inspect.isclass(object):
+        return object.__subclasses__()
+    else:
+        return object.__class__.__subclasses__()

@@ -510,7 +510,6 @@ def Race():
             return
         else:
             race_info.update()
-            # TODO: Make row here more intelligent
             race_features_frame.grid(row=0, column=2, rowspan=8, sticky="N")
             divider_2.grid(column=1, row=0, sticky="NS", rowspan=8)
 
@@ -594,7 +593,7 @@ def Race():
 
         if valid_feats == "any":
             valid_feats_name_list = tuple([name for name in feat_list.keys()])
-        else:  # TODO: This is incomplete, also need to check for prereq
+        else:
             valid_feats_name_list = tuple()
 
         feat_chooser["values"] = valid_feats_name_list

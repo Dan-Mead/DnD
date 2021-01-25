@@ -68,7 +68,6 @@ class trigger_passive(effect):
     def __init__(self, origin, aspect, desc, trigger, limit):
         self.desc = desc
         super().__init__(origin, aspect)
-        # TODO: Finish this!
 
 
 class action(effect):

@@ -15,7 +15,6 @@ class atk_option:
     def ammunition(self, weapon):
         weapon, = weapon
         self.range = weapon.range
-        # TODO: Ammo
 
     def finesse(self):
         self.attr = 'STR', 'DEX'

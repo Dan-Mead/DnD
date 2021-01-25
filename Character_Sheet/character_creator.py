@@ -8,7 +8,6 @@ from PIL import Image, ImageTk
 from functools import partial
 import textwrap
 import num2words
-import inspect
 
 import Character_Sheet.reference.glossary as glossary
 import Character_Sheet.reference.races as races

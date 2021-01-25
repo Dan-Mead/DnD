@@ -6,6 +6,9 @@ import Character_Sheet.reference.glossary as glossary
 class Background():
     pass
 
+class Placeholder(Background):
+    name = "Null"
+    skills = ()
 
 class KnighlyOrder(Background):
     name = 'Knight of the Order'

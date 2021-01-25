@@ -1,8 +1,17 @@
-import inspect
-import sys
+from Character_Sheet.reference.items.armour import Light, Medium, Heavy, Shield
 
 class Feat:
     pass
+
+class PrereqTypes:
+    armour = "armour"
+    race = "race"
+
+    light = "light"
+    medium = "medium"
+    heavy = "heavy"
+
+pr = PrereqTypes
 
 class Actor(Feat):
     name = "Actor"
@@ -24,7 +33,7 @@ class Actor(Feat):
 
 class Heavily_Armored(Feat):
     name = "Heavily Armored"
-    prereq = ['armor', 'medium']
+    prereq = (pr.armour, Medium)
     desc = {"You have trained to master the use of heavy armor, "
                      "gaining the following benefits:":
                          ['+1 to Strength',

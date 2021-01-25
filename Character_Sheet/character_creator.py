@@ -1,24 +1,27 @@
 import pickle
-import textwrap
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 
-from Character_Sheet.reference.backgrounds import *
-from Character_Sheet.reference.feats import feat_list, unpack_desc
-from Character_Sheet.reference.glossary import common_languages, \
-    exotic_languages, attrs
-from Character_Sheet.reference.races import race_list
-from Character_Sheet.reference.subclasses import *
+from PIL import Image, ImageTk
 
-# from Character_Sheet.reference.equipment import Martial, Simple, Ranged, Melee
+from functools import partial
+import textwrap
+import num2words
+import inspect
 
-global current_race_instance, current_subrace_instance
+import Character_Sheet.reference.glossary as glossary
+import Character_Sheet.reference.races as races
+import Character_Sheet.reference.classes as classes
+import Character_Sheet.reference.backgrounds as backgrounds
+import Character_Sheet.reference.feats as feats
+import Character_Sheet.helpers as helpers
+import re
+
+default_font = "Verdana"
 
 
-# System Functions
-
-def export(character):
+def export_data(character):
     name = character["Name"]
 
     if name == "":
@@ -35,1506 +38,2664 @@ def import_info(filename):
     file = open(filename, "rb")
     info = pickle.load(file)
     file.close()
-
     return info
 
 
-def update_character_info():
-    character_data = {}
-    for name, item in character.items():
+def label_entry_pair(master, label_text, textvar, font_mod=" 8", pack=False):
+    label = tk.Label(master,
+                     text=label_text,
+                     font=default_font + font_mod)
+    entry = tk.Entry(master,
+                     width=24,
+                     justify="center",
+                     textvariable=textvar)
 
-        if isinstance(item, (list, tuple)):
-            print("Alternative methods required")
-        elif isinstance(item, dict):
-            character_data[name] = {}
-            for key, value in item.items():
-                if not isinstance(value[0], (list, tuple)):
-                    character_data[name][key] = [val.get() for val in value]
-                else:
-                    character_data[name][key] = [[v.get() for v in val] for val
-                                                 in value]
-        else:
-            character_data[name] = item.get()
+    if pack:
+        label.pack()
+        entry.pack()
 
-    return character_data
+    return label, entry
 
 
-def save():
-    data = update_character_info()
-    export(data)
+def label_values_pair(master, label_text, textvar, font_mod=" 8", pack=True, wrap=False):
+    frame = tk.Frame(master)
+    label = tk.Label(frame,
+                     text=label_text,
+                     font=default_font + font_mod + " italic")
+    text = tk.Label(frame,
+                    textvariable=textvar,
+                    font=default_font + font_mod)
+
+    if wrap:
+        text['wraplength'] = wrap
+
+    label.pack()
+    text.pack()
+
+    if pack:
+        frame.pack(pady=4)
+
+    return frame, label, text
 
 
-def load():
-    filename = tk.filedialog.askopenfilename(initialdir="saves/",
-                                             title="Select save file",
-                                             filetypes=(
-                                                 ("Pickled Files", "*.pkl"),
-                                                 ("all files", "*.*")))
+def label_textbox_pair(master, label_text, title_font=" 8", text_font=" 8", islist=False, pack=False, grid=False,
+                       height=6, width=42, resize_func=None):
+    frame = tk.Frame(master)
+    label = tk.Label(frame,
+                     text=label_text,
+                     font=default_font + title_font + " bold")
+    label.pack()
 
-    character_data = import_info(filename)
+    class Textbox:
+        def __init__(self, master, islist, resize, **kwargs):
 
-    second_stage_imports = []
+            self.islist = islist
+            self.resize = resize
 
-    for key, value in character_data.items():
-        try:
-            input = character_data[key]
-            destination = character[key]
-            if isinstance(destination, tk.ttk.Combobox) or isinstance(
-                    destination, tk.StringVar):
-                destination.set(input)
-            elif isinstance(destination, dict):
-                second_stage_imports.append((key, value))
-            else:
-                destination.delete(0, tk.END)
-                destination.insert(0, input)
-        except Exception as print_error:
-            print(key)
-            print(character[key])
-            print(value)
-            print(print_error)
+            self.textbox = tk.Text(master,
+                                   kwargs,
+                                   relief=tk.GROOVE,
+                                   borderwidth=2)
+            self.textbox.pack()
 
-    for aspect in second_stage_imports:
-        key, value = aspect
-        for subkey, subvalue in value.items():
-            update_character_info()
-            if not isinstance(subvalue[0], (list, tuple)):
-                for n, variable in enumerate(character[key][subkey]):
-                    variable.set(subvalue[n])
-            else:
-                for i, sublist in enumerate(character[key][subkey]):
-                    for j, variable in enumerate(sublist):
-                        variable.set(subvalue[i][j])
+        def set(self, text):
 
-    resize_tabs()
+            if not text:
+                text = ""
 
+            if self.islist:
+                if not text.isspace() and text:
+                    if not text.startswith("•"):
+                        text = "• " + text
 
-def save_and_close():
-    save()
-    window.destroy()
+                text = re.sub(r"(\n)(\s?[a-zA-Z])", r"\n• \2", text)
+                text = re.sub(r"\n+$", "", text)
 
+            self.textbox.delete('1.0', tk.END)
+            self.textbox.insert(tk.END, text)
 
-def close():
-    window.destroy()
+            if not self.islist:
+                self.update_text_height(text)
 
+        def update_text_height(self, text):
+            # Check text height and adjust box
 
-def exit():
-    def exit_save_and_close():
-        save_and_close()
-        exit_window.destroy()
+            text_height = (len(textwrap.wrap(text, self.textbox['width']))
+                           + text.count("\n"))
+            self.textbox['height'] = text_height
 
-    def exit_close():
-        close()
-        exit_window.destroy()
+            self.textbox.update()
+            self.resize()
 
-    exit_window = tk.Tk()
-    exit_label = tk.Label(exit_window, text="Would you like to save?",
-                          font=default_font + " 10")
-    exit_label.pack()
-    exit_buttons = tk.Frame(exit_window)
-    yes_button = tk.Button(exit_buttons, width=8, text="Yes",
-                           command=exit_save_and_close)
-    no_button = tk.Button(exit_buttons, width=8, text="No", command=exit_close)
-    cancel_button = tk.Button(exit_buttons, width=8, text="Cancel",
-                              command=exit_window.destroy)
+        def get(self):
 
-    yes_button.grid(row=1, column=0, padx=4)
-    no_button.grid(row=1, column=1, padx=4, pady=8)
-    cancel_button.grid(row=1, column=2, padx=4)
+            text = self.textbox.get('1.0', tk.END)
 
-    exit_buttons.pack()
+            text = re.sub(r"\n+$", "", text)
 
+            return text
 
-# Helper Functions
+    text = Textbox(frame, islist, resize=resize_func,
+                   height=height,
+                   width=width,
+                   wrap=tk.WORD,
+                   font=default_font + text_font)
 
-def get_chosen_skills(character):
-    return [character[choice].get() for choice in character.keys() if
-            "Skill" in choice]
-
-
-def text_join(text, capitalise, sentence_end):
-    if len(text) > 2:
-        text = ", ".join(text[:-1]) + f", and {text[-1]}"
-    else:
-        text = " and ".join(text)
-
-    text += sentence_end
-
-    if capitalise:
-        text = text[0].upper() + text[1:]
-
+    if pack:
+        frame.pack()
+    elif grid:
+        frame.grid(grid)
     return text
 
 
-# Creation of Frames
-
-def Title():
-    title = tk.Label(character_creator,
-                     text='Character Creator',
-                     bd=8,
-                     font=default_font + " 14 bold")
-
-    title.pack(side=tk.TOP)
-
-    main_menu = tk.Menu(character_creator)
-
-    file_menu = tk.Menu(main_menu, tearoff=0)
-    file_menu.add_command(label="Save", command=save)
-    file_menu.add_command(label="Load", command=load)
-    file_menu.add_separator()
-    file_menu.add_command(label="Exit", command=exit)
-    main_menu.add_cascade(label="File", menu=file_menu)
-
-    window.config(menu=main_menu)
+class AspectTypes:
+    info = "info"
+    skill = "skill"
+    language = "language"
+    asi = "asi"
+    feat = "feat"
+    race_feature_choice = "race feature choice"
+    prof = "proficiency"
+    equipment = "equipment"
 
 
-def Info():
-    info_frame = tk.Frame(info_tab,
-                          relief=tk.SUNKEN,
-                          borderwidth=4,
-                          )
-
-    ### Character Name
-
-    name_frame = tk.Frame(info_frame)
-
-    name_label = tk.Label(name_frame,
-                          text='Character name',
-                          font=default_font + " 12 bold")
-    name_entry = tk.Entry(name_frame,
-                          width=24,
-                          justify="center")
-
-    name_label.pack()
-    name_entry.pack()
-
-    name_frame.pack(padx=8, pady=(8, 16))
-
-    ### Character info
-
-    data_frame = tk.Frame(info_frame)
-
-    #### Age
-
-    age_frame = tk.Frame(data_frame)
-
-    age_label = tk.Label(age_frame,
-                         text="Age",
-                         font=default_font + " 10 bold")
-    age_entry = tk.Entry(age_frame,
-                         width=8,
-                         justify="center")
-
-    age_label.grid(row=0)
-    age_entry.grid(row=1)
-
-    #### Gender
-
-    gender_frame = tk.Frame(data_frame)
-
-    gender_label = tk.Label(gender_frame,
-                            text="Gender",
-                            font=default_font + " 10 bold")
-    gender_entry = tk.Entry(gender_frame,
-                            width=8,
-                            justify="center")
-
-    gender_label.grid(row=0)
-    gender_entry.grid(row=1)
-
-    #### Physical Attributes
-
-    appearance_aspects = ["Skin Colour",
-                          "Hair Colour",
-                          "Eye Colour"]
-    size_aspects = ["Height",
-                    "Weight",
-                    "Build"]
-
-    appearance_frame = tk.Frame(data_frame)
-    size_frame = tk.Frame(data_frame)
-
-    physicals = {}
-
-    for j in range(len(appearance_aspects)):
-
-        frames = appearance_frame, size_frame
-        aspects = appearance_aspects, size_aspects
-
-        for k, frame in enumerate(frames):
-            label = tk.Label(frame,
-                             text=aspects[k][j],
-                             font=default_font + " 10 bold")
-            entry = tk.Entry(frame,
-                             width=10,
-                             justify="center")
-
-            physicals[label.cget("text")] = entry
-
-            label.grid(row=1, column=j, pady=(2, 1), padx=4)
-            entry.grid(row=2, column=j, padx=8)
-
-    ### Add all data to frame
-
-    age_frame.grid(row=0, column=0, padx=(0, 4), sticky="E")
-    gender_frame.grid(row=0, column=1, padx=(4, 0), sticky="W")
-    appearance_frame.grid(row=2, column=0, columnspan=2, padx=(0, 8))
-    size_frame.grid(row=4, column=0, columnspan=2, padx=(8, 0))
-
-    data_frame.pack()
-
-    ### Faith
-
-    faith_frame = tk.Frame(info_frame)
-
-    faith_label = tk.Label(faith_frame,
-                           text='Faith',
-                           font=default_font + " 10 bold")
-    faith_entry = tk.Entry(faith_frame,
-                           width=16,
-                           justify="center")
-
-    faith_label.pack()
-    faith_entry.pack()
-
-    faith_frame.pack(pady=2)
-
-    ### Alignment
-
-    alignment_frame = tk.Frame(info_frame)
-
-    alignment_label = tk.Label(faith_frame,
-                               text='Alignment',
-                               font=default_font + " 10 bold")
-
-    alignment_entry_frame = tk.Frame(alignment_frame)
-
-    ethics = ttk.Combobox(alignment_entry_frame,
-                          values=["Lawful", "Neutral", "Chaotic"],
-                          state="readonly",
-                          width=8)
-    morality = ttk.Combobox(alignment_entry_frame,
-                            values=["Good", "Neutral", "Evil"],
-                            state="readonly",
-                            width=8)
-
-    ethics.grid(row=0, column=1, padx=(0, 2))
-    morality.grid(row=0, column=2, padx=(2, 0))
-
-    alignment_label.pack()
-    alignment_entry_frame.pack()
-
-    alignment_frame.pack(pady=2)
-
-    ### Character Info for Export
-
-    character_info = {"Name": name_entry,
-                      "Age": age_entry,
-                      "Gender": gender_entry,
-                      "Faith": faith_entry,
-                      "Ethics": ethics,
-                      "Morality": morality
-                      }
-
-    character_info.update(physicals)
-
-    character.update(character_info)
-
-    return info_frame
+class Tabs:
+    info = "info"
+    race = "race"
+    class_ = "class"
+    background = "background"
+    characteristics = "characteristics"
+    final = "final"
 
 
-def Race():
-    def update_race_info():
+class ValueChooserGenerator:
+    def __init__(self, character, master, num_choosers, variable_name, value_tab, value_type,
+                 invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False,
+                 aspect_order=1):
+        char = character
+        master_frame = master
 
-        for key, value in race_data.items():
-            if key != "Race" and key != "Subrace":
-                value.set("")
+        self.frame = tk.Frame(master_frame)
+        self.variables = []
+        self.widgets = []
+        self.aspects = []
+        self.value_type = value_type
+        self.values = values
+        self.default_value = default_value
+        self.invalid_options = invalid_options
+        self.grid = grid
 
-        size = current_race_instance.size
-        speed = current_race_instance.speed
-        race_size_text.set(size)
-        race_speed_text.set(f'{speed} ft.')
+        if label:
+            self.label = tk.Label(self.frame, label)
+            self.label_text = tk.StringVar()
+            self.label_text.set(self.label['text'])
+            self.label["textvariable"] = self.label_text
 
-        if current_race_instance.__subclasses__():
-            subrace_choice.pack()
-            if current_subrace.get() != '':
-                subrace_choice.set(current_subrace.get())
+            self.label.pack()
+
+        for i in range(num_choosers):
+            variable = tk.StringVar()
+            self.variables.append(variable)
+            chooser = ttk.Combobox(self.frame,
+                                   textvariable=variable,
+                                   state="readonly",
+                                   width=16,
+                                   font=default_font + " 8",
+                                   postcommand=partial(self.checker, i, char.aspects, check_global)
+                                   )
+
+            if default_value:
+                chooser.set(default_value)
+
+            chooser.pack()
+
+            self.widgets.append(chooser)
+
+            if num_choosers > 1:
+                aspect_variable_name = f'{variable_name} {i}'
             else:
-                subrace_choice.set(subrace_choice_prompt)
-            subclass = True
+                aspect_variable_name = variable_name
 
+            Aspect(aspect_variable_name, value_tab, value_type, variable, chooser, aspect_order, False).add(char)
+
+            self.aspects.append(char.aspects[aspect_variable_name])
+
+        if grid:
+            self.frame.grid(grid)
+            self.frame.grid_forget()
+
+    def checker(self, index, aspects_list, check_global):
+
+        chosen_local = self.invalid_options.copy()
+
+        if len(self.widgets) > 1:
+            for n, widget in enumerate(self.widgets):
+                if n != index:
+                    chosen_local.append(self.variables[n].get())
+
+        chosen_global = []
+
+        if check_global:
+            for aspect in aspects_list.values():
+                if aspect.type == self.value_type and aspect.active == True:
+                    if len(self.widgets) > 1 or self.aspects[index] != aspect:
+                        chosen_global.append(aspect.variable.get())
+
+        chosen_all = chosen_local + chosen_global
+
+        self.widgets[index]['values'] = [value for value in self.values if value not in chosen_all]
+
+    def activate(self, num=None):
+
+        for n, widget in enumerate(self.widgets):
+
+            if widget.get() != self.default_value and widget.get() not in self.values:
+                widget.set(self.default_value)
+
+            self.aspects[n].active = False
+            widget.pack_forget()
+            if (num and n + 1 <= num) or not num:
+                widget.pack(pady=1)
+                self.aspects[n].active = True
+
+        if self.grid:
+            self.frame.grid(self.grid)
         else:
-            current_subrace.set(None)
-            subrace_choice.pack_forget()
-            subclass = False
-            subrace_choice.set("")
+            self.frame.pack(pady=1)
 
-        race_info.pack_forget()
-        race_info.pack()
-        race_languages_choice.grid_forget()
-        race_base_info.update()
-        languages()
+    def deactivate(self):
 
-        if not subclass:
-            ASI()
-            other_features()
-
-    def languages():
-
-        language_list = [language for language in
-                         current_race_instance.languages]
-
-        choices_num = language_list.count("choice")
-
-        if choices_num > 0:
-            language_list.remove("choice")
-            race_languages_choice.grid(row=3, column=2, stick="W", padx=(2, 0))
-
-            divider.grid(rowspan=race_base_info.grid_size()[1])
-
-            known_languages = language_list
-            language_choices = ["None"] + common_languages + exotic_languages
-            for lang in known_languages:
-                language_choices.remove(lang)
-            race_languages_choice["values"] = language_choices
-
-        language_list = "\n".join(language_list)
-
-        race_language_text.set(language_list)
-
-    def ASI():
-
-        bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW",
-                            pady=(4, 0))
-
-        if current_subrace_instance is None:
-            ASI = current_race_instance.ASI
+        if self.grid:
+            self.frame.grid_forget()
         else:
-            ASI = current_subrace_instance.ASI
+            self.frame.pack_forget()
 
-        num_choices = 0
-        choice_options = []
-
-        for i in ASI:
-            if i[0] == "choice":
-                num_choices += 1
-                choice_options.append(i[1])
-
-        ASI_automatic = dict(ASI)
-
-        if num_choices > 0:
-            del ASI_automatic["choice"]
-
-        if ASI_automatic:
-            asi_attributes_frame.grid(row=1)
-            for asi_value in asi_automatic_values:
-                asi_value.configure(text="")
-
-            for attribute, attr_value in ASI_automatic.items():
-                attr_index = attrs.index(attribute.__name__)
-
-                text_value = f'{attr_value:+d}'
-
-                asi_automatic_values[attr_index].configure(text=text_value)
-        else:
-            asi_attributes_frame.grid_forget()
-
-        asi_choice_frame.grid_forget()
-
-        if num_choices > 0:
-            asi_choice_label["text"] = "Choose ability score to increase by +1:"
-            asi_choice_frame.grid(row=2)
-            asi_choice_2.grid_forget()
-            if choice_options[0] == "any":
-                asi_options = attrs.copy()
-            else:
-                asi_options = attrs.copy()
-                asi_options.remove(choice_options[0])
-
-            asi_choice_1_val = tk.StringVar()
-            asi_choice_1["textvariable"] = asi_choice_1_val
-            asi_choice_1["values"] = asi_options
-        if num_choices == 2:
-            asi_choice_label[
-                "text"] = "Choose ability scores to increase by +1:"
-            asi_choice_2.grid(row=2)
-            asi_choice_2_val = tk.StringVar()
-            asi_choice_2["textvariable"] = asi_choice_2_val
-
-            def check_asi_1_choices():
-                second_choice = asi_choice_2.get()
-                if not second_choice:
-                    pass
-                else:
-                    first_options = asi_options.copy()
-                    first_options.remove(second_choice)
-                    asi_choice_1["values"] = first_options
-
-            def check_asi_2_choices():
-                first_choice = asi_choice_1.get()
-                second_options = asi_options.copy()
-                second_options.remove(first_choice)
-                asi_choice_2["values"] = second_options
-
-            asi_choice_1["postcommand"] = check_asi_1_choices
-            asi_choice_2["postcommand"] = check_asi_2_choices
-
-        asi_frame.grid(row=2, column=0)
-
-    def other_features():
-
-        race_features_frame.grid_forget()
-        divider_2.grid_forget()
-
-        for widget in race_features_internal_frame.winfo_children():
+        for n, widget in enumerate(self.widgets):
+            self.aspects[n].active = False
             widget.pack_forget()
 
-        if current_race_instance.features:
-            race_features = current_race_instance.features.copy()
-            try:
-                race_features += current_race_instance.features_chosen
-            except:
-                pass
-        else:
-            race_features = None
+    def activate_only(self, num=None):
+        for n, widget in enumerate(self.widgets):
+            self.aspects[n].active = False
+            if (num and n + 1 <= num) or not num:
+                self.aspects[n].active = True
 
-        if current_subrace_instance and current_subrace_instance.features:
-            subrace_features = current_subrace_instance.features.copy()
-            try:
-                subrace_features += current_subrace_instance.features_chosen
-            except:
-                pass
-        else:
-            subrace_features = None
+    def deactivate_only(self):
+        for n, widget in enumerate(self.widgets):
+            self.aspects[n].active = False
 
-        if not (race_features or subrace_features):
-            return
-        else:
-            race_info.update()
-            # TODO: Make row here more intelligent
-            race_features_frame.grid(row=0, column=2, rowspan=8, sticky="N")
-            divider_2.grid(column=1, row=0, sticky="NS", rowspan=8)
 
-        if race_features:
-            features_checker(current_race_instance, race_features)
+class Aspect:
+    def __init__(self, aspect_id, aspect_tab, aspect_type, variable, widget, order, active):
+        self.id = aspect_id
+        self.tab = aspect_tab
+        self.type = aspect_type
+        self.variable = variable
+        self.widget = widget
+        self.order = order
+        self.active = active
 
-        if subrace_features:
-            features_checker(current_subrace_instance, subrace_features)
+    def add(self, character):
+        character.aspects[self.id] = self
 
-    def feature_switch(entity, feature):
-        if feature == "skills":
-            skills(entity.skills)
-        elif feature == "feat":
-            feat(entity.feats)
-        elif feature == "other":
-            others(entity.other_features)
-        elif feature == "choice":
-            feature_choice(entity)
+    def update(self, character):
+        pass
 
-    def features_checker(entity, features):
 
-        for feature in features:
-            feature_switch(entity, feature)
+class CharacterCreator:
 
-    def feature_choice(entity):
+    def save(self):
 
-        options = list(entity.choice_features.keys())
+        character_export_dict = {}
 
-        if entity.__subclasses__():
-            if race_feature_chosen.get() not in options:
-                race_feature_chosen.set("")
-            race_feature_chooser["values"] = options
-            subrace_feature_chooser_label.pack_forget()
-            subrace_feature_chooser.pack_forget()
+        for aspect_id, aspect in self.aspects.items():
+            if aspect.active:
+                # Currently only works for individual values for get(), will need to adjust.
+                character_export_dict[aspect_id] = (aspect.variable.get())
 
-        else:
-            if subrace_feature_chosen.get() not in options:
-                subrace_feature_chosen.set("")
-            subrace_feature_chooser["values"] = options
-            race_feature_chooser_label.pack_forget()
-            race_feature_chooser.pack_forget()
+        export_data(character_export_dict)
 
-        race_feature_chooser_frame.pack()
+        print("Save successful!")
 
-    def skills(valid_skills):
+    def load(self):
 
-        def choose_race_skill():
+        filename = tk.filedialog.askopenfilename(initialdir="saves/",
+                                                 title="Select save file",
+                                                 filetypes=(
+                                                     ("Pickled Files", "*.pkl"),
+                                                     ("all files", "*.*")))
 
-            chosen_skills = get_chosen_skills(character)
+        character_import_dict = import_info(filename)
+        num_layers = max([aspect.order for aspect in self.aspects.values()]) + 1
+        for condition in range(num_layers):
+            for key, value in character_import_dict.items():
 
-            for n, valid_skill in enumerate(valid_skills):
+                try:
 
-                invalid_skills = chosen_skills.copy()
+                    aspect = self.aspects[key]
 
-                invalid_skills.remove(race_skills_choices[n].get())
+                    if aspect.order == condition:
+                        # print(key, value)
 
-                if isinstance(valid_skill, str) and valid_skill == "any":
-                    valid_choices = [skill for skill in skills_list if
-                                     skill not in invalid_skills]
+                        aspect.variable.set(value)
+                        aspect.active = True
 
-                race_skill_choosers[n]["value"] = valid_choices
+                except:
 
-        skill_chooser_1["postcommand"] = choose_race_skill
-        skill_chooser_2["postcommand"] = choose_race_skill
+                    # aspect = self.aspects[key]
+                    #
+                    # if aspect.order == condition:
+                    #     aspect.variable.set(value)
+                    #     aspect.active = True
 
-        for n, skill_chooser in enumerate(race_skill_choosers):
-            try:
-                if valid_skills[n] != "any" and skill_chooser.get() not in \
-                        valid_skills[n]:
-                    race_skills_choices[n].set(skill_chooser.get())
-                skill_chooser.pack()
-            except:
-                skill_chooser.set("")
-                skill_chooser.pack_forget()
+                    print(f"Error loading {key} value")
 
-        skill_chooser_frame.pack()
+    def exit(self):
 
-    def feat(valid_feats):
+        def exit_save_and_close():
+            exit_window.destroy()
+            self.save()
+            window.destroy()
 
-        feat_chooser.set("")
+        def exit_close():
+            exit_window.destroy()
+            window.destroy()
 
-        if valid_feats == "any":
-            valid_feats_name_list = tuple([name for name in feat_list.keys()])
-        else:  # TODO: This is incomplete, also need to check for prereq
-            valid_feats_name_list = tuple()
+        exit_window = tk.Tk()
+        exit_label = tk.Label(exit_window, text="Would you like to save?",
+                              font=default_font + " 10")
+        exit_label.pack()
+        exit_buttons = tk.Frame(exit_window)
+        yes_button = tk.Button(exit_buttons, width=8, text="Yes",
+                               command=exit_save_and_close)
+        no_button = tk.Button(exit_buttons, width=8, text="No", command=exit_close)
+        cancel_button = tk.Button(exit_buttons, width=8, text="Cancel",
+                                  command=exit_window.destroy)
 
-        feat_chooser["values"] = valid_feats_name_list
-        feat_chooser_frame.pack()
+        yes_button.grid(row=1, column=0, padx=4)
+        no_button.grid(row=1, column=1, padx=4, pady=8)
+        cancel_button.grid(row=1, column=2, padx=4)
 
-    def others(other_features):
-        text = ""
-        for name, feature in other_features.items():
-            text += f'{name}:'
-            text += f'\n{feature.desc}\n\n'
-        text = text[:-1]
-        general_features_text.set(text)
-        general_features_frame.pack()
+        exit_buttons.pack()
 
-    # Chosing Race and Subrace
-    race_frame = tk.Frame(race_tab,
-                          relief=tk.SUNKEN,
-                          borderwidth=4,
-                          )
-    race_label = tk.Label(race_frame,
-                          text="Race",
-                          font=default_font + " 12 bold")
-    race_label.pack(pady=(8, 8))
-    current_race = tk.StringVar()
-    race_choice = ttk.Combobox(race_frame,
-                               values=[race for race in race_list],
-                               state="readonly",
-                               width=16,
-                               textvariable=current_race)
+    def new(self):
+        pass
 
-    race_choice_prompt = "Choose race: "
-    race_choice.set(race_choice_prompt)
+    def refresh(self):
 
-    subrace_choice_prompt = "Choose subrace: "
-    current_subrace = tk.StringVar()
+        character_export_dict = {}
 
-    def get_subclasses():
-        subrace_choice["values"] = [subrace.subrace_name for subrace in
-                                    current_race_instance.__subclasses__()]
+        for aspect_id, aspect in self.aspects.items():
+            if aspect.active:
+                # Currently only works for individual values for get(), will need to adjust.
+                character_export_dict[aspect_id] = (aspect.variable.get())
+        character_import_dict = character_export_dict
 
-    subrace_choice = ttk.Combobox(race_frame,
-                                  postcommand=get_subclasses,
-                                  values=[],
+        num_layers = max([aspect.order for aspect in self.aspects.values()]) + 1
+        for condition in range(num_layers):
+            for key, value in character_import_dict.items():
+                try:
+                    aspect = self.aspects[key]
+                    if aspect.order == condition:
+                        aspect.variable.set(value)
+                        aspect.active = True
+                except:
+
+                    # aspect = self.aspects[key]
+                    #
+                    # if aspect.order == condition:
+                    #     aspect.variable.set(value)
+                    #     aspect.active = True
+
+                    print(f"Error loading {key} value")
+
+    def sanitise(self):
+        print([aspect.order for aspect in self.aspects.values()])
+        # character_export_dict = {}
+        #
+        # for aspect_id, aspect in self.aspects.items():
+        #     print(aspect_id, aspect.variable.get(), aspect.active)
+        #
+        #     # if aspect.active:
+        #     #     character_export_dict[aspect_id] = (aspect.variable.get())
+        #
+        # # export_data(character_export_dict)
+
+    def reset_tab_aspects(self, tab_hash):
+
+        for aspect in self.aspects.values():
+            if aspect.tab is tab_hash:
+                aspect.active = False
+
+    def create_title(self):
+        self.title = tk.Label(self.master,
+                              text='Character Creator',
+                              bd=8,
+                              font=default_font + " 14 bold")
+
+        self.title.pack(side=tk.TOP)
+
+        self.main_menu = tk.Menu(self.master)
+
+        self.file_menu = tk.Menu(self.main_menu, tearoff=0)
+        self.file_menu.add_command(label="Save", command=self.save)
+        self.file_menu.add_command(label="Load", command=self.load)
+        self.file_menu.add_command(label="Refresh", command=self.refresh)
+        self.file_menu.add_command(label="Sanitise", command=self.sanitise)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.exit)
+        self.main_menu.add_cascade(label="File", menu=self.file_menu)
+        self.master.config(menu=self.main_menu)
+
+    def create_tab_manager(self):
+
+        self.tab_manager = ttk.Notebook(self.master)
+
+        self.info_tab = ttk.Frame(self.tab_manager,
+                                  relief=tk.FLAT,
+                                  borderwidth=5)
+        self.race_tab = ttk.Frame(self.tab_manager,
+                                  relief=tk.FLAT,
+                                  borderwidth=5)
+        self.class_tab = ttk.Frame(self.tab_manager,
+                                   relief=tk.FLAT,
+                                   borderwidth=5)
+        self.background_tab = ttk.Frame(self.tab_manager,
+                                        relief=tk.FLAT,
+                                        borderwidth=5)
+        self.personality_tab = ttk.Frame(self.tab_manager,
+                                         relief=tk.FLAT,
+                                         borderwidth=5)
+        self.final_tab = ttk.Frame(self.tab_manager,
+                                   relief=tk.FLAT,
+                                   borderwidth=5)
+
+        self.tab_manager.add(self.info_tab, text="Info")
+        self.tab_manager.add(self.race_tab, text="Race")
+        self.tab_manager.add(self.class_tab, text="Class")
+        self.tab_manager.add(self.background_tab, text="Background")
+        self.tab_manager.add(self.personality_tab, text="Characteristics")
+        self.tab_manager.add(self.final_tab, text="Finish")
+
+        self.tab_manager.bind("<<NotebookTabChanged>>", self.changed_tabs)
+
+        self.tab_manager.pack()
+
+    def create_info_tab(self):
+
+        def name_frame_config():
+            name_frame = tk.Frame(self.info_frame)
+            character_name = tk.StringVar()
+            name_label, name_entry = label_entry_pair(name_frame, "Character Name", character_name, " 12 bold", True)
+            name_entry.config(width=24,
+                              justify="center")
+
+            Aspect("Name", Tabs.info, AspectTypes.info, character_name, name_entry, 0, True).add(self)
+
+            name_frame.pack(padx=8, pady=(8, 16))
+
+        def data_frame_config():
+
+            data_frame = tk.Frame(self.info_frame)
+
+            # Age
+
+            age_frame = tk.Frame(data_frame)
+            character_age = tk.StringVar()
+            age_label, age_entry = label_entry_pair(age_frame, "Age", character_age, " 10 bold", False)
+            age_label.grid(row=0)
+            age_entry.grid(row=1)
+
+            age_entry.config(width=8,
+                             justify="center")
+            Aspect("Age", Tabs.info, AspectTypes.info, character_age, age_entry, 1, True).add(self)
+
+            # Gender
+
+            gender_frame = tk.Frame(data_frame)
+            character_gender = tk.StringVar()
+            gender_label, gender_entry = label_entry_pair(gender_frame, "Gender", character_gender, " 10 bold", False)
+            gender_label.grid(row=0)
+            gender_entry.grid(row=1)
+            gender_entry.config(width=8,
+                                justify="center")
+            Aspect("Gender", Tabs.info, AspectTypes.info, character_gender, gender_entry, 1, True).add(self)
+
+            # Physical Attributes
+
+            appearance_frame = tk.Frame(data_frame)
+            size_frame = tk.Frame(data_frame)
+
+            appearance_aspects = ["Skin Colour",
+                                  "Hair Colour",
+                                  "Eye Colour"]
+            size_aspects = ["Height",
+                            "Weight",
+                            "Build"]
+
+            for j in range(len(appearance_aspects)):
+
+                frames = appearance_frame, size_frame
+                aspects = appearance_aspects, size_aspects
+
+                for k, frame in enumerate(frames):
+                    aspect_var = tk.StringVar()
+                    label, entry = label_entry_pair(frame, aspects[k][j], aspect_var, " 10 bold", False)
+                    entry.config(width=10,
+                                 justify="center")
+
+                    label.grid(row=1, column=j, pady=(2, 1), padx=4)
+                    entry.grid(row=2, column=j, padx=8)
+
+                    Aspect(aspects[k][j], Tabs.info, AspectTypes.info, aspect_var, entry, 1, True).add(self)
+
+            age_frame.grid(row=0, column=0, padx=(0, 4), sticky="E")
+            gender_frame.grid(row=0, column=1, padx=(4, 0), sticky="W")
+            appearance_frame.grid(row=1, column=0, columnspan=2, padx=(0, 8))
+            size_frame.grid(row=2, column=0, columnspan=2, padx=(8, 0))
+
+            data_frame.pack()
+
+        def faith_frame_config():
+            faith_frame = tk.Frame(self.info_frame)
+
+            character_faith = tk.StringVar()
+
+            faith_label, faith_entry = label_entry_pair(faith_frame, "Faith", character_faith, " 10 bold", True)
+            faith_entry.config(width=16,
+                               justify="center")
+
+            Aspect("Faith", Tabs.info, AspectTypes.info, character_faith, faith_entry, 1, True).add(self)
+
+            faith_frame.pack(pady=2)
+
+        def alignment_frame_config():
+
+            alignment_frame = tk.Frame(self.info_frame)
+
+            alignment_label = tk.Label(alignment_frame,
+                                       text='Alignment',
+                                       font=default_font + " 10 bold")
+            character_ethics = tk.StringVar()
+            character_morality = tk.StringVar()
+            ethics = ttk.Combobox(alignment_frame,
+                                  values=["Lawful", "Neutral", "Chaotic"],
                                   state="readonly",
-                                  width=16,
-                                  textvariable=current_subrace)
-
-    # Race Info Stuff
-    race_info = tk.Frame(race_frame)
-
-    race_info_label = tk.Label(race_info,
-                               text="Racial Stats:",
-                               font=default_font + " 10 bold")
-
-    race_size_text = tk.StringVar()
-    race_speed_text = tk.StringVar()
-    race_language_text = tk.StringVar()
-
-    race_size_text.set("Medium")
-    race_speed_text.set(f'{30} ft.')
-    race_language_text.set("Common")
-
-    race_base_info = tk.Frame(race_info)
-
-    race_size_label = tk.Label(race_base_info,
-                               text="Size",
-                               font=default_font + " 10 bold")
-    race_speed_label = tk.Label(race_base_info,
-                                text="Speed",
-                                font=default_font + " 10 bold")
-    divider = ttk.Separator(race_base_info,
-                            orient=tk.VERTICAL)
-
-    race_size_value = tk.Label(race_base_info,
-                               textvariable=race_size_text,
-                               font=default_font + " 10")
-
-    race_speed_value = tk.Label(race_base_info,
-                                textvariable=race_speed_text,
-                                font=default_font + " 10")
-
-    race_languages_label = tk.Label(race_base_info,
-                                    text="Languages",
-                                    font=default_font + " 10 bold")
-
-    race_languages_value = tk.Label(race_base_info,
-                                    textvariable=race_language_text,
-                                    font=default_font + " 10",
-                                    justify=tk.LEFT)
-
-    race_languages_choice = ttk.Combobox(race_base_info,
-                                         values=[],
-                                         state="readonly",
-                                         width=16)
-
-    race_languages_choice.set("Choose language: ")
-
-    race_size_label.grid(row=0, column=0, sticky="E")
-    race_size_value.grid(row=0, column=2, sticky="W")
-    race_speed_label.grid(row=1, column=0, sticky="E")
-    race_speed_value.grid(row=1, column=2, sticky="W")
-    race_languages_label.grid(row=2, column=0, sticky="NE")
-    race_languages_value.grid(row=2, column=2, sticky="NW")
-
-    divider.grid(column=1, row=0, rowspan=race_base_info.grid_size()[1],
-                 sticky="NS")
-
-    bottom_divider = ttk.Separator(race_base_info)
-    bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
-
-    race_info_label.grid(row=0)
-    race_base_info.grid(row=1, column=0, sticky="N")
-
-    # Tracing Race/Subrace values
-    def changed_race(*args):
-        global current_race_instance
-        if current_race.get() != race_choice_prompt:  # essential to call the variable once, no idea why
-            current_race_instance = race_list[current_race.get()]
-            asi_frame.grid_forget()
-            bottom_divider.grid_forget()
-            current_subrace.set(subrace_choice_prompt)
-            update_race_info()
-        else:
-            current_race_instance = None
-
-        resize_tabs()
-
-    current_race.trace('w', changed_race)
-
-    def changed_subrace(*args):
-        global current_subrace_instance
-
-        if current_race.get() != 'Choose race: ':
-
-            if race_list[
-                current_race.get()].__subclasses__() and current_subrace.get() != subrace_choice_prompt:
-                current_subrace_instance = \
-                    {subrace.subrace_name: subrace for subrace in
-                     current_race_instance.__subclasses__()}[
-                        current_subrace.get()]
-                asi_frame.grid_forget()
-                bottom_divider.grid_forget()
-                ASI()
-                other_features()
-
-            elif current_subrace.get() == subrace_choice_prompt:
-                race_features_frame.grid_forget()
-                current_subrace_instance = None
-
-            resize_tabs()
-
-    current_subrace.trace('w', changed_subrace)
-
-    # ASI Stuff
-    asi_frame = tk.Frame(race_info)
-
-    asi_label = tk.Label(asi_frame,
-                         text="Ability score increases",
-                         font=default_font + " 8 bold")
-
-    asi_label.grid(row=0, sticky="N")
-
-    asi_attributes_frame = tk.Frame(asi_frame)
-
-    asi_automatic_values = [None] * 6
-    for n, attribute in enumerate(attrs):
-        label = tk.Label(asi_attributes_frame,
-                         text=attribute,
-                         font=default_font + " 10 bold")
-        label.grid(row=n, column=0, sticky="E")
-
-        value = tk.Label(asi_attributes_frame,
-                         font=default_font + " 10")
-
-        value.grid(row=n, column=2, sticky="W")
-        asi_automatic_values[n] = value
-
-    ttk.Separator(asi_attributes_frame,
-                  orient=tk.VERTICAL).grid(column=1, row=0, sticky="NS",
-                                           rowspan=
-                                           asi_attributes_frame.grid_size()[1])
-
-    asi_choice_frame = tk.Frame(asi_frame)
-
-    asi_choice_label = tk.Label(asi_choice_frame,
-                                text="Choose ability score to increase by +1:")
-
-    asi_choice_1 = ttk.Combobox(asi_choice_frame,
-                                state="readonly",
-                                width=12)
-
-    asi_choice_2 = ttk.Combobox(asi_choice_frame,
-                                state="readonly",
-                                width=12)
-
-    asi_choice_label.grid(row=0)
-    asi_choice_1.grid(row=1)
-    asi_choice_2.grid(row=2)
-
-    asi_attributes_frame.grid(row=1)
-    asi_choice_frame.grid(row=2)
-
-    race_choice.pack()
-
-    # Race Features
-    race_features_frame = tk.Frame(race_info)
-
-    race_features_label = tk.Label(race_features_frame,
-                                   text="Racial Features:",
-                                   font=default_font + " 10 bold",
-                                   anchor="n")
-    race_features_label.grid(row=0, sticky="N")
-
-    # race_features_frame.grid(row=0, column=2, sticky="N")
-
-    divider_2 = ttk.Separator(race_info,
-                              orient=tk.VERTICAL)
-
-    # divider_2.grid(column=1, row=0, sticky="NS", rowspan=2)
-
-    race_features_internal_frame = tk.Frame(race_features_frame)
-    race_features_internal_frame.grid(row=1)
-
-    skill_chooser_frame = tk.Frame(race_features_internal_frame)
-
-    skill_chooser_label = tk.Label(skill_chooser_frame,
-                                   text="Choose skill proficiency:",
-                                   font=default_font + " 8")
-
-    race_skill_choice_1 = tk.StringVar()
-    race_skill_choice_2 = tk.StringVar()
-
-    skill_chooser_1 = ttk.Combobox(skill_chooser_frame,
-                                   state="readonly",
-                                   textvariable=race_skill_choice_1)
-    skill_chooser_label.pack(pady=(4, 0))
-    skill_chooser_1.pack()
-
-    skill_chooser_2 = ttk.Combobox(skill_chooser_frame,
-                                   state="readonly",
-                                   textvariable=race_skill_choice_2)
-    skill_chooser_2.pack()
-
-    race_skill_choosers = [skill_chooser_1, skill_chooser_2]
-    race_skills_choices = [race_skill_choice_1, race_skill_choice_2]
-
-    feat_chooser_frame = tk.Frame(race_features_internal_frame)
-
-    feat_chooser_label = tk.Label(feat_chooser_frame,
-                                  text="Choose feat:",
-                                  font=default_font + " 8")
-    feat_chosen = tk.StringVar()
-    feat_chooser = ttk.Combobox(feat_chooser_frame,
-                                textvariable=feat_chosen,
-                                state="readonly")
-
-    def changed_feat(*args):
-
-        if feat_chosen.get():
-            description = feat_list[feat_chosen.get()].desc
-            description_formatted = unpack_desc(description)
-            feat_description.set(description_formatted)
-
-        resize_tabs()
-
-    feat_chosen.trace('w', changed_feat)
-    feat_description = tk.StringVar()
-
-    feat_description_label = tk.Label(feat_chooser_frame,
-                                      textvariable=feat_description,
-                                      wraplength=400,
-                                      justify=tk.LEFT,
-                                      font=default_font + " 8")
-
-    feat_chooser_label.pack()
-    feat_chooser.pack()
-    feat_description_label.pack()
-
-    general_features_frame = tk.Frame(race_features_internal_frame)
-
-    general_features_text = tk.StringVar()
-
-    general_feature_label = tk.Label(general_features_frame,
-                                     textvariable=general_features_text,
-                                     wraplength=400,
-                                     justify=tk.LEFT,
-                                     anchor="w",
-                                     font=default_font + " 8"
-                                     )
-
-    general_feature_label.pack(side=tk.LEFT)
-
-    race_feature_chooser_frame = tk.Frame(race_features_internal_frame)
-    race_feature_chooser_label = tk.Label(race_feature_chooser_frame,
-                                          text="Choose racial feature:",
-                                          font=default_font + " 8")
-
-    subrace_feature_chooser_label = tk.Label(race_feature_chooser_frame,
-                                             text="Choose subrace feature:",
-                                             font=default_font + " 8")
-
-    race_feature_chosen = tk.StringVar()
-    subrace_feature_chosen = tk.StringVar()
-    race_feature_chooser = ttk.Combobox(race_feature_chooser_frame,
-                                        state="readonly",
-                                        textvariable=race_feature_chosen)
-    subrace_feature_chooser = ttk.Combobox(race_feature_chooser_frame,
-                                           state="readonly",
-                                           textvariable=subrace_feature_chosen)
-
-    def race_feature_changed(*args):
-
-        if race_feature_chosen.get():
-
-            feature_value = current_race_instance.choice_features[
-                race_feature_chosen.get()]
-
-            current_race_instance.features_chosen = []
-
-            if isinstance(feature_value, str):
-                current_race_instance.features_chosen.append(feature_value)
-                other_features()
-
-            else:
-                other_features()
-                text = general_features_text.get()
-                text += f'\n{race_feature_chosen.get()}:'
-                text += f'\n{feature_value.desc}\n'
-                general_features_text.set(text)
-                general_features_frame.pack()
-
-        resize_tabs()
-
-    def subrace_feature_changed(*args):
-        if subrace_feature_chosen.get():
-
-            feature_value = current_subrace_instance.choice_features[
-                subrace_feature_chosen.get()]
-
-            current_subrace_instance.features_chosen = []
-
-            if isinstance(feature_value, str):
-                current_subrace_instance.features_chosen.append(feature_value)
-                other_features()
-
-            else:
-                other_features()
-                text = general_features_text.get()
-                text += f'\n{subrace_feature_chosen.get()}:'
-                text += f'\n{feature_value.desc}\n'
-                general_features_text.set(text)
-                general_features_frame.pack()
-
-        resize_tabs()
-
-    race_feature_chosen.trace("w", race_feature_changed)
-    subrace_feature_chosen.trace("w", subrace_feature_changed)
-
-    race_feature_chooser_label.pack(pady=(4, 0))
-    race_feature_chooser.pack()
-    subrace_feature_chooser_label.pack()
-    subrace_feature_chooser.pack()
-
-    race_info.update()
-
-    race_data = {"Race": race_choice,
-                 "Subrace": subrace_choice,
-                 "Languages": race_languages_choice,
-                 "ASI Choice 1": asi_choice_1,
-                 "ASI Choice 2": asi_choice_2,
-                 "Race Skill 1": skill_chooser_1,
-                 "Race Skill 2": skill_chooser_2,
-                 "Race Feat": feat_chooser,
-                 "Race Feature": race_feature_chooser,
-                 "Subrace Feature": subrace_feature_chooser
-                 }
-
-    character.update(race_data)
-
-    return race_frame
-
-
-def Class():
-    def class_choice_changed(*args):
-        global current_class_instance
-
-        if current_class_choice.get() != "":
-            current_class_instance = class_list[current_class_choice.get()]()
-            class_ = current_class_instance
-            class_.base_features()
-            class_top_label["text"] = f"{class_.name} features:"
-            text = ""
-
-            text += f"Primary Attribute{'s' if len(current_class_instance.primary_attr) > 1 else ''}:\n"
-            text += " and ".join([attr.name for attr in
-                                  current_class_instance.primary_attr]) + "\n"
-
-            text += f"\nSaving Throw Proficiencies:\n" \
-                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.saving_throws])}\n"
-
-            text += f"\nArmour Proficiencies:\n" \
-                    f"{', '.join([class_.__name__ if class_ else 'None' for class_ in class_.armour_proficiencies])}\n"
-
-            text += f"\nWeapon Proficiencies:\n" \
-                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.weapon_proficiencies])}\n"
-
-            text += f"\nTool Proficiencies:\n" \
-                    f"{', '.join([class_.name if class_ else 'None' for class_ in class_.tool_proficiencies])}\n"
-
-            text += f"\nHit Dice: {class_.hit_die}\n"
-            text += f"Level up HP: {class_.lvl_up_hp}\n"
-
-            class_basic_info_text["text"] = text
-
-            class_left_frame.grid(column=0, row=0, sticky="n", padx=4)
-            class_central_frame.grid(column=2, row=0, sticky="n", padx=4)
-            class_right_frame.grid(column=4, row=0, sticky="n", padx=4)
-
-            class_divider_1.grid(column=1, row=0, rowspan=10, sticky="NS")
-            class_divider_2.grid(column=3, row=0, rowspan=10, sticky="NS")
-
-            skill_choosers(current_class_instance)
-            equipment_selection(current_class_instance)
-
-            class_description.set(f'{class_.desc}\n\n\n{class_.rpgbot}')
-
-            subclass_list = "\n".join(
-                sorted([subclass.name for subclass in
-                        current_class_instance.__class__.__subclasses__()],
-                       key=str.lower))
-
-            class_subclass_lvl_label[
-                "text"] = f'\n{class_.name}s choose their {class_.subclass_name} at level {class_.subclass_lvl}, selecting from:\n\n{subclass_list}'
-
-            resize_tabs()
-
-    def skill_choosers(current_class):
-        for chooser in class_skill_choosers_list:
-            chooser.grid_forget()
-
-        for n, option in enumerate(class_skill_choices):
-            try:
-                if current_class.skills[n] == "choose":
-                    class_skill_choosers_list[n][
-                        "postcommand"] = class_skill_chooser_prep
-                    class_skill_choosers_list[n].grid(row=n + 1, pady=1, padx=4)
-                else:
-                    pass
-
-                if option.get() not in [skill.name for skill in
-                                        current_class.valid_skills]:
-                    option.set("")
-            except:
-                option.set("")
-
-    def class_skill_chooser_prep():
-
-        chosen_skills = get_chosen_skills(character)
-
-        current_class_instance.base_features()
-
-        if isinstance(current_class_instance.valid_skills, str):
-            valid_skills = [skill.key() for skill in skills_list]
-        else:
-            valid_skills = [skill.name for skill in
-                            current_class_instance.valid_skills]
-
-        for n, skill_chooser in enumerate(class_skill_choosers_list):
-            current_chooser_choice = class_skill_choices[n].get()
-            invalid_choices = chosen_skills.copy()
-            invalid_choices.remove(current_chooser_choice)
-
-            skills_options = [skill for skill in valid_skills if
-                              skill not in invalid_choices]
-            class_skill_choosers_list[n]["values"] = skills_options
-
-    def equipment_selection(current_class):
-
-        class equipment_selection:
-
-            def __init__(self, index, choices):
-                self.index = index
-                self.tracking_variable = tk.IntVar()
-                self.frame = tk.Frame(class_equipment_internal_frame)
-                equipment_choices["selections"].append(self.tracking_variable)
-                equipment_choices["selection_options"].append(choices)
-                for i, options in enumerate(choices):
-                    text = []
-                    for j, item in enumerate(options):
-                        if isinstance(item[0], tuple):
-                            conditions = item[0]
-                            # This assumes only two conditions, may prove to not be correct in the future but hey.
-                            parent_1 = set(list(conditions[0].__bases__))
-                            parent_2 = set(list(conditions[1].__bases__))
-
-                            common_parent = list(parent_1.intersection(
-                                parent_2))  # assume only one common parent
-
-                            text_entry = f'{conditions[0].syntax_start(item[1])} {conditions[1].__name__} {common_parent[0].syntax_end(item[1])}'.lower()
-                        elif item[0].__subclasses__():
-                            text_entry = f'{item[0].syntax_start(item[1])} {item[0].__bases__[0].syntax_end(item[1])}'.lower()
-                        else:
-                            text_entry = item[0].syntax(item[1])
-
-                        text.append(text_entry)
-
-                    text = text_join(text, True, "")
-
-                    button = tk.Radiobutton(self.frame,
-                                            value=i,
-                                            variable=self.tracking_variable,
-                                            text=text,
-                                            command=self.changed_selection)
-                    button.grid(row=i, sticky=tk.W)
-                    if i == 0:
-                        button.select()
-
-                    self.tracking_variable.trace("w",
-                                                 self.changed_selection_auto)
-
-                self.frame.update()
-
-                self.frame.grid(row=index * 2, column=0, sticky=tk.W)
-                ttk.Separator(class_equipment_internal_frame).grid(
-                    row=index * 2 + 1, column=0, columnspan=3,
-                    sticky=tk.EW)
-
-            def changed_selection(self):
-                get_choice_options(self.index)
-
-            def changed_selection_auto(self, *args):
-                self.tracking_variable
-                get_choice_options(self.index)
-
-        def get_choice_options(selection_index):
-            current_selection_choice = equipment_choices["selections"][
-                selection_index].get()
-
-            current_selection_options = \
-                equipment_choices["selection_options"][selection_index][
-                    current_selection_choice]
-
-            for child_widget in class_equipment_internal_frame.grid_slaves():
-                if int(child_widget.grid_info()["column"]) > 0 and int(
-                        child_widget.grid_info()["row"]) == 2 * selection_index:
-                    for grandchild in child_widget.winfo_children():
-                        grandchild.destroy()
-                    child_widget.grid_forget()
-
-            chooser_frame = tk.Frame(class_equipment_internal_frame)
-
-            choices = []
-
-            for option in current_selection_options:
-
-                for n in range(option[1]):
-
-                    if isinstance(option[0], tuple):
-
-                        option_choice = tk.StringVar()
-                        choices.append(option_choice)
-
-                        conditions = option[0]
-                        choice_options = ([condition.name for condition in
-                                           conditions[0].__subclasses__() if
-                                           issubclass(condition,
-                                                      conditions[1])])
-
-                        chooser = ttk.Combobox(chooser_frame,
-                                               state="readonly",
-                                               values=choice_options,
-                                               textvariable=option_choice)
-                        chooser.set(
-                            f"Choose {conditions[0].__bases__[0].__name__.lower()}:")
-                        chooser.pack(pady=2)
-
-                    else:
-                        if option[0].__subclasses__():
-                            option_choice = tk.StringVar()
-                            choices.append(option_choice)
-
-                            choice_options = ([option.name for option in
-                                               option[0].__subclasses__()])
-
-                            chooser = ttk.Combobox(chooser_frame,
-                                                   state="readonly",
-                                                   values=choice_options,
-                                                   textvariable=option_choice)
-                            chooser.set(
-                                f"Choose {option[0].__bases__[0].__name__.lower()}:")
-                            chooser.pack(pady=2)
-
-            chooser_frame.grid(row=selection_index * 2, column=1)
-
-            equipment_choices["choices"][selection_index] = choices
-
-            resize_tabs()
-
-        for child_widget in class_equipment_internal_frame.winfo_children():
-            child_widget.destroy()
-
-        equipment_list = current_class.equipment
-
-        equipment_choices = {"selections": [],
-                             "selection_options": [],
-                             "choices": []}
-
-        num_selections = 0
-        final_text = []
-        final_equipment.pack_forget()
-
-        for selection in equipment_list:
-            num_options = len(selection)
-            if num_options > 1:
-                equipment_selection(num_selections, selection)
-                equipment_choices["choices"].append([])
-                get_choice_options(num_selections)
-                num_selections += 1
-            else:
-                num_items = selection[0][1]
-                final_text.append(selection[0][0]().syntax(num_items))
-
-        final_equipment["text"] = text_join(final_text, True, "")
-        final_equipment.pack(anchor="w")
-
-        export_choices = equipment_choices.copy()
-        del export_choices["selection_options"]
-
-        character["equipment_choices"] = export_choices
-
-    class_frame = tk.Frame(class_tab,
-                           relief=tk.SUNKEN,
-                           borderwidth=4)
-
-    class_label = tk.Label(class_frame,
-                           text="Class",
-                           font=default_font + " 12 bold")
-
-    class_label.pack(pady=8)
-
-    class_choice_frame = tk.Frame(class_frame)
-    class_choice_label = tk.Label(class_choice_frame,
-                                  text="Choose starting class:",
-                                  font=default_font + " 8")
-
-    current_class_choice = tk.StringVar()
-    class_choice_chooser = ttk.Combobox(class_choice_frame,
-                                        values=list(class_list.keys()),
-                                        state="readonly",
-                                        textvariable=current_class_choice)
-
-    class_choice_label.pack()
-    class_choice_chooser.pack()
-    class_choice_frame.pack()
-
-    current_class_choice.trace("w", class_choice_changed)
-
-    class_info_frame = tk.Frame(class_frame)
-
-    class_top_label = tk.Label(class_info_frame,
-                               font=default_font + " 10 bold")
-
-    class_description = tk.StringVar()
-
-    class_description_label = tk.Label(class_info_frame,
-                                       textvariable=class_description,
-                                       font=default_font + " 8",
-                                       wraplength=640)
-    class_description_label.pack(pady=8)
-
-    class_features_internal_frame = tk.Frame(class_info_frame)
-
-    class_left_frame = tk.Frame(class_features_internal_frame)
-
-    class_basic_info_text = tk.Label(class_left_frame,
-                                     font=default_font + " 8",
-                                     justify=tk.CENTER,
-                                     wraplength=160
-                                     )
-
-    class_basic_info_label = tk.Label(class_left_frame,
-                                      text="Class Info:",
-                                      font=default_font + " 8 bold")
-
-    class_basic_info_label.pack()
-    class_basic_info_text.pack()
-
-    class_divider_1 = ttk.Separator(class_features_internal_frame,
-                                    orient=tk.VERTICAL)
-
-    class_divider_2 = ttk.Separator(class_features_internal_frame,
-                                    orient=tk.VERTICAL)
-
-    class_central_frame = tk.Frame(class_features_internal_frame)
-
-    class_primary_attributes = tk.StringVar()
-
-    class_skills_frame = tk.Frame(class_central_frame)
-
-    class_skills_label = tk.Label(class_skills_frame,
-                                  text="Class Skills:",
-                                  font=default_font + " 8 bold"
-                                  )
-
-    class_skills_choosers_frame = tk.Frame(class_skills_frame)
-
-    class_skills_chooser_label = tk.Label(class_skills_choosers_frame,
-                                          text="Choose skill proficiencies:",
-                                          font=default_font + " 8")
-
-    class_skill_1 = tk.StringVar()
-    class_skill_2 = tk.StringVar()
-    class_skill_3 = tk.StringVar()
-    class_skill_4 = tk.StringVar()
-
-    class_skill_chooser_1 = ttk.Combobox(class_skills_choosers_frame,
-                                         state="readonly",
-                                         textvariable=class_skill_1)
-    class_skill_chooser_2 = ttk.Combobox(class_skills_choosers_frame,
-                                         state="readonly",
-                                         textvariable=class_skill_2)
-    class_skill_chooser_3 = ttk.Combobox(class_skills_choosers_frame,
-                                         state="readonly",
-                                         textvariable=class_skill_3)
-    class_skill_chooser_4 = ttk.Combobox(class_skills_choosers_frame,
-                                         state="readonly",
-                                         textvariable=class_skill_4)
-
-    class_skill_choosers_list = [class_skill_chooser_1, class_skill_chooser_2,
-                                 class_skill_chooser_3,
-                                 class_skill_chooser_4]
-    class_skill_choices = [class_skill_1, class_skill_2, class_skill_3,
-                           class_skill_4]
-
-    for n, skill_choice in enumerate(class_skill_choices):
-        name = f'Class Skill {n + 1}'
-        character[name] = skill_choice
-
-    class_skills_chooser_label.grid(row=0)
-    class_skill_chooser_1.grid(row=1, pady=1, padx=4)
-    class_skill_chooser_2.grid(row=2, pady=1)
-    class_skill_chooser_3.grid(row=3, pady=1)
-    class_skill_chooser_4.grid(row=4, pady=1)
-
-    class_skills_label.pack()
-    class_skills_frame.pack()
-    class_skills_choosers_frame.pack()
-
-    class_subclass_lvl_frame = tk.Frame(class_central_frame)
-    class_subclass_lvl_label = tk.Label(class_subclass_lvl_frame,
-                                        font=default_font + " 8",
-                                        wraplength=200)
-    class_subclass_lvl_label.pack()
-    class_subclass_lvl_frame.pack()
-
-    class_right_frame = tk.Frame(class_features_internal_frame)
-
-    class_equipment_frame = tk.Frame(class_right_frame)
-
-    tk.Label(class_equipment_frame,
-             text="Class Equipment:",
-             font=default_font + " 8 bold").pack()
-
-    tk.Label(class_equipment_frame,
-             text="You recieve the following items, plus any provided by your background:",
-             font=default_font + " 8",
-             wraplength=220).pack()
-
-    class_equipment_internal_frame = tk.Frame(class_equipment_frame)
-
-    class_equipment_frame.pack()
-    class_equipment_internal_frame.pack(fill="x", expand=True)
-
-    final_equipment = tk.Label(class_equipment_frame,
-                               justify=tk.LEFT)
-
-    class_info_frame.pack()
-    class_top_label.pack()
-    class_features_internal_frame.pack()
-
-    class_data = {"Class Choice": class_choice_chooser}
-
-    character.update(class_data)
-
-    class_label.pack()
-
-    return class_frame
-
-
-def Background_():
-    def changed_background(*args):
-        background_choice_instance = background_list[background_choice.get()]()
-
-        background_name_text_var.set(background_choice_instance.name)
-
-        background_desc_text.delete('1.0', tk.END)
-        background_desc_text.insert(tk.END, background_choice_instance.feature)
-
-        # Check text height and adjust box
-        text_height = (len(textwrap.wrap(background_choice_instance.feature,
-                                         background_desc_text['width']))
-                       + background_choice_instance.feature.count("\n"))
-        background_desc_text['height'] = text_height
-
-        background_desc_text.update()
-
-        background_name_text.pack()
-        background_desc_text.pack(pady=4)
-
-        resize_tabs()
-
-    background_frame = tk.Frame(background_tab,
-                                relief=tk.SUNKEN,
-                                borderwidth=4,
-                                )
-
-    background_label = tk.Label(background_frame,
-                                text="Background",
-                                font=default_font + " 12 bold")
-
-    background_label.pack(pady=8)
-
-    background_chooser_frame = tk.Frame(background_frame)
-
-    background_chooser_label = tk.Label(background_chooser_frame,
-                                        text="Choose background template:\n"
-                                             "(Name and description can be "
-                                             "altered if desired)",
-                                        font=default_font + " 8")
-
-    background_choice = tk.StringVar()
-    background_choice.trace("w", changed_background)
-    background_chooser = ttk.Combobox(background_chooser_frame,
-                                      state='readonly',
-                                      values=[bg.name for bg in
-                                              Background.__subclasses__()],
-                                      textvariable=background_choice)
-
-    background_chooser_label.pack()
-    background_chooser.pack()
-    background_chooser_frame.pack()
-
-    background_features_frame = tk.Frame(background_frame)
-    background_name_text_var = tk.StringVar()
-    background_name_text = tk.Entry(background_features_frame,
-                                    textvariable=background_name_text_var,
+                                  textvariable=character_ethics,
+                                  width=8,
+                                  justify="center")
+            morality = ttk.Combobox(alignment_frame,
+                                    values=["Good", "Neutral", "Evil"],
+                                    state="readonly",
+                                    textvariable=character_morality,
+                                    width=8,
                                     justify="center")
 
-    background_desc_text = tk.Text(background_features_frame,
-                                   height=10,
-                                   width=80,
-                                   wrap=tk.WORD)
+            Aspect("Ethics", Tabs.info, AspectTypes.info, character_ethics, ethics, 1, True).add(self)
+            Aspect("Morality", Tabs.info, AspectTypes.info, character_morality, morality, 1, True).add(self)
 
-    background_features_frame.pack(pady=8)
+            alignment_label.grid(row=0, columnspan=2)
+            ethics.grid(row=1, column=0, padx=(0, 2))
+            morality.grid(row=1, column=1, padx=(2, 0))
 
-    background_features_dict = {'background_choice': background_chooser}
+            alignment_frame.pack(pady=(2, 8))
 
-    return background_frame
+        self.reset_tab_aspects(Tabs.info)
 
+        self.info_frame = tk.Frame(self.info_tab,
+                                   relief=tk.SUNKEN,
+                                   borderwidth=4,
+                                   )
+        name_frame_config()
+        data_frame_config()
+        faith_frame_config()
+        alignment_frame_config()
 
-window = tk.Tk()
-window.title("Character Creator")
-default_font = "Verdana"
+        self.info_frame.pack(fill="both", expand=True)
 
-# Character Creation Stuff
+    def create_race_tab(self):
 
-character_creator = tk.Frame(window)
+        """Can do Tasha's optionals in the future"""
+        """https://thetrove.is/Books/Dungeons%20%26%20Dragons%20%5Bmulti%5D/5th%20Edition%20%285e%29/Core/Tasha%E2%80%99s%20Cauldron%20of%20Everything%20%28HQ%2C%20Both%20Covers%29.pdf"""
 
-tab_manager = ttk.Notebook(character_creator)
+        def race_choice_config():
 
-info_tab = ttk.Frame(tab_manager,
-                     relief=tk.FLAT,
-                     borderwidth=5)
-race_tab = ttk.Frame(tab_manager,
-                     relief=tk.FLAT,
-                     borderwidth=5)
-class_tab = ttk.Frame(tab_manager,
-                      relief=tk.FLAT,
-                      borderwidth=5)
+            self.character_race = tk.StringVar()
 
-background_tab = ttk.Frame(tab_manager,
-                           relief=tk.FLAT,
-                           borderwidth=5)
+            self.race_chooser = ttk.Combobox(self.race_frame,
+                                             values=sorted([race for race in races.race_list]),
+                                             state="readonly",
+                                             width=16,
+                                             textvariable=self.character_race,
+                                             justify="center")
 
-tab_manager.add(info_tab, text="Info")
+            Aspect("Race", Tabs.race, AspectTypes.info, self.character_race, self.race_chooser, 0, True).add(self)
 
-tab_manager.add(race_tab, text="Race")
+            self.race_choice_prompt = "Choose race: "
+            self.race_chooser.set(self.race_choice_prompt)
 
-tab_manager.add(class_tab, text="Class")
+            self.character_race.trace_add('write', race_changed)
 
-tab_manager.add(background_tab, text="Background")
+            self.race_chooser.grid(row=1, columnspan=3, pady=2)
 
+        def race_changed(*args):
 
-def change_tabs(event):
-    event.widget.update_idletasks()
-    current_tab = event.widget.nametowidget(event.widget.select())
-    event.widget.configure(height=current_tab.winfo_reqheight(),
-                           width=current_tab.winfo_reqwidth())
+            if self.character_race.get() != self.race_choice_prompt:
 
-    character_creator.update_idletasks()
-    tab_manager.update_idletasks()
-    if character_creator.winfo_width() > tab_manager.winfo_reqwidth():
-        tab_manager.configure(width=character_creator.winfo_width())
+                self.race_instance = races.race_list[self.character_race.get()]
 
-        current_tab_contents = \
-            tab_manager.nametowidget(tab_manager.select()).winfo_children()[0]
+                if self.race_instance.__subclasses__():
 
-        current_tab_contents.pack(fill="both", expand=True)
-
-
-def resize_tabs():
-    tab_manager.update_idletasks()
-    current_tab = tab_manager.nametowidget(tab_manager.select())
-    tab_manager.configure(height=current_tab.winfo_reqheight(),
-                          width=current_tab.winfo_reqwidth())
+                    self.subrace_chooser.grid(row=2, columnspan=3, pady=2)
+                    subraces_list = [subrace.subrace_name for subrace in self.race_instance.__subclasses__()]
+                    if self.character_subrace.get() not in subraces_list:
+                        self.character_subrace.set(self.subrace_choice_prompt)
 
 
-tab_manager.bind("<<NotebookTabChanged>>", change_tabs)
+                else:
+                    self.subrace_chooser.grid_forget()
+                    self.character_subrace.set(self.subrace_choice_prompt)
 
-character = {}
+                    if hasattr(self, "subrace_instance"):
+                        delattr(self, "subrace_instance")
 
-Title()
+                pack_race_info()
+                self.resize_tabs()
 
-Info().pack()
-Class().pack()
-Race().pack()
-Background_().pack()
+                feature_constructor(self.race_instance)
 
-tab_manager.pack()
-character_creator.pack()
+            else:
 
-style = ttk.Style(window)
-style.configure('TNotebook', tabposition='n')
+                self.race_asi_choice.deactivate()
+                self.character_race_language.deactivate()
 
-# Move window to centre
+                self.subrace_chooser.grid_forget()
+                self.character_subrace.set(self.subrace_choice_prompt)
+                self.race_info_frame.grid_forget()
+                self.asi_frame.grid_forget()
+                self.bottom_divider.grid_forget()
+                self.divider_2.grid_forget()
+                self.racial_features_frame.grid_forget()
 
-windowWidth = window.winfo_reqwidth()
-windowHeight = window.winfo_reqheight()
-position_right = int(window.winfo_screenwidth() / 3 - windowHeight / 2)
-position_down = int(window.winfo_screenheight() / 4 - windowHeight / 2)
-window.geometry(f"+{position_right}+{position_down}")
+                self.resize_tabs()
+                self.master.update()
+                self.tab_manager.config(width=self.master.winfo_width())
 
-window.mainloop()
+        def subrace_choice_config():
+
+            self.character_subrace = tk.StringVar()
+
+            self.subrace_chooser = ttk.Combobox(self.race_frame,
+                                                values=[],
+                                                postcommand=get_subclasses,
+                                                state="readonly",
+                                                width=16,
+                                                textvariable=self.character_subrace,
+                                                justify="center")
+
+            Aspect("Subrace", Tabs.race, AspectTypes.info, self.character_subrace, self.subrace_chooser, 0,
+                   True).add(self)
+
+            self.subrace_choice_prompt = "Choose subrace: "
+            self.subrace_chooser.set(self.subrace_choice_prompt)
+
+            self.character_subrace.trace_add('write', subrace_changed)
+
+        def get_subclasses():
+            subraces_list = [subrace.subrace_name for subrace in self.race_instance.__subclasses__()]
+            self.subrace_chooser['values'] = subraces_list
+
+        def subrace_changed(*args):
+
+            if self.character_subrace.get() != self.subrace_choice_prompt:
+                self.subrace_instance = \
+                    {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
+                        self.character_subrace.get()]
+
+                feature_constructor(self.subrace_instance)
+            else:
+                if hasattr(self, "subrace_instance"):
+                    delattr(self, "subrace_instance")
+
+        def feature_constructor(instance):
+
+            if instance not in races.Race.__subclasses__():
+                is_subrace = True
+            else:
+                is_subrace = False
+
+            if hasattr(instance, "ASI"):
+                self.asi_frame.grid_forget()
+                self.asi_attributes_frame.grid_forget()
+                self.race_asi_choice.deactivate()
+                pack_race_asi(instance, is_subrace)
+            else:
+                self.asi_frame.grid_forget()
+                self.asi_attributes_frame.grid_forget()
+                self.race_asi_choice.deactivate()
+
+            if hasattr(instance, "languages"):
+                pack_race_languages(instance)
+
+            if hasattr(instance, "features"):
+                pack_other_features(instance, is_subrace)
+
+            self.resize_tabs()
+
+        def race_info_config():
+
+            self.race_info_frame = tk.Frame(self.race_frame)
+
+            race_info_label = tk.Label(self.race_info_frame,
+                                       text="Racial Stats:",
+                                       font=default_font + " 10 bold")
+
+            self.race_size_text = tk.StringVar()
+            self.race_speed_text = tk.StringVar()
+            self.race_language_text = tk.StringVar()
+
+            self.race_size_text.set("Medium")
+            self.race_speed_text.set(f'{30} ft.')
+            self.race_language_text.set("Common")
+
+            self.race_base_info = tk.Frame(self.race_info_frame)
+            race_size_label = tk.Label(self.race_base_info,
+                                       text="Size",
+                                       font=default_font + " 10 bold")
+            race_speed_label = tk.Label(self.race_base_info,
+                                        text="Speed",
+                                        font=default_font + " 10 bold")
+            divider = ttk.Separator(self.race_base_info,
+                                    orient=tk.VERTICAL)
+
+            race_size_value = tk.Label(self.race_base_info,
+                                       textvariable=self.race_size_text,
+                                       font=default_font + " 10")
+
+            race_speed_value = tk.Label(self.race_base_info,
+                                        textvariable=self.race_speed_text,
+                                        font=default_font + " 10")
+
+            race_languages_label = tk.Label(self.race_base_info,
+                                            text="Languages",
+                                            font=default_font + " 10 bold")
+
+            race_languages_value = tk.Label(self.race_base_info,
+                                            textvariable=self.race_language_text,
+                                            font=default_font + " 10",
+                                            justify=tk.LEFT)
+
+            self.character_race_language = ValueChooserGenerator(character=self,
+                                                                 master=self.race_base_info,
+                                                                 num_choosers=1,
+                                                                 variable_name="Race Language",
+                                                                 values=["None"] + glossary.all_languages,
+                                                                 value_tab=Tabs.race,
+                                                                 value_type=AspectTypes.language,
+                                                                 default_value="Choose language: ",
+                                                                 grid=dict(row=3, column=2, sticky="NW"),
+                                                                 check_global=True)
+
+            race_size_label.grid(row=0, column=0, sticky="E")
+            race_size_value.grid(row=0, column=2, sticky="W")
+            race_speed_label.grid(row=1, column=0, sticky="E")
+            race_speed_value.grid(row=1, column=2, sticky="W")
+            race_languages_label.grid(row=2, column=0, sticky="NE")
+            race_languages_value.grid(row=2, column=2, sticky="NW")
+
+            divider.grid(column=1, row=0, rowspan=5, sticky="NS")
+
+            self.bottom_divider = ttk.Separator(self.race_base_info)
+
+            race_info_label.grid(row=0)
+            self.race_base_info.grid(row=1, column=0, sticky="N")
+
+        def pack_race_info():
+            self.race_info_frame.grid(row=3, column=0, sticky="N", padx=4)
+
+            self.race_size_text.set(self.race_instance.size)
+            self.race_speed_text.set(f'{self.race_instance.speed} ft.')
+
+        def race_asi_config():
+
+            self.asi_frame = tk.Frame(self.race_info_frame)
+
+            asi_label = tk.Label(self.asi_frame,
+                                 text="Ability score increases:",
+                                 font=default_font + " 10 bold")
+
+            asi_label.grid(row=0, sticky="N")
+
+            self.asi_attributes_frame = tk.Frame(self.asi_frame)
+
+            self.asi_automatic_values = [None] * 6
+            for n, attribute in enumerate(glossary.attrs):
+                label = tk.Label(self.asi_attributes_frame,
+                                 text=attribute,
+                                 font=default_font + " 10 bold")
+                label.grid(row=n, column=0, sticky="E")
+
+                value = tk.Label(self.asi_attributes_frame,
+                                 font=default_font + " 10")
+
+                value.grid(row=n, column=2, sticky="W")
+                self.asi_automatic_values[n] = value
+
+            ttk.Separator(self.asi_attributes_frame,
+                          orient=tk.VERTICAL).grid(column=1, row=0, sticky="NS",
+                                                   rowspan=
+                                                   self.asi_attributes_frame.grid_size()[1])
+
+            self.asi_choice_text = tk.StringVar()
+
+            self.race_asi_choice = ValueChooserGenerator(character=self,
+                                                         master=self.asi_frame,
+                                                         num_choosers=2,
+                                                         variable_name="Race ASI",
+                                                         value_tab=Tabs.race,
+                                                         value_type=AspectTypes.asi,
+                                                         grid=dict(row=2, sticky=tk.N),
+                                                         check_global=False,
+                                                         label=dict(textvariable=self.asi_choice_text,
+                                                                    font=default_font + " 8"))
+
+        def pack_race_languages(instance):
+
+            default_languages = []
+
+            num_language_choice = 0
+
+            for lang in instance.languages:
+                if isinstance(lang, str):
+                    default_languages.append(lang)
+                else:
+                    num_language_choice += 1
+
+            self.race_language_text.set("\n".join(default_languages))
+
+            if num_language_choice:
+                self.character_race_language.activate(num_language_choice)
+                self.character_race_language.invalid_options = default_languages
+
+                if hasattr(self, "current_background"):
+                    background_languages = [lang for lang in self.current_background.languages if isinstance(lang, str)]
+                    self.character_race_language.invalid_options += background_languages
+            else:
+                self.character_race_language.deactivate()
+
+        def pack_race_asi(instance, is_subrace):
+
+            for asi in self.asi_automatic_values:
+                asi['text'] = ""
+
+            self.asi_frame.grid(row=2, column=0)
+            self.bottom_divider.grid(column=0, row=5, columnspan=3, sticky="EW", pady=(4, 0))
+
+            try:
+                asi_list = list(instance.ASI)
+            except Exception as e:
+                print(e)
+
+            self.all_asi = asi_list
+
+            if is_subrace:
+                if hasattr(self.race_instance, "ASI"):
+                    self.all_asi += list(self.race_instance.ASI)
+
+            asi_choice = False
+
+            for asi in self.all_asi:
+                if isinstance(asi[0], list):
+                    asi_choice = asi[1]
+                    asi_choice_options = asi[0]
+                    if asi[1] <= 1:
+                        self.race_asi_choice.label_text.set("Choose ability score to increase by +1:")
+                    elif asi[1] > 1:
+                        self.race_asi_choice.label_text.set("Choose ability scores to increase by +1:")
+
+                else:
+                    self.asi_attributes_frame.grid(row=1)
+                    attr_index = (glossary.attrs.index(asi[0].__name__))
+                    self.asi_automatic_values[attr_index].configure(text=f'{asi[1]:+d}')
+
+            if asi_choice:
+                self.race_asi_choice.activate(asi_choice)
+                self.race_asi_choice.values = [attr.__name__ for attr in asi_choice_options]
+            else:
+                self.race_asi_choice.deactivate()
+
+        def race_other_features_config():
+
+            self.divider_2 = ttk.Separator(self.race_frame, orient=tk.VERTICAL)
+
+            self.racial_features_frame = tk.Frame(self.race_frame)
+
+            self.race_features_title = tk.Label(self.racial_features_frame,
+                                                text="Racial Features:",
+                                                font=default_font + " 10 bold",
+                                                anchor="n")
+
+            # Race Frames
+            self.race_features_frame = tk.Frame(self.racial_features_frame)
+            self.race_features_label = tk.Label(self.race_features_frame,
+                                                text="Race Features:",
+                                                font=default_font + " 8 bold",
+                                                anchor="n")
+            self.race_chooser_features_frame = tk.Frame(self.race_features_frame)
+            self.race_general_features_frame = tk.Frame(self.race_features_frame)
+
+            # Subrace Frames
+            self.subrace_features_frame = tk.Frame(self.racial_features_frame)
+            self.subrace_features_label = tk.Label(self.subrace_features_frame,
+                                                   text="Subrace Features:",
+                                                   font=default_font + " 8 bold",
+                                                   anchor="n")
+            self.subrace_chooser_features_frame = tk.Frame(self.subrace_features_frame)
+            self.subrace_general_features_frame = tk.Frame(self.subrace_features_frame)
+
+            self.race_features_title.grid(row=0)
+
+            self.race_features_label.grid(row=0)
+            self.race_chooser_features_frame.grid(row=1)
+            self.race_general_features_frame.grid(row=2)
+
+            self.subrace_features_label.grid(row=0)
+            self.subrace_chooser_features_frame.grid(row=1)
+            self.subrace_general_features_frame.grid(row=2)
+
+        class FeatureWidgets:
+            def __init__(self, char):
+                self.char = char
+
+            def chooser(self, aspect_name, feature_frame, feature_values):
+                # print("Packing chooser", aspect_name)
+
+                values = feature_values.keys()
+
+                default = f"Choose {aspect_name[0]} feature:"
+
+                chooser = ValueChooserGenerator(character=self.char,
+                                                master=feature_frame,
+                                                num_choosers=1,
+                                                variable_name=" ".join(aspect_name),
+                                                value_tab=Tabs.race,
+                                                value_type=AspectTypes.race_feature_choice,
+                                                default_value=default,
+                                                values=values,
+                                                check_global=True
+                                                )
+                chooser.widgets[0]["width"] = 20
+
+                chooser.activate()
+                chooser.deactivate_only()
+
+                self.char.race_feature_widgets["activatable"].append(chooser)
+
+                return chooser
+
+            def other(self, feature_name, feature_frame, feature_values):
+                widget = tk.Label(feature_frame,
+                                  text=f'{feature_values.desc}',
+                                  wraplength=400,
+                                  justify=tk.LEFT,
+                                  anchor="w",
+                                  font=default_font + " 8"
+                                  )
+                widget.pack(side=tk.LEFT)
+
+                return widget
+
+            def skill(self, aspect_name, feature_frame, feature_values):
+                num_choosers = len(feature_values)
+                values = feature_values[0]
+                widget = ValueChooserGenerator(character=self.char,
+                                               master=feature_frame,
+                                               num_choosers=num_choosers,
+                                               variable_name=" ".join(aspect_name),
+                                               value_tab=Tabs.race,
+                                               value_type=AspectTypes.skill,
+                                               default_value="Choose skill:",
+                                               values=values,
+                                               aspect_order=2,
+                                               check_global=True
+                                               )
+                widget.activate()
+                widget.deactivate_only()
+
+                self.char.race_feature_widgets["activatable"].append(widget)
+
+                return widget
+
+            def feat(self, aspect_name, feature_frame, feature_values):
+
+                num_feats = len(feature_values)
+
+                try:
+                    self.char.final_features["feats"] += num_feats
+                except KeyError:
+                    self.char.final_features["feats"] = num_feats
+                except AttributeError:
+                    self.char.final_features = {"feats": num_feats}
+
+                # values = feature_values[0]
+
+                if hasattr(self.char, "num_feats"):
+                    self.char.num_feats += num_feats
+                else:
+                    self.char.num_feats = num_feats
+
+                if num_feats > 1:
+                    plural = "s"
+                else:
+                    plural = ""
+                text = F"You may also choose {num2words.num2words(num_feats)} feat{plural} at the end of character " \
+                       F"creation. "
+
+                widget = tk.Label(feature_frame,
+                                  text=text,
+                                  wraplength=200,
+                                  font=default_font + " 7")
+
+                widget.pack()
+
+                # if hasattr(self, "class_instance"):
+                #     pass
+                # else:
+                #     values = ["Choose class first"]
+
+                # widget = ValueChooserGenerator(character=self.char,
+                #                                master=feature_frame,
+                #                                num_choosers=num_choosers,
+                #                                variable_name=" ".join(aspect_name),
+                #                                value_tab=Tabs.race,
+                #                                value_type=AspectTypes.feat,
+                #                                default_value="Choose feat:",
+                #                                values=values,
+                #                                aspect_order=2,
+                #                                # label=dict(text="Ensure you meet prerequisites",
+                #                                #            font=default_font+" 6"),
+                #                                check_global=True)
+                # widget.activate()
+                #
+                # widget.deactivate_only()
+                #
+                # self.char.race_feature_widgets["activatable"].append(widget)
+
+                return widget
+
+            def prof(self, aspect_name, feature_frame, feature_values):
+                prof_type = feature_values[0]
+                feature_vals = feature_values[1][0]
+                num_choosers = len(feature_values[1])
+                variable_name = " ".join(aspect_name + [prof_type])
+                widget = ValueChooserGenerator(character=self.char,
+                                               master=feature_frame,
+                                               num_choosers=num_choosers,
+                                               variable_name=variable_name,
+                                               value_tab=Tabs.race,
+                                               value_type=AspectTypes.prof,
+                                               default_value=f"Choose {prof_type} proficiency:",
+                                               values=feature_vals,
+                                               aspect_order=2,
+                                               check_global=True)
+
+                widget.widgets[0]["width"] = len(widget.default_value) - 4
+
+                widget.activate()
+                widget.deactivate_only()
+
+                self.char.race_feature_widgets["activatable"].append(widget)
+
+                return widget
+
+        def add_dynamic_aspects():
+
+            def get_feature_info(name, feature_name, feature, origin):
+
+                feature_type = feature[0]
+
+                feature_opts = feature[1]
+
+                return (origin, name, feature_name, feature_type, feature_opts)
+
+            def feature_splitter(feature_list, name, origin):
+
+                features = []
+
+                for feature in feature_list.items():
+                    feature_name = feature[0]
+                    if not isinstance(feature[1], list):
+                        features.append(get_feature_info(name, feature_name, feature[1], origin))
+                    else:
+                        for feature_set in feature[1]:
+                            features.append(get_feature_info(name, feature_name, feature_set, origin))
+                return features
+
+            def list_features(name, instance, origin):
+
+                feature_list = []
+
+                if instance.features:
+                    feature_list.extend(feature_splitter(instance.features.all, name, origin))
+                    # if hasattr(instance, Ftype.choice):
+                    #     origin += " choice"
+                    #     feature_list.extend(feature_splitter(instance.choice_features, name, origin))
+
+                return feature_list
+
+            from collections import defaultdict
+
+            def deep_dict():
+                return defaultdict(deep_dict)
+
+            self.race_features_all = deep_dict()
+
+            Ftype = races.FeatureType
+
+            widgets_set = FeatureWidgets(self)
+
+            feature_switcher = {
+                Ftype.choice: widgets_set.chooser,
+                Ftype.other: widgets_set.other,
+                Ftype.skills: widgets_set.skill,
+                Ftype.feats: widgets_set.feat,
+                Ftype.proficiencies: widgets_set.prof
+            }
+
+            all_features = []
+
+            all_races = [race for race in races.Race.__subclasses__()]
+            for race in all_races:
+                race_name = race.race_name
+                origin = "race"
+                all_features.extend(list_features(race_name, race, origin))
+
+                subraces = [subrace for subrace in race.__subclasses__()]
+                for subrace in subraces:
+                    subrace_name = subrace.subrace_name
+                    origin = "subrace"
+                    all_features.extend(list_features(race_name + " " + subrace_name, subrace, origin))
+
+            all_features = [feature for feature in all_features if feature is not None]
+
+            top_frames = {'race': self.race_general_features_frame,
+                          'subrace': self.subrace_general_features_frame,
+                          'race choice': self.race_chooser_features_frame,
+                          'subrace choice': self.subrace_chooser_features_frame}
+
+            # Put into master dictionary and structure
+            for feature in all_features:
+                feature_level, feature_origin, feature_name, feature_type, feature_opts = feature
+                self.race_features_all[feature_level][feature_origin][feature_name][feature_type] = feature_opts
+
+            self.race_feature_widgets = {}
+
+            self.race_feature_widgets["activatable"] = []
+
+            for feature_level, feature_origin in self.race_features_all.items():
+                top_frame = top_frames[feature_level]
+
+                # print(feature_level)
+                for feature_origin, feature_names in feature_origin.items():
+                    # print("\t", feature_origin)
+                    for feature_name, feature_types in feature_names.items():
+
+                        feature_key = (feature_level, feature_origin, feature_name)
+
+                        # print(feature_key)
+
+                        if Ftype.choice in feature_types.keys():
+                            top_frame = top_frames[feature_level + " choice"]
+
+                        if feature_key not in self.race_feature_widgets:
+                            feature_frame = tk.Frame(top_frame)
+                            feature_label = tk.Label(feature_frame,
+                                                     text=feature_name,
+                                                     font=default_font + " 8 italic")
+                            self.race_feature_widgets[feature_key] = {"frame": feature_frame,
+                                                                      "label": feature_label}
+                            # feature_frame.pack()
+                            feature_label.pack()
+                        else:
+                            feature_frame = self.race_feature_widgets[feature_key]["frame"]
+
+                        # print("\t\t", feature_name)
+                        for feature_type, feature_opts in feature_types.items():
+
+                            aspect_name = [feature_level, feature_origin, feature_name, feature_type]
+
+                            # print("\t\t\t", feature_type)
+
+                            widget = feature_switcher[feature_type](aspect_name, feature_frame, feature_opts)
+                            self.race_feature_widgets[feature_key].update({feature_type: widget})
+
+                            if feature_type == Ftype.choice:
+
+                                # Pack options
+                                self.race_feature_widgets[feature_key]["choice_widgets"] = {}
+                                for opt_name, (opt_type, opt_vals) in feature_opts.items():
+                                    opt_frame = tk.Frame(feature_frame)
+                                    # opt_label = tk.Label(opt_frame,
+                                    #                      text=opt_name,
+                                    #                      font=default_font + " 8 italic")
+                                    # opt_label.pack()
+                                    opt_aspect_name = aspect_name + [opt_name]
+
+                                    opt_widget = feature_switcher[opt_type](opt_aspect_name, opt_frame, opt_vals)
+
+                                    self.race_feature_widgets[feature_key]["choice_widgets"].update(
+                                        {opt_name: {'widget': opt_widget,
+                                                    'type': opt_type,
+                                                    'frame': opt_frame}})
+
+                                # Add trace to variable
+
+                                choice_variable = widget.variables[0]
+
+                                choice_default = widget.default_value
+
+                                change_feature_func = partial(feature_changed, choice_variable,
+                                                              self.race_feature_widgets[feature_key]["choice_widgets"],
+                                                              choice_default)
+
+                                choice_variable.trace_add("write", change_feature_func)
+
+            # Go through and generate all possible choosers and aspects. When actually packing, call them appropriately. Not nice but it should work.
+
+        def pack_other_features(instance, is_subrace):
+
+            # Cleanup old
+
+            def wipe_clean(frame):
+                for child in frame.winfo_children():
+                    child.pack_forget()
+
+            top_frames = {'race': self.race_general_features_frame,
+                          'subrace': self.subrace_general_features_frame,
+                          'race choice': self.race_chooser_features_frame,
+                          'subrace choice': self.subrace_chooser_features_frame}
+
+            Ftype = races.FeatureType
+            activatable_widgets = [Ftype.choice, Ftype.skills, Ftype.proficiencies]
+
+            if not is_subrace:
+                frames = top_frames.values()
+                features_level = "race"
+                features_origin = self.race_instance.race_name
+                self.race_features_frame.grid_forget()
+                self.subrace_features_frame.grid_forget()
+
+
+            else:
+                frames = [self.subrace_general_features_frame,
+                          self.subrace_chooser_features_frame]
+                features_level = "subrace"
+                features_origin = " ".join([self.race_instance.race_name, self.subrace_instance.subrace_name])
+                self.subrace_features_frame.grid_forget()
+                levels = ['subrace']
+                if not self.race_instance.features:
+                    self.race_features_frame.grid_forget()
+                    levels.append('race')
+
+            for key, values in self.race_feature_widgets.items():
+                if features_level in key:
+                    for value, object in values.items():
+                        if value in activatable_widgets:
+                            object.deactivate_only()
+
+            for frame in frames:
+                wipe_clean(frame)
+                tk.Frame(frame).pack()
+
+            # Add new
+
+            if instance.features:
+
+                self.divider_2.grid(row=3, column=1, sticky="NS", rowspan=8)
+                self.racial_features_frame.grid(row=3, column=2, sticky="N", padx=4)
+
+                if not is_subrace:
+
+                    self.race_features_frame.grid(row=1)
+
+                else:
+                    self.subrace_features_frame.grid(row=2)
+
+                for feature_name, feature_values in instance.features.all.items():
+                    feature_entry = self.race_feature_widgets[(features_level, features_origin, feature_name)]
+                    feature_entry['frame'].pack()
+
+                    for entry, value in feature_entry.items():
+                        if entry in activatable_widgets:
+                            value.activate_only()
+
+                # print(self.race_feature_widgets.keys())
+                # print((features_level, features_origin))
+
+            else:
+                self.divider_2.grid_forget()
+                self.racial_features_frame.grid_forget()
+
+        def feature_changed(choice, choice_options, default, *args):
+
+            Ftype = races.FeatureType
+            activatable_widgets = [Ftype.choice, Ftype.skills, Ftype.proficiencies]
+
+            choice_name = choice.get()
+
+            for choice, choice_values in choice_options.items():
+                if choice_values['type'] in activatable_widgets:
+                    choice_values['widget'].deactivate_only()
+                choice_values['frame'].pack_forget()
+
+            if choice_name != default:
+
+                chosen = choice_options[choice_name]
+
+                chosen['frame'].pack()
+
+                if chosen['type'] in activatable_widgets:
+                    chosen['widget'].activate_only()
+
+        ### Begin Code
+
+        self.reset_tab_aspects(Tabs.race)
+
+        self.race_frame = tk.Frame(self.race_tab,
+                                   relief=tk.SUNKEN,
+                                   borderwidth=4,
+                                   )
+
+        self.race_label = tk.Label(self.race_frame,
+                                   text="Race",
+                                   font=default_font + " 12 bold").grid(row=0, columnspan=3, pady=8)
+
+        race_choice_config()
+        subrace_choice_config()
+        race_info_config()
+        race_asi_config()
+        race_other_features_config()
+        add_dynamic_aspects()
+
+        self.race_frame.pack(fill="both", expand=True)
+
+        self.race_frame.grid_rowconfigure(0, weight=1)
+        self.race_frame.grid_columnconfigure(0, weight=1)
+
+    def create_class_tab(self):
+
+        def class_choice_config():
+            self.character_class = tk.StringVar()
+            self.class_chooser = ttk.Combobox(self.class_frame,
+                                              values=sorted(
+                                                  [c.class_name for c in classes.CharacterClass.__subclasses__()]),
+                                              state="readonly",
+                                              width=16,
+                                              textvariable=self.character_class,
+                                              justify="center")
+
+            Aspect("Class", Tabs.class_, AspectTypes.info, self.character_class, self.class_chooser, 0, True).add(self)
+
+            self.class_choice_prompt = "Choose class: "
+            self.class_chooser.set(self.class_choice_prompt)
+
+            self.character_class.trace_add('write', class_changed)
+
+            self.class_chooser.grid(row=1, pady=2)
+
+            self.class_features_frame = tk.Frame(self.class_frame,
+                                                 )
+
+            self.class_lower_features_frame = tk.Frame(self.class_features_frame,
+                                                       relief=tk.GROOVE,
+                                                       borderwidth=2
+                                                       )
+            self.class_lower_features_frame.grid(row=1, columnspan=3, sticky="N")
+
+            self.left_frame = tk.Frame(self.class_lower_features_frame)
+            tk.Label(self.left_frame,
+                     text="Class Proficiencies:",
+                     font=default_font + " 9 bold").pack()
+            self.left_frame.grid(row=0, column=0, sticky="N")
+
+            self.central_frame = tk.Frame(self.class_lower_features_frame)
+            tk.Label(self.central_frame,
+                     text="Class Info:",
+                     font=default_font + " 9 bold").pack()
+            self.central_frame.grid(row=0, column=1, sticky="N", padx=8)
+
+            self.right_frame = tk.Frame(self.class_lower_features_frame)
+            tk.Label(self.right_frame,
+                     text="Class Equipment:",
+                     font=default_font + " 9 bold").pack()
+            self.right_frame.grid(row=0, column=2, sticky="N")
+
+        def class_info_config():
+            self.class_info_frame = tk.Frame(self.class_features_frame,
+                                             )
+
+            self.class_desc = tk.Label(self.class_info_frame,
+                                       wraplength=600,
+                                       justify=tk.CENTER,
+                                       # anchor="w",
+                                       font=default_font + " 8",
+                                       )
+
+            self.class_rpgbot = tk.Label(self.class_info_frame,
+                                         wraplength=600,
+                                         justify=tk.CENTER,
+                                         # anchor="w",
+                                         font=default_font + " 8",
+                                         )
+
+            # tk.Label(self.class_info_frame,
+            #          text = "Class Description:",
+            #          font=default_font+ " 8 italic").pack()
+            self.class_desc.pack()
+            tk.Label(self.class_info_frame,
+                     text="Class Design:",
+                     font=default_font + " 8 italic").pack(pady=(8, 2))
+            self.class_rpgbot.pack(pady=(2, 8))
+
+            self.class_info_frame.grid(row=0, columnspan=3)
+
+        def class_stats_config():
+
+            self.class_primary_attr = tk.StringVar()
+            frame, self.class_attr_label, text = label_values_pair(self.central_frame, "Primary Attribute:",
+                                                                   self.class_primary_attr)
+
+            self.class_hit_die = tk.StringVar()
+            label_values_pair(self.central_frame, "Hit Die:", self.class_hit_die)
+
+            self.class_armour_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Armour Proficiencies:", self.class_armour_profs, wrap=200)
+
+            self.class_weapon_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Weapon Proficiencies:", self.class_weapon_profs, wrap=200)
+
+            self.class_tool_profs = tk.StringVar()
+            label_values_pair(self.left_frame, "Tool Proficiencies:", self.class_tool_profs, wrap=200)
+
+            self.class_saving_throws = tk.StringVar()
+            label_values_pair(self.left_frame, "Saving Throws:", self.class_saving_throws, wrap=200)
+
+            # self.my_class_description = dict(Combat=tk.StringVar(),
+            #                                  Spellcasting=tk.StringVar(),
+            #                                  Skills=tk.StringVar())
+            # for aspect in self.my_class_description.keys():
+            #     label_values_pair(self.central_frame, aspect+":", self.my_class_description[aspect], wrap=300)
+
+        def class_skills_config():
+
+            self.class_skills_chooser = ValueChooserGenerator(character=self,
+                                                              master=self.left_frame,
+                                                              num_choosers=4,
+                                                              variable_name="Class Skill",
+                                                              value_tab=Tabs.class_,
+                                                              value_type=AspectTypes.skill,
+                                                              label=dict(text="Choose skill proficiencies:",
+                                                                         font=default_font + " 8 italic"),
+                                                              check_global=True)
+
+        def class_equipment_config():
+
+            class EquipmentChooser:
+
+                def __init__(self, char):
+
+                    self.update_size = char.resize_tabs
+
+                    self.char_temp = char
+
+                    self.chooser_frame = tk.Frame(char.right_frame)
+                    tk.Label(self.chooser_frame,
+                             text="You recieve the following items, plus any provided by your background:",
+                             font=default_font + " 8",
+                             wraplength=220).pack()
+                    self.chooser_internal_frame = tk.Frame(self.chooser_frame)
+                    self.chooser_internal_frame.pack(fill="x", expand=True)
+
+                    # tk.Label(self.chooser_frame,
+                    #          text="Additionally, you will also receive:",
+                    #          font=default_font + " 8").pack()
+
+                    self.end_label = tk.Label(self.chooser_frame)  # ,
+                    # font=default_font + " 8")
+
+                    self.end_label.pack(anchor=tk.W)
+
+                    self.chooser_frame.pack()  # padx=(0,8))
+
+                    self.selectors = {}
+
+                def selector_packer(self, n_import, choice, variable):
+
+                    frame = tk.Frame(self.chooser_internal_frame)
+                    frame.pack(fill="x", expand=True)
+
+                    self.selectors[n_import]["choosers"] = {}
+
+                    self.chooser_frame_dummies = []
+
+                    for n, option in enumerate(choice):
+
+                        c_frame = tk.Frame(frame)
+
+                        rdb = tk.Radiobutton(frame,
+                                             variable=variable,
+                                             value=n,
+                                             command=self.chooser_checker)
+
+                        text = []
+
+                        for item in option:
+
+                            if not isinstance(item, (tuple, list)):
+
+                                item_num = item.num
+
+                                if not helpers.subclasses(item):
+                                    text.append(item.syntax())
+                                else:
+                                    """Plot a chooser and get options"""
+                                    option_name = item.syntax()
+                                    text.append(option_name)
+                                    self.chooser_packer((n_import, n), c_frame, item_num, (item,))
+                            else:
+
+                                item_value = item[0]
+                                item_num = item[1]
+
+                                option_name = item_value[0].syntax_start(item_num) + " " + \
+                                              item_value[1].syntax_end(item_num)
+                                text.append(option_name)
+
+                                self.chooser_packer((n_import, n), c_frame, item_num, item_value)
+
+                        true_text = helpers.list_syntax(text).capitalize()
+                        rdb.config(text=true_text)
+                        rdb.pack(anchor=tk.W)
+                        if n == 0:
+                            rdb.select()
+                        rdb.update()
+
+                        c_frame.pack(anchor=tk.W, padx=(23, 0))
+
+                    ttk.Separator(self.chooser_internal_frame,
+                                  orient=tk.HORIZONTAL).pack(pady=4, fill="x", expand=True)
+
+                def chooser_packer(self, n_values, frame, num, conditions):
+
+                    if len(conditions) == 1:
+                        condition, = conditions
+                        options = [option.name for option in helpers.subclasses(condition)]
+                    else:
+                        values_1 = [option.name for option in helpers.subclasses(conditions[0])]
+                        values_2 = [option.name for option in helpers.subclasses(conditions[1])]
+
+                        options = [value for value in values_1 if value in values_2]
+
+                    # options.sort()
+
+                    choosers = []
+
+                    for n in range(num):
+                        choosers.append(ttk.Combobox(frame,
+                                                     state="readonly",
+                                                     width=16,
+                                                     values=options))
+
+                    n1, n2 = n_values
+
+                    self.selectors[n1]["choosers"][n2] = (choosers, options)
+
+                def chooser_checker(self):
+                    for keys, values in self.selectors.items():
+                        current_choice = values["current_choice"].get()
+                        for keys_2, values_2 in values["choosers"].items():
+                            widgets = values_2[0]
+                            for widget in widgets:
+                                parent_widget = widget._nametowidget(widget.winfo_parent())
+                                widget.pack_forget()
+
+                            if current_choice == keys_2:
+                                for widget in widgets:
+                                    widget.pack(pady=2)
+                            else:
+                                dummy = tk.Frame(parent_widget)
+                                dummy.pack()
+                                self.chooser_frame_dummies.append(dummy)
+
+                    self.update_size()
+
+                    self.get()
+
+                def update(self, char, equipment_choices):
+                    for child in self.chooser_internal_frame.winfo_children():
+                        child.destroy()
+
+                    end_text = []
+
+                    self.selectors = {}
+
+                    for n, choice in enumerate(equipment_choices):
+                        if len(choice) > 1:
+                            selection_variable = tk.IntVar()
+                            self.selectors[n] = {"current_choice": selection_variable}
+                            self.selector_packer(n, choice, selection_variable)
+                        else:
+                            end_text.append(choice[0].syntax())
+
+                    self.end_label['text'] = helpers.list_syntax(end_text).capitalize()
+
+                    self.chooser_checker()
+
+                def get(self):
+
+                    selected = []
+                    chosen = []
+
+                    for index, vals in self.selectors.items():
+                        selected.append(vals["current_choice"].get())
+                        for key, vals2 in vals["choosers"].items():
+                            chosen.append([widget.get() for widget in vals2[0]])
+
+                    values = {"selected": selected,
+                              "chosen": chosen}
+
+                    return values
+
+                def set(self, values):
+
+                    i = 0
+                    j = 0
+
+                    for index, vals in self.selectors.items():
+                        vals["current_choice"].set(values["selected"][i])
+                        for key, vals2 in vals["choosers"].items():
+                            for k, widget in enumerate(vals2[0]):
+                                widget.set(values["chosen"][j][k])
+                            j += 1
+                        i += 1
+
+                    self.chooser_checker()
+
+            self.class_equipment_chooser = EquipmentChooser(self)
+
+            Aspect(aspect_id="Class Equipment",
+                   aspect_tab=Tabs.class_,
+                   aspect_type=AspectTypes.equipment,
+                   variable=self.class_equipment_chooser,
+                   widget=self.right_frame,  # ???
+                   order=1,
+                   active=True).add(self)
+
+        def subclass_info_config():
+
+            self.subclass_label_text = tk.StringVar()
+
+            tk.Label(self.central_frame,
+                     text="Subclass Info:",
+                     font=default_font + " 8 bold").pack()
+            tk.Label(self.central_frame,
+                     textvariable=self.subclass_label_text,
+                     wraplength=200).pack()
+
+        def class_changed(*args):
+            self.class_features_frame.grid_forget()
+
+            if self.character_class.get() != self.class_choice_prompt:
+
+                self.class_instance = {c.class_name: c for c in classes.CharacterClass.__subclasses__()}[
+                    self.character_class.get()]
+
+                self.class_desc['text'] = self.class_instance.desc
+                self.class_rpgbot['text'] = self.class_instance.rpgbot
+                self.class_hit_die.set(f"d{self.class_instance.hit_die}")
+
+                if len(self.class_instance.primary_attr) > 1:
+                    self.class_attr_label['text'] = "Primary Attributes:"
+                else:
+                    self.class_attr_label['text'] = "Primary Attribute:"
+
+                self.class_primary_attr.set(
+                    helpers.list_syntax([attr.name for attr in self.class_instance.primary_attr]))
+
+                profs = {"class_armour_profs": "armour_proficiencies",
+                         "class_weapon_profs": "weapon_proficiencies",
+                         "class_tool_profs": "tool_proficiencies"}
+
+                for prof_string, prof_vals in profs.items():
+
+                    prof_string = getattr(self, prof_string)
+                    prof_vals = getattr(self.class_instance, prof_vals)
+
+                    if prof_vals:
+
+                        names = []
+
+                        for val in prof_vals:
+                            names.append(val.uncountable())
+
+                        vals = helpers.list_syntax(names)
+                        vals = vals.lower().capitalize()
+                    else:
+                        vals = None
+                    prof_string.set(vals)
+
+                # Saves
+                self.class_saving_throws.set(" and ".join([save.name for save in self.class_instance.saving_throws]))
+
+                # Skills
+                self.class_skills_chooser.deactivate()
+                self.class_skills_chooser.values = [skill.name for skill in self.class_instance.valid_skills]
+                self.class_skills_chooser.activate(self.class_instance.num_skills)
+
+                # Equipment
+                self.class_equipment_chooser.update(self, self.class_instance.equipment)
+
+                self.class_features_frame.grid(row=2, padx=8)
+
+                # My descriptions
+
+                # for key,value in self.class_instance.game_aspects.items():
+                #     self.my_class_description[key].set(value)
+
+                # self.
+
+                # Subclass Info
+
+                subclass_text = F"{self.class_instance.class_name}s choose their subclass ({self.class_instance.subclass_title}) at level {self.class_instance.subclass_lvl}."
+
+                self.subclass_label_text.set(subclass_text)
+
+            self.resize_tabs()
+
+        ### Begin Code
+
+        self.reset_tab_aspects(Tabs.class_)
+
+        self.class_frame = tk.Frame(self.class_tab,
+                                    relief=tk.SUNKEN,
+                                    borderwidth=4,
+                                    )
+
+        self.class_label = tk.Label(self.class_frame,
+                                    text="Class",
+                                    font=default_font + " 12 bold").grid(row=0, columnspan=3, pady=8)
+
+        class_choice_config()
+        class_info_config()
+        class_stats_config()
+        class_skills_config()
+        class_equipment_config()
+        subclass_info_config()
+
+        self.class_frame.pack(fill="both", expand=True)
+
+        self.class_frame.grid_rowconfigure(0, weight=1)
+        self.class_frame.grid_columnconfigure(0, weight=1)
+
+    def create_background_tab(self):
+        def background_changed(*args):
+
+            self.background_skills.deactivate()
+
+            for chooser in self.background_tool_choosers:
+                chooser.deactivate()
+
+            self.background_equipment_frame.grid_forget()
+            self.background_info_frame.grid_forget()
+            self.background_proficiencies_frame.grid_forget()
+
+            if self.character_background.get() != self.background_choice_prompt:
+
+                self.current_background = {background.name: background
+                                           for background in backgrounds.Background.__subclasses__()}[
+                    self.character_background.get()]
+
+                self.background_info_frame.grid(row=2, pady=4)
+
+                # Description stuff
+
+                self.background_name_text.set(self.current_background.name)
+
+                self.background_desc_box.set(self.current_background.feature)
+                self.background_desc_box.update_text_height(self.current_background.feature)
+
+                # Skills
+
+                chosen_skills = [skill.name for skill in self.current_background.skills if not isinstance(skill, tuple)]
+
+                if hasattr(self.current_background, "skill_choices"):
+
+                    num_choices = [True for skill in self.current_background.skills if isinstance(skill, tuple)].count(
+                        True)
+
+                    skill_options = [skill.name for skill in self.current_background.skill_choices]
+                    self.background_skills.values = skill_options
+
+                    if chosen_skills:
+                        self.background_skills_text[
+                            "text"] = f"{helpers.list_syntax(chosen_skills)}, plus:".capitalize()
+                    else:
+                        self.background_skills_text["text"] = f"Choose from:"
+
+                    self.background_skills.activate(num_choices)
+                else:
+                    self.background_skills_text["text"] = f"{helpers.list_syntax(chosen_skills)}.".capitalize()
+
+                # Tool proficiencies
+
+                if hasattr(self.current_background, "tools") and self.current_background.tools:
+
+                    single_choices = [tool for tool in self.current_background.tools if
+                                      not isinstance(tool, (tuple, list))]
+                    set_tools = [tool.name for tool in single_choices if not tool.__subclasses__()]
+                    tool_choices = [tool for tool in single_choices if tool.__subclasses__()]
+                    tool_multi_choices = [tool for tool in self.current_background.tools if
+                                          isinstance(tool, (tuple, list))]
+
+                    if tool_choices or tool_multi_choices:
+
+                        if set_tools:
+                            self.background_tools_text["text"] = f"{helpers.list_syntax(set_tools)}, plus:".capitalize()
+                        else:
+                            self.background_tools_text["text"] = "Choose from:"
+
+                        for i, choice in enumerate(tool_choices + tool_multi_choices):
+
+                            if not isinstance(choice, (tuple, list)):
+                                options = [option.name for option in choice.__subclasses__()]
+                            else:
+                                options = []
+                                for item in choice:
+                                    options.extend([option.name for option in item.__subclasses__()])
+
+                            self.background_tool_choosers[i].values = options
+                            self.background_tool_choosers[i].activate()
+
+                    else:
+                        self.background_tools_text["text"] = f"{helpers.list_syntax(set_tools)}.".capitalize()
+                else:
+                    self.background_tools_text["text"] = f"None"
+
+                # Languages
+
+                if hasattr(self.current_background, "languages") and self.current_background.languages:
+
+                    set_languages = [lang for lang in self.current_background.languages if isinstance(lang, str)]
+                    language_options = [lang for lang in self.current_background.languages if
+                                        isinstance(lang, (tuple, list))]
+
+                    race_languages = []
+
+                    if hasattr(self, "race_instance"):
+                        race_languages = [lang for lang in self.race_instance.languages if isinstance(lang, str)]
+
+                        if hasattr(self, "subrace_instance"):
+                            if hasattr(self.subrace_instance, "languages"):
+                                race_languages.extend(
+                                    [lang for lang in self.subrace_instance.languages if isinstance(lang, str)])
+
+                    if language_options:
+
+                        if set_languages:
+                            self.background_languages_text[
+                                "text"] = f"{helpers.list_syntax(set_languages)}, plus:".capitalize()
+                        else:
+                            self.background_languages_text["text"] = f"Choose from:".capitalize()
+
+                        if race_languages:
+                            self.background_languages_choosers.invalid_options = race_languages
+                        self.background_languages_choosers.values = self.current_background.language_options
+                        self.background_languages_choosers.activate(len(language_options))
+
+                    else:
+                        self.background_languages_text["text"] = f"{helpers.list_syntax(set_languages)}.".capitalize()
+                else:
+                    self.background_languages_text["text"] = f"None"
+
+                self.background_proficiencies_frame.grid(row=3)
+
+                if hasattr(self.current_background, "equipment") and self.current_background.equipment:
+                    starting_items = []
+                    for item in self.current_background.equipment:
+                        starting_items.append(item.syntax())
+
+                    self.background_equipment_text.set(helpers.list_syntax(starting_items).capitalize())
+
+                self.background_equipment_frame.grid(row=4, columnspan=3, pady=4)
+
+            self.resize_tabs()
+
+        def background_choice_config():
+
+            background_chooser_frame = tk.Frame(self.background_frame)
+
+            self.character_background = tk.StringVar()
+            self.background_chooser = ttk.Combobox(background_chooser_frame,
+                                                   values=sorted(
+                                                       [background.name for background in
+                                                        backgrounds.Background.__subclasses__()]),
+                                                   state="readonly",
+                                                   width=20,
+                                                   textvariable=self.character_background,
+                                                   justify="center")
+
+            Aspect("Background", Tabs.background, AspectTypes.info, self.character_background, self.background_chooser,
+                   0, True).add(self)
+
+            self.background_choice_prompt = "Choose background:"
+            self.background_chooser.set(self.background_choice_prompt)
+
+            self.character_background.trace_add('write', background_changed)
+
+            # background_chooser_label.pack()
+            self.background_chooser.pack()
+            background_chooser_frame.grid(row=1)
+
+        def background_info_config():
+            self.background_info_frame = tk.Frame(self.background_frame)
+
+            self.background_name_text = tk.StringVar()
+            self.background_name_box = tk.Entry(self.background_info_frame,
+                                                textvariable=self.background_name_text,
+                                                justify=tk.CENTER,
+                                                width=32,
+                                                relief=tk.GROOVE,
+                                                borderwidth=2
+                                                )
+
+            Aspect("Background Name", Tabs.background, AspectTypes.info, self.background_name_text,
+                   self.background_name_box, 1, True).add(self)
+
+            class BackgroundDesc:
+                def __init__(self, master_frame):
+                    self.background_desc_text = tk.Text(master_frame,
+                                                        height=8,
+                                                        width=80,
+                                                        wrap=tk.WORD,
+                                                        font=default_font + " 8",
+                                                        relief=tk.GROOVE,
+                                                        borderwidth=2)
+                    self.text_variable = tk.StringVar()
+
+                def pack(self, **args):
+                    self.background_desc_text.pack(args)
+
+                def set(self, text):
+                    self.background_desc_text.delete('1.0', tk.END)
+                    self.background_desc_text.insert(tk.END, text)
+
+                    self.text_variable.set(text)
+
+                def update_text_height(self, char_feature):
+                    # Check text height and adjust box
+                    text_height = (len(textwrap.wrap(char_feature, self.background_desc_text['width']))
+                                   + char_feature.count("\n"))
+                    self.background_desc_text['height'] = text_height - 1
+
+                    self.background_desc_text.update()
+
+                def get(self):
+                    return self.text_variable.get()
+
+            self.background_desc_box = BackgroundDesc(self.background_info_frame)
+
+            self.background_name_box.pack(pady=4)
+            self.background_desc_box.pack(padx=8)
+
+            Aspect("Background Feature", Tabs.background, AspectTypes.info, self.background_desc_box,
+                   self.background_desc_box, 1, True).add(self)
+
+        def background_proficiencies_config():
+
+            self.background_proficiencies_frame = tk.Frame(self.background_frame)
+            tk.Label(self.background_proficiencies_frame,
+                     text="Additionally, you gain the following proficiencies:",
+                     font=default_font + " 8 ").grid(row=0, columnspan=3)
+
+        def background_skills_config():
+
+            self.background_skills_frame = tk.Frame(self.background_proficiencies_frame)
+
+            tk.Label(self.background_skills_frame,
+                     text="Skills:",
+                     font=default_font + " 8 italic").pack()
+
+            self.background_skills_text = tk.Label(self.background_skills_frame)
+
+            self.background_skills = ValueChooserGenerator(character=self,
+                                                           master=self.background_skills_frame,
+                                                           num_choosers=2,
+                                                           variable_name="Background Skill",
+                                                           value_tab=Tabs.background,
+                                                           value_type=AspectTypes.skill,
+                                                           check_global=True,
+                                                           aspect_order=1)
+
+            self.background_skills_text.pack()
+            self.background_skills_frame.grid(row=1, column=0, sticky=tk.N, padx=4)
+
+        def background_tools_config():
+            self.background_tools_frame = tk.Frame(self.background_proficiencies_frame)
+
+            tk.Label(self.background_tools_frame,
+                     text="Tools:",
+                     font=default_font + " 8 italic").pack()
+
+            self.background_tools_text = tk.Label(self.background_tools_frame)
+
+            self.background_tools_1 = ValueChooserGenerator(character=self,
+                                                            master=self.background_tools_frame,
+                                                            num_choosers=1,
+                                                            variable_name="Background Tool 0",
+                                                            value_tab=Tabs.background,
+                                                            value_type=AspectTypes.prof,
+                                                            check_global=True,
+                                                            aspect_order=1)
+
+            self.background_tools_2 = ValueChooserGenerator(character=self,
+                                                            master=self.background_tools_frame,
+                                                            num_choosers=1,
+                                                            variable_name="Background Tool 1",
+                                                            value_tab=Tabs.background,
+                                                            value_type=AspectTypes.prof,
+                                                            check_global=True,
+                                                            aspect_order=1)
+
+            self.background_tool_choosers = [self.background_tools_1, self.background_tools_2]
+
+            self.background_tools_text.pack()
+
+            self.background_tools_frame.grid(row=1, column=1, sticky=tk.N, padx=4)
+
+        def background_languages_config():
+
+            self.background_languages_frame = tk.Frame(self.background_proficiencies_frame)
+
+            tk.Label(self.background_languages_frame,
+                     text="Languages:",
+                     font=default_font + " 8 italic").pack()
+
+            self.background_languages_text = tk.Label(self.background_languages_frame)
+
+            self.background_languages_choosers = ValueChooserGenerator(character=self,
+                                                                       master=self.background_languages_frame,
+                                                                       num_choosers=2,
+                                                                       variable_name="Background Language",
+                                                                       value_tab=Tabs.background,
+                                                                       value_type=AspectTypes.language,
+                                                                       check_global=True,
+                                                                       aspect_order=1)
+
+            self.background_languages_text.pack()
+
+            self.background_languages_frame.grid(row=1, column=2, sticky=tk.N, padx=4)
+
+        def background_equipment_config():
+
+            self.background_equipment_frame = tk.Frame(self.background_frame)
+            tk.Label(self.background_equipment_frame,
+                     text="You also begin with:",
+                     font=default_font + " 8").pack()
+            self.background_equipment_text = tk.StringVar()
+            tk.Label(self.background_equipment_frame,
+                     textvariable=self.background_equipment_text,
+                     wraplength=400,
+                     font=default_font + " 8").pack()
+
+        def backstory_config():
+
+            self.backstory_frame = tk.Frame(self.background_frame)
+            self.backstory = label_textbox_pair(self.backstory_frame, "Backstory", width=80, height=8, pack=True,
+                                                resize_func=self.resize_tabs)
+            Aspect("Backstory", Tabs.background, AspectTypes.info, self.backstory, self.backstory, 1, True).add(self)
+
+            self.backstory_frame.grid(row=5, columnspan=3, pady=4)
+
+        ### Begin Code
+
+        self.reset_tab_aspects(Tabs.background)
+
+        self.background_frame = tk.Frame(self.background_tab,
+                                         relief=tk.SUNKEN,
+                                         borderwidth=4,
+                                         )
+
+        self.background_label = tk.Label(self.background_frame,
+                                         text="Background",
+                                         font=default_font + " 12 bold").grid(row=0, columnspan=3, pady=8)
+
+        background_choice_config()
+        background_info_config()
+        background_proficiencies_config()
+        background_skills_config()
+        background_tools_config()
+        background_languages_config()
+        background_equipment_config()
+        backstory_config()
+
+        self.background_frame.pack(fill="both", expand=True)
+
+        self.background_frame.grid_rowconfigure(0, weight=1)
+        self.background_frame.grid_columnconfigure(0, weight=1)
+
+    def create_personality_tab(self):
+
+        self.reset_tab_aspects(Tabs.characteristics)
+
+        self.personality_frame = tk.Frame(self.personality_tab,
+                                          relief=tk.SUNKEN,
+                                          borderwidth=4,
+                                          )
+
+        self.personality_label = tk.Label(self.personality_frame,
+                                          text="Characteristics",
+                                          font=default_font + " 12 bold",
+                                          anchor=tk.CENTER).grid(row=0, columnspan=2, pady=(8, 4))
+
+        tk.Label(self.personality_frame,
+                 text="Note that everything below is purely flavour and has no mechanical effect on the game. "
+                      "\n"
+                      "Ideas for personality traits, flaws, etc. can be found throughout literature for race, class, and background.",
+                 font=default_font + " 8",
+                 anchor=tk.CENTER).grid(row=1, columnspan=2, pady=4)
+
+        tk.Label(self.personality_frame,
+                 text="Personality:",
+                 font=default_font + " 10 bold").grid(row=3, columnspan=2, sticky="N", )
+
+        self.traits = label_textbox_pair(self.personality_frame, "Traits", islist=True,
+                                         grid=dict(row=4, column=0, padx=4, ))
+
+        self.ideals = label_textbox_pair(self.personality_frame, "Ideals", islist=True,
+                                         grid=dict(row=4, column=1, padx=4, ))
+
+        self.bonds = label_textbox_pair(self.personality_frame, "Bonds", islist=True,
+                                        grid=dict(row=5, column=0, padx=4, pady=4))
+        self.flaws = label_textbox_pair(self.personality_frame, "Flaws", islist=True,
+                                        grid=dict(row=5, column=1, padx=4, pady=4))
+
+        Aspect("Traits", Tabs.characteristics, AspectTypes.info, self.traits, self.traits, 1, True).add(self)
+        Aspect("Ideals", Tabs.characteristics, AspectTypes.info, self.ideals, self.ideals, 1, True).add(self)
+        Aspect("Bonds", Tabs.characteristics, AspectTypes.info, self.bonds, self.bonds, 1, True).add(self)
+        Aspect("Flaws", Tabs.characteristics, AspectTypes.info, self.flaws, self.flaws, 1, True).add(self)
+
+        tk.Label(self.personality_frame,
+                 text="Affiliations:",
+                 font=default_font + " 10 bold").grid(row=6, columnspan=2, sticky="N", )
+
+        self.allies = label_textbox_pair(self.personality_frame, "Allies", islist=True,
+                                         grid=dict(row=7, column=0, padx=4, pady=4))
+        self.enemies = label_textbox_pair(self.personality_frame, "Enemies", islist=True,
+                                          grid=dict(row=7, column=1, padx=4, pady=4))
+        self.organisations = label_textbox_pair(self.personality_frame, "Organisations", islist=True,
+                                                grid=dict(row=8, column=0, padx=4, pady=4))
+        self.other = label_textbox_pair(self.personality_frame, "Other", islist=True,
+                                        grid=dict(row=8, column=1, padx=4, pady=4))
+
+        Aspect("Allies", Tabs.characteristics, AspectTypes.info, self.allies, self.allies, 1, True).add(self)
+        Aspect("Enemies", Tabs.characteristics, AspectTypes.info, self.enemies, self.enemies, 1, True).add(self)
+        Aspect("Organisations", Tabs.characteristics, AspectTypes.info, self.organisations, self.organisations, 1,
+               True).add(self)
+        Aspect("Other_affiliations", Tabs.characteristics, AspectTypes.info, self.other, self.other, 1, True).add(self)
+
+        self.appearance = label_textbox_pair(self.personality_frame, "Appearance", resize_func=self.resize_tabs,
+                                             grid=dict(row=9, columnspan=2, padx=4, pady=4), height=4, width=80)
+
+        Aspect("Physical Appearance", Tabs.characteristics, AspectTypes.info, self.appearance, self.appearance, 1,
+               True).add(self)
+
+        self.other_notes = label_textbox_pair(self.personality_frame, "Other Notes", resize_func=self.resize_tabs,
+                                              grid=dict(row=10, columnspan=2, padx=4, pady=4), height=4, width=40)
+
+        Aspect("Other Notes", Tabs.characteristics, AspectTypes.info, self.other_notes, self.other_notes, 1,
+               True).add(self)
+
+        self.personality_frame.pack(fill="both", expand=True)
+
+        self.personality_frame.grid_rowconfigure(0, weight=1)
+        self.personality_frame.grid_columnconfigure(0, weight=1)
+        self.personality_frame.grid_rowconfigure(1, weight=1)
+        self.personality_frame.grid_columnconfigure(1, weight=1)
+
+    def create_final_tab(self):
+
+        def summary_section():
+            self.final_summary_label = tk.Label(self.final_frame,
+                                                text="Summary:",
+                                                font=default_font + " 12 bold")
+
+            # self.final_summary_label.grid(row=0, columnspan=3, pady=(8, 4))
+
+            self.final_summary_frame = tk.Frame(self.final_frame)
+            self.final_summary_frame.grid(row=1, column=0, sticky="E", padx=8)
+
+            def choose_photo(*args):
+
+                self.aspects["Character Image Path"].active = True
+
+                image_path = tk.filedialog.askopenfilename(title="Select image file",
+                                                           filetypes=(
+                                                               ("PNG", "*.png"),
+                                                               ("all files", "*.*"),
+                                                           )
+                                                           )
+
+                self.image_reference.set(image_path)
+
+            def changed_image_ref(*args):
+
+                if self.image_reference.get():
+
+                    image = Image.open(self.image_reference.get())
+
+                    image.thumbnail((240, 240), Image.ANTIALIAS)
+
+                    self.image_object = ImageTk.PhotoImage(image.convert('RGB'))  #
+
+                    self.character_image.config(image=self.image_object,
+                                                text="Choose different image")
+                else:
+                    self.character_image.config(image="",
+                                                text="Choose\nCharacter Image")
+
+                self.resize_tabs()
+
+            self.character_image_object = tk.PhotoImage()
+
+            self.character_image = tk.Button(self.final_frame,
+                                             text="Choose\nCharacter Image",
+                                             image=self.character_image_object,
+                                             compound=tk.TOP,
+                                             command=choose_photo
+                                             )
+
+            self.image_reference = tk.StringVar()
+            self.image_reference.trace_add("write", changed_image_ref)
+
+            Aspect("Character Image Path", Tabs.final, AspectTypes.info, self.image_reference, self.character_image, 1,
+                   active=False).add(self)
+
+            self.character_image.grid(row=1, column=1, sticky="NEWS", pady=(8, 0), padx=(0, 8))
+
+            # Name
+
+            def final_name_change(*args):
+                char_name = self.aspects["Name"].variable.get()
+                self.final_name_text_var.set(char_name)
+
+                self.character_image.config(image=tk.PhotoImage(),
+                                            text="Choose\ncharacter image")
+
+            self.final_name_text_var = tk.StringVar()
+            final_name_text = self.aspects["Name"].variable
+            self.final_name_text_var.set("No Name")
+            final_name_text.trace_add("write", final_name_change)
+
+            tk.Label(self.final_summary_frame,
+                     textvariable=self.final_name_text_var,
+                     font=default_font + " 12 bold",
+                     anchor=tk.E).pack(pady=(8, 4), anchor=tk.E)
+
+            # Race and Class
+
+            def final_race_change(*args):
+                race = self.aspects["Race"].variable.get()
+                subrace = self.aspects["Subrace"].variable.get()
+                class_text = self.aspects["Class"].variable.get()
+
+                self.big3 = (race, subrace, class_text)
+
+                if race != self.race_choice_prompt:
+                    self.chosen_valid_race = True
+                else:
+                    self.chosen_valid_race = False
+
+                if hasattr(self, "race_instance"):
+                    if self.race_instance.__subclasses__():
+                        if subrace != self.subrace_choice_prompt:
+                            self.chosen_valid_subrace = True
+                            subrace = f" ({subrace}) "
+                        else:
+                            subrace = ""
+                            self.chosen_valid_subrace = False
+                    else:
+                        self.chosen_valid_subrace = True
+
+                if class_text != self.class_choice_prompt:
+                    self.chosen_valid_class = True
+                else:
+                    self.chosen_valid_class = False
+
+                subrace = " "
+
+                self.final_race_text_var.set(f"{race}{subrace}{class_text}")
+
+                answers_three = (self.chosen_valid_race, self.chosen_valid_subrace, self.chosen_valid_class)
+
+                all_choices_valid(answers_three)
+
+            self.final_race_text_var = tk.StringVar()
+            self.final_race_text_var.set("No Race or Class")
+            final_race_text = self.aspects["Race"].variable
+            final_race_text.trace_add("write", final_race_change)
+
+            final_subrace_text = self.aspects["Subrace"].variable
+            final_subrace_text.trace_add("write", final_race_change)
+
+            final_class_text = self.aspects["Class"].variable
+            final_class_text.trace_add("write", final_race_change)
+
+            self.chosen_valid_race = False
+            self.chosen_valid_subrace = False
+            self.chosen_valid_class = False
+
+            tk.Label(self.final_summary_frame,
+                     textvariable=self.final_race_text_var,
+                     font=default_font + " 11",
+                     anchor=tk.E).pack(anchor=tk.E)
+
+            # Background
+
+            def final_bg_change(*args):
+                bg = self.aspects["Background"].variable.get()
+                self.final_bg_text_var.set(bg)
+
+            self.final_bg_text_var = tk.StringVar()
+            self.final_bg_text_var.set("No Background")
+            final_bg_text = self.aspects["Background"].variable
+            final_bg_text.trace_add("write", final_bg_change)
+
+            tk.Label(self.final_summary_frame,
+                     textvariable=self.final_bg_text_var,
+                     font=default_font + " 11 italic",
+                     anchor=tk.E).pack(anchor=tk.E)
+
+        def all_choices_valid(answers_three):
+
+            if all(answers_three):
+
+                # race = self.aspects["Race"].variable.get()
+                # subrace = self.aspects["Subrace"].variable.get()
+                # class_text = self.aspects["Class"].variable.get()
+
+                self.final_gateway_closed.grid_forget()
+                self.final_gateway_open.grid(row=0)
+
+                asi_aspects = [object for aspect, object in self.aspects.items() if
+                               object.type == AspectTypes.asi
+                               and object.tab != Tabs.final]
+
+                for aspect in asi_aspects:
+                    aspect.variable.trace_add("write", update_asi_values)
+
+                update_asi_values()
+
+
+
+                # self.final_feat_frame.grid_forget()
+                # self.feat_separator.grid_forget()
+                # self.aspects["Starting Feat"].active = False
+                # for instance in ["race_instance", "subrace_instance", "class_instance"]:
+                #     if hasattr(self, instance):
+                #         actual_instance = getattr(self, instance)
+                #         if hasattr(actual_instance, "feats"):
+                #             self.final_feat_frame.grid(row=2)
+                #             self.aspects["Starting Feat"].active = True
+                #             self.feat_separator.grid(row=3, sticky="EW", pady=4)
+
+
+
+
+            else:
+                self.final_gateway_closed.grid(row=0)
+                self.final_gateway_open.grid_forget()
+
+        def feat_checker():
+            values = self.feat_chooser["values"]
+
+            valid_options = []
+            for feat in feats.Feat.__subclasses__():
+                if feat.prereq:
+                    pr_type = feat.prereq[0]
+                    pr_value = feat.prereq[1]
+
+                    if pr_type == feats.PrereqTypes.armour:
+                        pass
+
+                else:
+                    valid_options.append(feat.name)
+
+
+        def final_choices():
+
+            self.final_choice_frame = tk.Frame(self.final_frame)
+            ttk.Separator(self.final_frame,
+                          orient=tk.HORIZONTAL).grid(row=2, columnspan=2, pady=4, sticky="EW")
+
+            self.final_choice_frame.grid(row=3, columnspan=2, padx=8, pady=4)
+
+            self.final_gateway_closed = tk.Label(self.final_choice_frame,
+                                                 text="Please choose both a race and a class before continuing",
+                                                 font=default_font + " 8 italic")
+            self.final_gateway_closed.grid(row=0)
+
+            self.final_gateway_open = tk.Frame(self.final_choice_frame)
+
+        def final_asi_config():
+
+            final_asi_choice_frame = tk.Frame(self.final_gateway_open)
+            final_asi_choice_frame.grid(row=0)
+            tk.Label(final_asi_choice_frame,
+                     text="Ability Score Choices:",
+                     font=default_font + " 10 bold").grid(row=0, columnspan=12)
+
+            self.final_asi_mods = {}
+            self.final_asi_choices = {}
+            self.final_asi_score = {}
+
+            for n, attr in enumerate(glossary.attrs):
+                # TODO: Point-Buy and Standard Array?
+
+                tk.Label(final_asi_choice_frame,
+                         text=attr,
+                         font=default_font + " 8 bold").grid(row=1, column=2 * n, columnspan=2, padx=8)
+                ttk.Separator(final_asi_choice_frame,
+                              orient=tk.HORIZONTAL).grid(row=2, column=2 * n, columnspan=2, sticky="EW", padx=4, pady=2)
+
+                entry_val = tk.StringVar()
+                entry_val.trace_add("write", update_asi_values)
+
+                entry_widget = tk.Entry(final_asi_choice_frame,
+                                        font=default_font + " 8",
+                                        width=3,
+                                        relief=tk.GROOVE,
+                                        textvariable=entry_val,
+                                        borderwidth=2,
+                                        justify=tk.CENTER)
+                entry_widget.grid(row=3, column=2 * n, padx=(4, 0))
+
+                Aspect(F"ASI Final Choice {attr}", Tabs.final, AspectTypes.asi, entry_val, entry_widget, 2, True).add(
+                    self)
+
+                mod_value = tk.StringVar()
+
+                current_mod = tk.Label(final_asi_choice_frame,
+                                       font=default_font + " 8",
+                                       textvariable=mod_value)
+                current_mod.grid(row=3, column=2 * n + 1, padx=(0, 4))
+
+                self.final_asi_choices[attr] = entry_val
+                self.final_asi_mods[attr] = mod_value
+                self.final_asi_score[attr] = tk.StringVar()
+
+                final_score = tk.Label(final_asi_choice_frame,
+                                       textvariable=self.final_asi_score[attr],
+                                       font=default_font + " 8 bold")
+
+                final_score.grid(row=4, column=2 * n, columnspan=2, padx=4)
+
+            # self.char.final_features
+
+            ttk.Separator(self.final_gateway_open,
+                          orient=tk.HORIZONTAL).grid(row=1, sticky="EW", pady=4)
+
+        def update_asi_values(*args):
+
+            self.asi_mods = {attr: 0 for attr in glossary.attrs}
+
+            # Getting race and subrace asi's
+
+            race_name = self.aspects["Race"].variable.get()
+            subrace_name = self.aspects["Subrace"].variable.get()
+            race = {race.race_name: race for race in races.Race.__subclasses__()}[race_name]
+
+            choosers = False
+
+            if hasattr(race, "ASI"):
+                for ASI in race.ASI:
+                    if not isinstance(ASI[0], (tuple, list)):
+                        self.asi_mods[ASI[0].__name__] += ASI[1]
+                    else:
+                        choosers = True
+            if race.__subclasses__() and subrace_name != self.subrace_choice_prompt:
+                try:
+                    subrace = {subrace.subrace_name: subrace for subrace in race.__subclasses__()}[subrace_name]
+
+                    if hasattr(subrace, "ASI"):
+
+                        if not hasattr(race, "ASI") or subrace.ASI != race.ASI:
+
+                            for ASI in subrace.ASI:
+                                if not isinstance(ASI[0], (tuple, list)):
+                                    self.asi_mods[ASI[0].__name__] += ASI[1]
+                                else:
+                                    choosers = True
+                except KeyError:
+                    print("Keyerror")
+
+                # if hasattr(race, "ASI"):
+                #     for ASI in race.ASI:
+                #         if not isinstance(ASI[0], (tuple, list)):
+                #             self.asi_mods[ASI[0].__name__] += ASI[1]
+                #         else:
+                #             choosers = True
+
+            if choosers:
+                for var in self.race_asi_choice.variables:
+                    attr = var.get()
+                    if attr:
+                        self.asi_mods[attr] += 1
+
+            # if self.race_instance.__subclasses__():
+            #     if subrace != self.subrace_choice_prompt:
+
+            for asi, val in self.asi_mods.items():
+                val = F'{val:+d}'
+                self.final_asi_mods[asi].set(val)
+
+            for attr in glossary.attrs:
+                try:
+                    chosen_val = int(self.final_asi_choices[attr].get())
+                except ValueError:
+                    chosen_val = 0
+
+                try:
+                    extra_val = int(self.final_asi_mods[attr].get())
+                except ValueError:
+                    extra_val = 0
+
+                self.final_asi_score[attr].set(chosen_val + extra_val)
+
+        def final_feat_config():
+
+            self.final_feat_frame = tk.Frame(self.final_gateway_open)
+
+            tk.Label(self.final_feat_frame,
+                     text="Choose feat:").pack()
+
+            self.final_feat_choice = tk.StringVar()
+
+            self.feat_chooser = ttk.Combobox(self.final_feat_frame,
+                                             state="readonly",
+                                             postcommand=feat_checker,
+                                             textvariable=self.final_feat_choice,
+                                             justify=tk.CENTER,
+                                             values=[feat.name for feat in feats.Feat.__subclasses__()])
+            self.feat_chooser.pack()
+
+            Aspect("Starting Feat", Tabs.final, AspectTypes.feat, self.final_feat_choice, self.feat_chooser, 2,
+                   False).add(self)
+
+            self.feat_separator = ttk.Separator(self.final_gateway_open,
+                                                orient=tk.HORIZONTAL)
+
+        def final_button_config():
+
+            def save_and_exit():
+                self.save()
+                window.destroy()
+
+            final_button_frame = tk.Frame(self.final_gateway_open)
+
+            tk.Button(final_button_frame,
+                      text="Save and Exit",
+                      command=save_and_exit).pack()
+
+            final_button_frame.grid(row=4)
+
+        self.reset_tab_aspects(Tabs.final)
+
+        self.final_frame = tk.Frame(self.final_tab,
+                                    relief=tk.SUNKEN,
+                                    borderwidth=4,
+                                    )
+
+        self.final_features = {}
+
+        summary_section()
+        final_choices()
+        final_asi_config()
+        # final_feat_config()
+        final_button_config()
+
+        # Feats?
+        # Tasha Stuff
+
+        # self.tasha_label = tk.Label(self.final_frame,
+        #                             text="Tasha's Custom Origins [WIP]",
+        #                             font=default_font + " 10 bold")
+        # self.tasha_label.grid(row=2, columnspan=3, pady=8)
+
+        self.final_frame.pack(fill="both", expand=True)
+
+        self.final_frame.grid_rowconfigure(0, weight=1)
+        self.final_frame.grid_columnconfigure(0, weight=1)
+
+    def changed_tabs(self, event):
+        event.widget.update_idletasks()
+        current_tab = event.widget.nametowidget(event.widget.select())
+        event.widget.configure(height=current_tab.winfo_reqheight(),
+                               width=current_tab.winfo_reqwidth())
+
+        self.master.update_idletasks()
+        self.tab_manager.update_idletasks()
+        if self.master.winfo_width() > self.tab_manager.winfo_reqwidth():
+            self.tab_manager.configure(width=self.master.winfo_width())
+
+            current_tab_contents = \
+                self.tab_manager.nametowidget(self.tab_manager.select()).winfo_children()[0]
+
+            current_tab_contents.pack(fill="both", expand=True)
+
+    def resize_tabs(self):
+        self.tab_manager.update_idletasks()
+        current_tab = self.tab_manager.nametowidget(self.tab_manager.select())
+        self.tab_manager.configure(height=current_tab.winfo_reqheight(),
+                                   width=current_tab.winfo_reqwidth())
+
+    def __init__(self, char, window):
+        self.master = window
+        window.title("Character Creator")
+
+        self.aspects = {}
+
+        self.create_title()
+        self.create_tab_manager()
+        self.create_info_tab()
+        self.create_race_tab()
+        self.create_class_tab()
+        self.create_background_tab()
+        self.create_personality_tab()
+        self.create_final_tab()
+
+        # Move window to centre
+
+        windowWidth = window.winfo_reqwidth()
+        windowHeight = window.winfo_reqheight()
+        position_right = int(window.winfo_screenwidth() / 3 - windowWidth / 2)
+        position_down = int(window.winfo_screenheight() / 5 - windowHeight / 2)
+        window.geometry(f"+{position_right}+{position_down}")
+
+
+if __name__ == "__main__":
+    class Character:
+        pass
+
+
+    window = tk.Tk()
+    char = Character
+    CharacterCreator(char, window)
+    style = ttk.Style(window)
+    style.configure('TNotebook', tabposition='n')
+
+    # style.map('TCombobox', fieldbackground=[('readonly', 'white')])
+    # style.map('TCombobox', selectbackground=[('readonly', 'white')])
+    # style.map('TCombobox', selectforeground=[('readonly', 'black')])
+    # style.map('TCombobox', selectborderwidth=[('readonly', '0')])
+
+    window.mainloop()

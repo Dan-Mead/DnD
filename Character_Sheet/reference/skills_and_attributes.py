@@ -10,6 +10,7 @@ class STR(Attribute):
     name = "Strength"
 
 
+
 class DEX(Attribute):
     name = "Dexterity"
 

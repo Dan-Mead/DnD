@@ -46,10 +46,6 @@ class Human(Race):
     languages = ("Common", all_languages)
     features = None
 
-    @staticmethod
-    def prereq():
-        return False
-
 
 class HumanBase(Human):
     subrace_name = "Base"

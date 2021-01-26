@@ -31,3 +31,5 @@ class KnighlyOrder(Background):
               "occasionally risky assistance,  such as a band of local citizens rallying to aid a sorely pressed " \
               "knight, or those who support the order helping to smuggle a knight out of town when he or she is being " \
               "hunted unjustly."
+
+background_list = {bg.name: bg for bg in Background.__subclasses__()}

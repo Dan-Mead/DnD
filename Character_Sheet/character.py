@@ -8,6 +8,7 @@ import textwrap
 import num2words
 import math
 
+import Character_Sheet.helpers as helpers
 import Character_Sheet.reference.glossary as glossary
 import Character_Sheet.reference.races as races
 import Character_Sheet.reference.classes as classes
@@ -15,12 +16,12 @@ import Character_Sheet.reference.items as items
 import Character_Sheet.reference.backgrounds as backgrounds
 import Character_Sheet.reference.skills_and_attributes as skills
 
+
 def import_info(filename):
     file = open(filename, "rb")
     info = pickle.load(file)
     file.close()
     return info
-
 
 class SimpleValue:
     def __init__(self):
@@ -71,8 +72,8 @@ class CompositeValues:
             text = F"{race_name}{subrace_string}"
             self.set(text)
 
-class ComplexValues:
 
+class ComplexValues:
     class Size(SimpleValue):
         def __init__(self, race_name):
             super().__init__()
@@ -84,21 +85,33 @@ class ComplexValues:
             if not self.override:
                 self.set(races.race_list[self.race_name.get()].size)
 
-
     class Speed(SimpleValue):
         def __init__(self, race_name):
             super().__init__()
             self.race_name = race_name
-            self.override = None
+            self.override = {"base": [],
+                             "temp": []}
 
         def update(self):
-            if not self.override:
+            if not any(self.override.values()):
                 self.set(races.race_list[self.race_name.get()].speed)
+            else:
+                if self.override["temp"]:
+                    self.set(max(self.override["temp"]))
+                else:
+                    self.set(max(self.override["base"]))
 
+class All:
+    named_items = {}
+    for item in helpers.list_end_values(items.Item):
+        if hasattr(item, "name"):
+            named_items[item.name] = item
 
 class Character:
     def __init__(self):
         self.imported = {}
+
+
 
         self.updatables = []
 
@@ -109,9 +122,11 @@ class Character:
         self.ability_scores_config()
         self.skills_config()
         self.flavour_config()
+        self.feats_config()
+        self.features_config()
+        self.defences_config()
+        self.inventory_config()
         self.other_config()
-
-
 
     def info_config(self):
 
@@ -151,7 +166,7 @@ class Character:
 
     def class_config(self):
 
-        self.class_ = {"name": tk.StringVar()}
+        self.class_ = {"starting class": tk.StringVar()}
 
     def profs_config(self):
 
@@ -159,9 +174,11 @@ class Character:
         [all_tools.extend(tool.__subclasses__()) for tool in items.Tool.__subclasses__() if tool.__subclasses__()]
 
         self.proficiencies = {"Languages": {lang: False for lang in glossary.all_languages},
-                              "Armour": {armour: False for armour in [items.Light, items.Medium, items.Heavy, items.Shields]},
-                              "Weapons": {weapon: False for weapon in [items.Simple, items.Martial]},
-                              "Tools": {tool: False for tool in all_tools}
+                              "Armour": {armour.name: False for armour in
+                                         [items.Light, items.Medium, items.Heavy, items.Shields]},
+                              "Weapons": {weapon.name: False for weapon in items.Simple.__subclasses__() +
+                                          items.Martial.__subclasses__()},
+                              "Tools": {tool.name: False for tool in all_tools}
                               }
 
     def ability_scores_config(self):
@@ -205,7 +222,10 @@ class Character:
         for score_object in self.ability_scores.values():
             self.updatables.append(score_object)
 
-        self.saving_throws = {attr: {} for attr in glossary.attrs}
+        self.saving_throws = {attr: {"prof": False,
+                                     "notes": []} for attr in glossary.attrs}
+
+        self.saving_throws["Notes"] = []
 
     def skills_config(self):
 
@@ -238,9 +258,24 @@ class Character:
         self.num_feats = 0
         self.feats = {}
 
+    def features_config(self):
+
+        self.features = {"All": {},
+                         "Other": {}}
+
+    def defences_config(self):
+        self.defences = []
+        self.immunities = []
+
+    def inventory_config(self):
+
+        self.inventory = {"items": [],
+                          "currency": {"gp": 0,
+                                       "sp": 0,
+                                       "cp": 0}}
+
     def other_config(self):
         self.image_path = None
-
 
     def load(self):
 
@@ -297,7 +332,7 @@ class Character:
                                     "Physical Appearance": self.flavour["physical appearance"],
                                     "Other_affiliations": self.flavour["other_affiliations"],
                                     "Other Notes": self.flavour["other notes"],
-                                    "Class": self.class_["name"],
+                                    "Class": self.class_["starting class"],
                                     }
 
         for origin, destination in imported_destination_key.items():
@@ -361,15 +396,6 @@ class Character:
 
     def scrape_rcb(self):
 
-        class_name = self.class_["name"].get()
-        background_name = self.flavour["background"].get()
-
-
-        class_instance = classes.class_list[class_name]
-        try:
-            background_instance = backgrounds.background_list[background_name]
-        except KeyError:
-            background_instance = None
         # ASI, Skills, Languages, Tools
 
         def race_scrape():
@@ -414,11 +440,12 @@ class Character:
 
                 for increase in race_ASI:
                     attr, val = increase
-                    self.ability_scores[attr].race += val
+                    if attr:
+                        self.ability_scores[attr].race += val
 
             def languages():
 
-                for lang in race_instance.languages: # assume only race has languages, may be untrue
+                for lang in race_instance.languages:  # assume only race has languages, may be untrue
                     if isinstance(lang, str):
                         self.proficiencies["Languages"][lang] = True
                     else:
@@ -434,7 +461,6 @@ class Character:
                     all_features.update(subrace_instance.features.all)
 
                 def feature_switcher(feature_name, feature_type, feature_val):
-
                     if feature_type == races.FeatureType.skills:
 
                         if isinstance(feature_val, (list, tuple)):
@@ -470,7 +496,6 @@ class Character:
                         for key, value in self.imported.items():
                             if feature_name in key and "choice_features" in key[-len("choice_features"):]:
                                 # print(key, ":", value)
-
                                 choice = choices[value]
 
                                 if isinstance(choice, tuple):
@@ -487,7 +512,8 @@ class Character:
                     elif feature_type == races.FeatureType.feats:
                         self.num_feats += 1
 
-
+                    elif feature_type == races.FeatureType.other:
+                        feature_val.add(self, feature_name)
 
                     else:
                         print(f"Must add {feature_type} support such as {feature_name}")
@@ -501,30 +527,106 @@ class Character:
 
                     elif isinstance(feature_vals, tuple):
                         feature_type = feature_vals[0]
-                        feature_val= feature_vals[1]
+                        feature_val = feature_vals[1]
                         feature_switcher(feature_name, feature_type, feature_val)
-
-
-
-
 
             race_instance, subrace_instance = get_instances()
             ASI()
             languages()
             other_features()
 
+        def class_scrape():
+
+            class_name = self.class_["starting class"].get()
+            class_instance = classes.class_list[class_name]
+
+            self.hit_die = class_instance.hit_die
+            self.lvl_up_hp = class_instance.lvl_up_hp
+
+            for armour in class_instance.armour_proficiencies:
+                self.proficiencies["Armour"][armour.name] = True
+
+            for prof in class_instance.weapon_proficiencies:
+                for weapon in prof.__subclasses__():
+                    self.proficiencies["Weapons"][weapon.name] = True
+
+            for tool in class_instance.tool_proficiencies:
+                self.proficiencies["Tools"][tool.name] = True
+
+            for save in class_instance.saving_throws:
+                self.saving_throws[save.__name__]["prof"] = True
+
+            for key, value in self.imported.items():
+                if "skill" in key.lower() and "class" in key.lower():
+                    if value:
+                        self.skills[value].prof = True
+
+                elif "equipment" in key.lower() and "class" in key.lower():
+
+                    selections = value["selected"]
+                    choices = value["chosen"]
+                    chosen_num = 0
+
+                    for i, selection in enumerate(class_instance.equipment):
+
+                        if len(selection) > 1:
+                            for j, selected in enumerate(selection):
+                                if j == selections[i]:
+                                    for item in selected:
+
+                                        if item.__class__.__subclasses__() or isinstance(item, tuple):
+                                            choice = choices[chosen_num]
+                                            if isinstance(item, tuple):
+                                                num = item[1]
+                                            else:
+                                                num = item.num
+
+                                            for c in choice:
+                                                if c in All.named_items:
+                                                    item = All.named_items[c]
+                                                    self.inventory["items"].append(item(num))
+                                            chosen_num += 1
+                                        else:
+                                            self.inventory["items"].append(item)
+                                else:
+                                    for item in selected:
+                                        if isinstance(item, tuple):
+                                            chosen_num += 1
+                                        elif item.__class__.__subclasses__():
+                                            chosen_num += 1
+                        else:
+                            item = selection[0]
+                            self.inventory["items"].append(item)
+
+            # print(self.imported["equipment"])
+
+            # for skill_name, skill in self.skills.items():
+            #     print(skill_name, skill.prof)
+
+        def bg_scrape():
+
+            background_name = self.flavour["background"].get()
+
+            try:
+                background_instance = backgrounds.background_list[background_name]
+            except KeyError:
+                background_instance = None
+
+
         race_scrape()
+        class_scrape()
+        bg_scrape()
 
     def update_all(self):
         for object in self.updatables:
             object.update()
-
-
 
 if __name__ == "__main__":
     window = tk.Tk()
     char = Character()
     char.load()
 
-    # print(char.skills["Acrobatics"].prof)
+    for item in char.inventory["items"]:
+        print(item.syntax().capitalize())
 
+    # print(char.features["Other"])

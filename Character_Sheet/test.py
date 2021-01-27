@@ -1,3 +1,4 @@
-x = True
+x = ("Test"), ("Test2"), ("Test3")
 
-print(F"X is {(if x)}")
+
+print(x)

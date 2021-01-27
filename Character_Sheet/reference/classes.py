@@ -29,7 +29,7 @@ class Barbarian(CharacterClass):
     lvl_up_hp = 7
     armour_proficiencies = Light, Medium, Shields
     weapon_proficiencies = Simple, Martial
-    tool_proficiencies = None
+    tool_proficiencies = ()
     saving_throws = STR, CON
     num_skills = 2
     valid_skills = AnimalHandling, Athletics, Intimidation, Nature, Perception, Survival
@@ -85,7 +85,7 @@ class Paladin(CharacterClass):
     lvl_up_hp = 6
     armour_proficiencies = Light, Medium, Heavy, Shields
     weapon_proficiencies = Simple, Martial
-    tool_proficiencies = None
+    tool_proficiencies = ()
     saving_throws = WIS, CHA
     num_skills = 2
     valid_skills = Athletics, Insight, Intimidation, Medicine, Persuasion, Religion
@@ -197,9 +197,9 @@ class Wizard(CharacterClass):
 
     hit_die = 6
     lvl_up_hp = 4
-    armour_proficiencies = None
+    armour_proficiencies = ()
     weapon_proficiencies = Dagger, Dart, Sling, Quarterstaff, LightCrossbow
-    tool_proficiencies = None
+    tool_proficiencies = ()
     saving_throws = INT, WIS
     num_skills = 2
     valid_skills = Arcana, History, Insight, Investigation, Medicine, Religion

@@ -1,5 +1,6 @@
 import inspect
 
+
 def list_all(class_value):
     list = []
 
@@ -9,8 +10,8 @@ def list_all(class_value):
 
     return list
 
-def list_end_values(class_value):
 
+def list_end_values(class_value):
     list = list_all(class_value)
 
     new_list = []
@@ -20,6 +21,7 @@ def list_end_values(class_value):
             new_list.append(item)
 
     return new_list
+
 
 def list_syntax(items):
     if items:
@@ -32,9 +34,17 @@ def list_syntax(items):
     else:
         return ""
 
-def subclasses(object):
 
+def subclasses(object):
     if inspect.isclass(object):
         return object.__subclasses__()
     else:
         return object.__class__.__subclasses__()
+
+
+def weight_frame(frame):
+    frame_width, frame_height = frame.grid_size()
+    for n in range(frame_width):
+        frame.columnconfigure(n, weight=1)
+    for n in range(frame_height):
+        frame.rowconfigure(n, weight=1)

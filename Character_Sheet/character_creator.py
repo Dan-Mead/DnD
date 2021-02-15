@@ -26,7 +26,7 @@ def export_data(character):
     if name == "":
         name = "Empty_Character"
 
-    loc = f'saves/{name}'
+    loc = f'saves/base_characters/{name}'
 
     with open(loc + '.pkl', "wb") as file:
         pickle.dump(character, file, pickle.HIGHEST_PROTOCOL)
@@ -318,7 +318,7 @@ class CharacterCreator:
 
     def load(self):
 
-        filename = tk.filedialog.askopenfilename(initialdir="saves/",
+        filename = tk.filedialog.askopenfilename(initialdir="saves/base_characters",
                                                  title="Select save file",
                                                  filetypes=(
                                                      ("Pickled Files", "*.pkl"),

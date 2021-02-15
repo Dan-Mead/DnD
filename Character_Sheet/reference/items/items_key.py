@@ -36,6 +36,8 @@ class Proficiencies:
 
 class Item:
 
+    wieldable = False
+
     def __init__(self, num, name=None):
         self.num = num
         if name:
@@ -137,6 +139,10 @@ class Item:
 
 
 class Weapon(Item):
+
+    wieldable = True
+    equippable = False
+
     item_type = Item.Types.weapon
 
     class PropertyKeys:
@@ -148,29 +154,53 @@ class Weapon(Item):
         reach = "reach"
         special = "special"
         two_handed = "two_handed"
-        versatile = "versatile"
         improvised = "improvised"
         silvered = "silvered"
 
         @staticmethod
         def thrown(range_min, range_max):
             range = f"{range_min}/{range_max}"
-            return "thrown"
+            return "thrown", ("range", range)
+
+        @staticmethod
+        def versatile(dmg_num, dmg_val):
+            return (("versatile", (dmg_num, dmg_val)),)
+
+        @staticmethod
+        def ammunition(range_min, range_max):
+            range = (range_min, range_max)
+            return "ammunition", ("range", range)
+
+        @staticmethod
+        def special(desc):
+            return (("special", desc),)
 
     @staticmethod
     def properties(*args):
 
-        if len(args) == 1:
-            return (args)
-        else:
-            return args
+        dict = {}
 
+        if len(args) == 1:
+            args = (args)
+        for arg in args:
+            if isinstance(arg, str):
+                dict[arg] = None
+            else:
+                for a in arg:
+                    if isinstance(a, str):
+                        dict[a] = None
+                    else:
+                        dict[a[0]] = a[1]
+
+        return dict
 
 class Armour(Item):
+    equippable = True
     item_type = Item.Types.armour
 
 
 class Ammunition(Item):
+    equippable = True
     item_type = Item.Types.ammunition
 
 
@@ -198,13 +228,12 @@ class Container(Item):
     item_type = Item.Types.container
 
     def __init__(self, num, *contents):
-        contents = [item.name for item in contents]
+        self.contents = contents
+        contents = [item.name for item in self.contents]
         contents_list = helpers.list_syntax(contents)
         self.num = num,
         super().__init__(num, self.name)
         self.name = F"{self.name} containing {contents_list}."
-
-
 
 class Other(Item):
     item_type = Item.Types.other

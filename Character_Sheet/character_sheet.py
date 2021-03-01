@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 from PIL import Image, ImageTk
+from pathlib import Path
 
 from functools import partial
 import textwrap
@@ -884,7 +885,9 @@ class CharacterSheet:
                  font=default_font + " 10 bold",
                  justify=tk.CENTER).grid(row=0, column=0, sticky="N", padx=4)
 
-        shield_im = Image.open(r"C:\Users\Dan\OneDrive\Code\DnD\Character_Sheet\reference\images\shield.png")
+        shieldpath=Path(os.getcwd()+r"\reference\images\shield.png")
+
+        shield_im = Image.open(shieldpath)
         shield_im.thumbnail((44, 44), Image.ANTIALIAS)
 
         self.shield_im = ImageTk.PhotoImage(shield_im.convert('RGBA'))
@@ -1305,10 +1308,7 @@ def startup(load=None):
     char = Character()
 
     if not load:
-
-        current_directory = os.getcwd()
-
-        filename = current_directory + "/saves/base_characters/Ser Gorden Simpleton.pkl"
+        filename = Path(os.getcwd()+"/saves/base_characters/Ser Gorden Simpleton.pkl")
         type = "base_character"
     else:
         filename = load

@@ -3,6 +3,8 @@ import pickle
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
+from pathlib import Path
+
 
 from functools import partial
 import textwrap
@@ -19,6 +21,7 @@ import Character_Sheet.reference.skills_and_attributes as skills
 
 
 def import_info(filename):
+
     file = open(filename, "rb")
     info = pickle.load(file)
     file.close()

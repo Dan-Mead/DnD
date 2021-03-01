@@ -5,6 +5,7 @@ from tkinter import filedialog
 from tkinter import ttk
 from PIL import Image, ImageTk
 from pathlib import Path
+from sys import platform
 
 from functools import partial
 import textwrap
@@ -290,7 +291,7 @@ class CharacterSheet:
 
         front_page_column_2 = tk.Frame(self.front_page_frame)
         self.class_section(front_page_column_2).grid(row=0, column=0, pady=4, padx=4, sticky="NEW")
-        self.proficiencies_section(front_page_column_2).grid(row=1, column=0, pady=4, padx=4, sticky="NW")
+        self.proficiencies_section(front_page_column_2).grid(row=1, column=0, pady=4, padx=4, sticky="NEW")
 
         self.items_section(front_page_column_2).grid(row=2, column=0, pady=4, padx=4, sticky="NEWS")
 
@@ -717,7 +718,10 @@ class CharacterSheet:
                     cv.itemconfigure(cvtext, text="X(")
                     self.death(instant=False)
                 elif num_passes == 3:
-                    cv.itemconfigure(cvtext, text="🎉")
+                    if platform == "windows":
+                        cv.itemconfigure(cvtext, text="🎉")
+                    elif platform == "linux":
+                        cv.itemconfigure(cvtext, text="")
                     heal_val = tk.IntVar()
                     heal_val.set(1)
                     self.heal(heal_val)
@@ -847,13 +851,19 @@ class CharacterSheet:
 
         char.HP.current_hp.trace_add("write", death_saves_mgmt.check)
 
+        lr_text = "Long Rest"
+        sr_text = "Short Rest"
+        if platform == "windows":
+            lr_text += " 🛏"
+            sr_text += " 🔥"
+
         tk.Button(rest_frame,
-                  text="Long Rest 🛏",
+                  text=lr_text,
                   command=char.long_rest,
                   font=default_font + " 9 ").grid(row=1, column=0, columnspan=2, sticky="EW", pady=4)
 
         tk.Button(rest_frame,
-                  text="Short Rest 🔥",
+                  text=sr_text,
                   command=char.short_rest,
                   font=default_font + " 9 ").grid(row=0, column=0, columnspan=2, sticky="EW", pady=4)
 
@@ -885,7 +895,7 @@ class CharacterSheet:
                  font=default_font + " 10 bold",
                  justify=tk.CENTER).grid(row=0, column=0, sticky="N", padx=4)
 
-        shieldpath=Path(os.getcwd()+r"\reference\images\shield.png")
+        shieldpath=Path.cwd() / "reference" / "images" / "shield.png"
 
         shield_im = Image.open(shieldpath)
         shield_im.thumbnail((44, 44), Image.ANTIALIAS)
@@ -1011,7 +1021,7 @@ class CharacterSheet:
             if object != "S":
                 tk.Label(self.proficiencies_frame,
                          text=object,
-                         width=8,
+                         # width=8,
                          font=default_font + " 10 bold").grid(row=2, column=n, sticky="EW", padx=6)
                 frame = tk.Frame(self.proficiencies_frame)
                 frame.grid(row=4, column=n, sticky="N")
@@ -1324,10 +1334,11 @@ def startup(load=None):
     style = ttk.Style(window)
     style.configure('TNotebook', tabposition='n')
 
-    # style.map('TCombobox', fieldbackground=[('readonly', 'white')])
-    # style.map('TCombobox', selectbackground=[('readonly', 'white')])
-    # style.map('TCombobox', selectforeground=[('readonly', 'black')])
-    # style.map('TCombobox', selectborderwidth=[('readonly', '0')])
+    if platform == "linux":
+        style.map('TCombobox', fieldbackground=[('readonly', 'white')])
+        style.map('TCombobox', selectbackground=[('readonly', 'white')])
+        style.map('TCombobox', selectforeground=[('readonly', 'black')])
+        style.map('TCombobox', selectborderwidth=[('readonly', '0')])
 
     window.mainloop()
 

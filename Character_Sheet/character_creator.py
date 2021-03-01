@@ -1,4 +1,5 @@
-import pickle
+from sys import platform
+import pickle, pickle5
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
@@ -8,6 +9,7 @@ from PIL import Image, ImageTk
 from functools import partial
 import textwrap
 import num2words
+
 
 import Character_Sheet.reference.glossary as glossary
 import Character_Sheet.reference.races as races
@@ -34,8 +36,12 @@ def export_data(character):
 
 
 def import_info(filename):
+
     file = open(filename, "rb")
-    info = pickle.load(file)
+    try:
+        info = pickle.load(file)
+    except ValueError:
+        info = pickle5.load(file)
     file.close()
     return info
 
@@ -328,7 +334,6 @@ class CharacterCreator:
         num_layers = max([aspect.order for aspect in self.aspects.values()]) + 1
         for condition in range(num_layers):
             for key, value in character_import_dict.items():
-
                 try:
 
                     aspect = self.aspects[key]
@@ -2692,9 +2697,10 @@ if __name__ == "__main__":
     style = ttk.Style(window)
     style.configure('TNotebook', tabposition='n')
 
-    # style.map('TCombobox', fieldbackground=[('readonly', 'white')])
-    # style.map('TCombobox', selectbackground=[('readonly', 'white')])
-    # style.map('TCombobox', selectforeground=[('readonly', 'black')])
-    # style.map('TCombobox', selectborderwidth=[('readonly', '0')])
+    if platform == "linux":
+        style.map('TCombobox', fieldbackground=[('readonly', 'white')])
+        style.map('TCombobox', selectbackground=[('readonly', 'white')])
+        style.map('TCombobox', selectforeground=[('readonly', 'black')])
+        style.map('TCombobox', selectborderwidth=[('readonly', '0')])
 
     window.mainloop()

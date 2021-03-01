@@ -1,5 +1,5 @@
 import os
-import pickle
+import pickle, pickle5
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
@@ -23,7 +23,11 @@ import Character_Sheet.reference.skills_and_attributes as skills
 def import_info(filename):
 
     file = open(filename, "rb")
-    info = pickle.load(file)
+    try:
+        info = pickle.load(file)
+    except ValueError:
+        info = pickle5.load(file)
+
     file.close()
     return info
 
@@ -74,33 +78,33 @@ class ExportDict:
 class My:
 
     @staticmethod
-    def StringVar(save_key=None):
+    def StringVar(save_key):
         value = tk.StringVar()
-        if save_key:
-            ExportDict.values[save_key] = value
+        My.export_key(save_key, value)
         return value
 
     @staticmethod
-    def BooleanVar(save_key=None):
+    def BooleanVar(save_key):
         value = tk.BooleanVar()
-        if save_key:
-            ExportDict.values[save_key] = value
+        My.export_key(save_key, value)
         return value
 
     @staticmethod
-    def IntVar(save_key=None):
+    def IntVar(save_key):
         value = tk.IntVar()
-        if save_key:
-            ExportDict.values[save_key] = value
+        My.export_key(save_key, value)
         return value
+
+    @staticmethod
+    def export_key(save_key, value):
+        if save_key in ExportDict.values.keys():
+            print(f"Key {save_key} already exists and will be overwritten! Are you sure?")
+        ExportDict.values[save_key] = value
 
 
 class SimpleValue:
-    def __init__(self):
-        self.textvariable = My.StringVar()
-
-    # def __repr__(self):
-    #     return repr(self.get())
+    def __init__(self, save_key):
+        self.textvariable = My.StringVar(save_key)
 
     def set(self, text):
         self.textvariable.set(text)
@@ -112,7 +116,7 @@ class SimpleValue:
 class CompositeValues:
     class Alignment(SimpleValue):
         def __init__(self, ethic_target, morality_target):
-            super().__init__()
+            super().__init__("alignment_text")
             Updatable.values.append(self)
             self.ethics = ethic_target
             self.morality = morality_target
@@ -123,7 +127,7 @@ class CompositeValues:
 
     class Race(SimpleValue):
         def __init__(self, race_target, subrace_target):
-            super().__init__()
+            super().__init__("race_text")
             Updatable.values.append(self)
             self.race = race_target
             self.subrace = subrace_target
@@ -144,9 +148,10 @@ class CompositeValues:
             self.set(text)
 
     class ListValsString:
-        def __init__(self, origin_list, min_height):
+
+        def __init__(self, origin_list, min_height, list_name):
             self.list_vals = origin_list
-            self.string = My.StringVar()
+            self.string = My.StringVar(F"{list_name}_list_vals")
             self.min_height = min_height
             Updatable.values.append(self)
 
@@ -163,7 +168,7 @@ class CompositeValues:
 class ComplexValues:
     class Size(SimpleValue):
         def __init__(self, race_name):
-            super().__init__()
+            super().__init__("size_text")
             Updatable.values.append(self)
             self.race_name = race_name
             self.size = None
@@ -175,7 +180,7 @@ class ComplexValues:
 
     class Speed(SimpleValue):
         def __init__(self, race_name):
-            super().__init__()
+            super().__init__("speed_text")
             Updatable.values.append(self)
             self.race_name = race_name
             self.override = {"base": [],
@@ -192,11 +197,10 @@ class ComplexValues:
 
             self.set(str(value) + " ft.")
 
-    class ProficiencyBonus(SimpleValue):
+    class ProficiencyBonus():
         def __init__(self):
-            super().__init__()
             Updatable.values.append(self)
-            self.mod = My.StringVar()
+            self.mod = My.StringVar("prof_bonus")
 
         def update(self, char):
             char.level.update(char)
@@ -205,9 +209,8 @@ class ComplexValues:
 
     class Level(SimpleValue):
         def __init__(self):
-            super().__init__()
             Updatable.values.append(self)
-            self.level = My.IntVar()
+            self.level = My.IntVar("char_level")
 
         def update(self, char):
             val = 0
@@ -253,7 +256,7 @@ class ComplexValues:
 
         def __init__(self):
             Updatable.values.append(self)
-            self.val = My.IntVar()
+            self.val = My.IntVar("AC_val")
             self.state = self.unarmoured
             self.shield = False
 
@@ -351,7 +354,7 @@ class Character:
                          "morality"]
 
         for value in simple_values:
-            self.info[value] = SimpleValue()
+            self.info[value] = SimpleValue(value)
 
         self.info["alignment"] = CompositeValues.Alignment(self.info["ethics"], self.info["morality"])
         self.info["race_print"] = CompositeValues.Race(self.race["name"], self.race["subrace"])
@@ -390,12 +393,12 @@ class Character:
         all_tools = [tool for tool in items.Tool.__subclasses__() if not tool.__subclasses__()]
         [all_tools.extend(tool.__subclasses__()) for tool in items.Tool.__subclasses__() if tool.__subclasses__()]
 
-        self.proficiencies = {"Languages": {lang: My.BooleanVar() for lang in glossary.all_languages},
-                              "Armour": {armour.name: My.BooleanVar() for armour in
+        self.proficiencies = {"Languages": {lang: My.BooleanVar(f"{lang}_prof_bool") for lang in glossary.all_languages},
+                              "Armour": {armour.name: My.BooleanVar(f"{armour.name}_prof_bool") for armour in
                                          [items.Light, items.Medium, items.Heavy, items.Shields]},
-                              "Weapons": {weapon.name: My.BooleanVar() for weapon in items.Simple.__subclasses__() +
+                              "Weapons": {weapon.name: My.BooleanVar(f"{weapon.name}_prof_bool") for weapon in items.Simple.__subclasses__() +
                                           items.Martial.__subclasses__()},
-                              "Tools": {tool.name: My.BooleanVar() for tool in all_tools},
+                              "Tools": {tool.name: My.BooleanVar(f"{tool.name}_prof_bool") for tool in all_tools},
                               "Major": []}
 
     def ability_scores_config(self):
@@ -448,7 +451,7 @@ class Character:
                 # self.ability_mod = ability_score
                 self.prof = My.BooleanVar(F"saving_throw_{self.attr}_prof")
                 self.notes = []
-                self.mod = My.StringVar()
+                self.mod = My.StringVar(F"saving_throw_{self.attr}_mod")
 
             def update(self, char):
 
@@ -481,7 +484,7 @@ class Character:
                 self.prof = My.BooleanVar(F"skill_{self.name}_prof")
                 self.expertise = My.BooleanVar(F"skill_{self.name}_expertise")
                 self.attr = attr
-                self.display = My.StringVar()
+                self.display = My.StringVar(F"skill_{self.name}_display_val")
 
             def update(self, char):
                 val = 0
@@ -502,7 +505,7 @@ class Character:
                 def __init__(self, name, skill):
                     self.name = name
                     self.skill = skill
-                    self.mod = My.StringVar()
+                    self.mod = My.StringVar(F"passive_skill_{name}_mod")
 
                 def update(self):
                     mod = self.skill.mod + 10
@@ -558,8 +561,8 @@ class Character:
         self.conditions = []
 
         self.AC = ComplexValues.AC()
-        self.defence_string = CompositeValues.ListValsString([self.defences, self.immunities], 3)
-        self.conditions_string = CompositeValues.ListValsString([self.conditions], 3)
+        self.defence_string = CompositeValues.ListValsString([self.defences, self.immunities], 3, "Defences")
+        self.conditions_string = CompositeValues.ListValsString([self.conditions], 3, "Conditions")
 
     def inventory_config(self):
 
@@ -584,9 +587,11 @@ class Character:
                 elif isinstance(item, forbidden_types):
                     pass  # should be already taken care of
                 elif isinstance(item, list):
-                    print(key, item)
+                    # print(key, item)
                     character[key] = item
                 else:
+                    # print(key, item)
+                    # character[key] = item
                     pass  # print(key, item)
 
         character = ExportDict.export()
@@ -597,10 +602,10 @@ class Character:
 
         open_dict(char_dict)
 
-        print(character["items"])
+        helpers.simple_print_dict(character)
 
         with open(loc + '.pkl', "wb") as file:
-            pickle.dump(character["items"], file, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(character, file, pickle.HIGHEST_PROTOCOL)
         file.close()
 
     def load(self, filename, type):
@@ -628,6 +633,7 @@ class Character:
             print("Finished importing")
 
         elif type == "active_character":
+            print("Imported active character")
             pass
 
             # print(import_info(filename))

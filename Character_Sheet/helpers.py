@@ -48,3 +48,7 @@ def weight_frame(frame):
         frame.columnconfigure(n, weight=1)
     for n in range(frame_height):
         frame.rowconfigure(n, weight=1)
+
+def simple_print_dict(dict):
+    for key, value in dict.items():
+        print(key, value)

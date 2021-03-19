@@ -80,7 +80,7 @@ class Actor(feat):
         char.skills.performance['notes'][name] += [
             'Advantage when pretending to be '
             'someone else.']
-        char.features[name] = ["You can mimic the speech of another "
+        char.Features[name] = ["You can mimic the speech of another "
                                "person or the sounds made by other "
                                "creatures. You must have heard the "
                                "person speaking, or heard the "

@@ -95,7 +95,7 @@ class atk_option:
 
         properties = {'Ammunition': (self.ammunition, weapon),
                       'Finesse': (self.finesse,),
-                      'Heavy': (self.heavy, char.stats.size.current),
+                      'Heavy': (self.heavy, char.data.size.current),
                       'Light': (self.light,),
                       'Loading': (self.loading,),
                       'Reach': (self.reach_,),
@@ -138,7 +138,7 @@ def attack_list(self):
     Prime candidate for refactoring."""
 
     print('\nAttack options:',
-          f'\nNumber of attacks per round/action: {self.stats.attacks_per_turn}\n')
+          f'\nNumber of attacks per round/action: {self.data.attacks_per_turn}\n')
 
     atk_rows = {}
     atk_cats = {}
@@ -177,7 +177,7 @@ def attack_list(self):
             # Assume you'd want to use max. Can separate out if not, for some reason.
             roll_val = max([self.attributes[attr].mod for attr in values.attr])
 
-            atk = f'1d20 + {roll_val + values.prof * self.stats.proficiency}'
+            atk = f'1d20 + {roll_val + values.prof * self.data.proficiency}'
 
             if values.disadv:
                 atk = f'{atk} (Disadvantage)'

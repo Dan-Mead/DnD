@@ -72,7 +72,7 @@ class Class:
 
         for feature in self.levels[1]:
             new_feature = get_feature(feature)
-            char.features[f"Class: {self.class_name}"][feature] = new_feature
+            char.Features[f"Class: {self.class_name}"][feature] = new_feature
             new_feature.initial_effects(char)
 
 

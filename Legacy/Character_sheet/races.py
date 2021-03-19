@@ -9,9 +9,9 @@ class race:
 
     def add_race_modifiers(self, char):
 
-        char.info.Race = self.race_name
-        char.stats.size.Race = self.size
-        char.stats.speed.Race = self.speed
+        char.Info.Race = self.race_name
+        char.data.size.Race = self.size
+        char.data.speed.Race = self.speed
         char.proficiencies.languages.Race = self.languages
 
         for trait in vars(self).keys():
@@ -27,15 +27,15 @@ class race:
                 from feats import get_feat
                 for feat in self.feats:
                     new_feat = get_feat(feat, self.race_name)
-                    char.feats[feat] = new_feat
-                    char.feats[feat].initial_effects(char)
+                    char.Feats[feat] = new_feat
+                    char.Feats[feat].initial_effects(char)
 
 
             elif trait == 'features':
                 from features import get_feature
                 for feature in self.features:
                     new_feature = get_feature(feature)
-                    char.features[self.race_name][feature] = new_feature
+                    char.Features[self.race_name][feature] = new_feature
                     new_feature.initial_effects(char)
 
             elif trait not in ['race_name', 'size', 'speed', 'languages']:

@@ -1178,7 +1178,7 @@ class CharacterSheet:
                 index -= 1
 
                 widgets = [self.equipped_1, self.equipped_2]
-                values = [char.inventory["wielded"][1], char.inventory["wielded"][2]]
+                values = [char.Inventory["wielded"][1], char.Inventory["wielded"][2]]
                 grid_vals = [dict(row=4, column=0, pady=1), dict(row=5, column=0, pady=1)]
 
                 if " (2H)" in values[index].get():

@@ -158,8 +158,8 @@ def choose_feat(msg, char):
     from feats import get_valid_feats
     valid_feats = get_valid_feats(char)
 
-    if char.feats:
-        chosen = [feat.name for feat in char.feats.values()]
+    if char.Feats:
+        chosen = [feat.name for feat in char.Feats.values()]
     else:
         chosen = []
 

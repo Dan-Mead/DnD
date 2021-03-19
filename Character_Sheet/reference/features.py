@@ -5,7 +5,7 @@ import Character_Sheet.reference.glossary as glossary
 class FeatureTypes:
 
     def text_feature(self, vals):
-        self.char.features["Other"][self.name] = vals
+        self.char.Features["Other"][self.name] = vals
 
     class Prof:
         def skills(self, skills_list):
@@ -25,7 +25,7 @@ class FeatureTypes:
                 self.char.proficiencies["Tools"][tool.name] = True
 
     def defence(self, vals):
-        self.char.defences += vals
+        self.char.Defences += vals
 
     def immunity(self, vals):
         self.char.immunities += vals
@@ -65,7 +65,7 @@ class Feature:
         self.name = name
         self.char = char
 
-        self.char.features["All"][name] = self.desc
+        self.char.Features["All"][name] = self.desc
 
         if hasattr(self, "effects"):
 

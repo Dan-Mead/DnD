@@ -488,8 +488,8 @@ def Race():
         for widget in race_features_internal_frame.winfo_children():
             widget.pack_forget()
 
-        if current_race_instance.features:
-            race_features = current_race_instance.features.copy()
+        if current_race_instance.Features:
+            race_features = current_race_instance.Features.copy()
             try:
                 race_features += current_race_instance.features_chosen
             except:
@@ -497,8 +497,8 @@ def Race():
         else:
             race_features = None
 
-        if current_subrace_instance and current_subrace_instance.features:
-            subrace_features = current_subrace_instance.features.copy()
+        if current_subrace_instance and current_subrace_instance.Features:
+            subrace_features = current_subrace_instance.Features.copy()
             try:
                 subrace_features += current_subrace_instance.features_chosen
             except:
@@ -523,7 +523,7 @@ def Race():
         if feature == "skills":
             skills(entity.skills)
         elif feature == "feat":
-            feat(entity.feats)
+            feat(entity.Feats)
         elif feature == "other":
             others(entity.other_features)
         elif feature == "choice":

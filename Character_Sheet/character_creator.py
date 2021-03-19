@@ -1139,8 +1139,8 @@ class CharacterCreator:
 
                 feature_list = []
 
-                if instance.features:
-                    feature_list.extend(feature_splitter(instance.features.all, name, origin))
+                if instance.Features:
+                    feature_list.extend(feature_splitter(instance.Features.all, name, origin))
                     # if hasattr(instance, Ftype.choice):
                     #     origin += " choice"
                     #     feature_list.extend(feature_splitter(instance.choice_features, name, origin))
@@ -1297,7 +1297,7 @@ class CharacterCreator:
                 features_origin = " ".join([self.race_instance.race_name, self.subrace_instance.subrace_name])
                 self.subrace_features_frame.grid_forget()
                 levels = ['subrace']
-                if not self.race_instance.features:
+                if not self.race_instance.Features:
                     self.race_features_frame.grid_forget()
                     levels.append('race')
 
@@ -1313,7 +1313,7 @@ class CharacterCreator:
 
             # Add new
 
-            if instance.features:
+            if instance.Features:
 
                 self.divider_2.grid(row=3, column=1, sticky="NS", rowspan=8)
                 self.racial_features_frame.grid(row=3, column=2, sticky="N", padx=4)
@@ -1325,7 +1325,7 @@ class CharacterCreator:
                 else:
                     self.subrace_features_frame.grid(row=2)
 
-                for feature_name, feature_values in instance.features.all.items():
+                for feature_name, feature_values in instance.Features.all.items():
                     feature_entry = self.race_feature_widgets[(features_level, features_origin, feature_name)]
                     feature_entry['frame'].pack()
 

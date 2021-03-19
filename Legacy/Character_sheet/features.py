@@ -35,7 +35,7 @@ class Darkvision(feature):
                     'of gray.'
 
     def initial_effects(self, char):
-        char.features['Darkvision'] = self.desc
+        char.Features['Darkvision'] = self.desc
 
 
 class Relentless_Endurance(feature):

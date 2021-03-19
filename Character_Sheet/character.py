@@ -262,10 +262,10 @@ class ComplexValues:
 
         def update(self, char):
 
-            inventory = {item.name: item for item in char.inventory["items"]}
+            inventory = {item.name: item for item in char.Inventory["items"]}
 
             try:
-                worn = inventory[char.inventory["worn"].get()]
+                worn = inventory[char.Inventory["worn"].get()]
                 self.state = self.armoured
             except KeyError:
                 self.state = self.unarmoured
@@ -284,7 +284,7 @@ class ComplexValues:
 
             # Check for shields
             self.shield = False
-            wielded_names = [name.get() for name in char.inventory["wielded"].values()]
+            wielded_names = [name.get() for name in char.Inventory["wielded"].values()]
             for wielded in wielded_names:
                 if wielded in inventory.keys():
                     wielded_item = inventory[wielded]
@@ -776,9 +776,9 @@ class Character:
 
             def other_features():
                 all_features = {}
-                if race_instance.features:
-                    all_features.update(race_instance.features.all)
-                if subrace_instance and subrace_instance.features and subrace_instance.features != race_instance.features:
+                if race_instance.Features:
+                    all_features.update(race_instance.Features.all)
+                if subrace_instance and subrace_instance.features and subrace_instance.features != race_instance.Features:
                     all_features.update(subrace_instance.features.all)
 
                 def feature_switcher(feature_name, feature_type, feature_val):

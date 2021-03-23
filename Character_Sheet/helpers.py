@@ -52,3 +52,7 @@ def weight_frame(frame):
 def simple_print_dict(dict):
     for key, value in dict.items():
         print(key, value)
+
+def simple_print_dict_sep(dict):
+    for key, value in dict.items():
+        print(key, "|", value)

@@ -176,7 +176,7 @@ class Tabs:
 class ValueChooserGenerator:
     def __init__(self, character, master, num_choosers, variable_name, value_tab, value_type,
                  invalid_options=[], default_value="", values=[], label={}, grid={}, check_global=False,
-                 aspect_order=1):
+                 aspect_order=1, universal=[]):
         char = character
         master_frame = master
 
@@ -189,6 +189,7 @@ class ValueChooserGenerator:
         self.default_value = default_value
         self.invalid_options = invalid_options
         self.grid = grid
+        self.universals = universal
 
         if label:
             self.label = tk.Label(self.frame, label)
@@ -248,7 +249,15 @@ class ValueChooserGenerator:
 
         chosen_all = chosen_local + chosen_global
 
-        self.widgets[index]['values'] = [value for value in self.values if value not in chosen_all]
+        new_values = [value for value in self.values if value not in chosen_all]
+
+        for option in self.universals:
+            if option not in new_values:
+                new_values.insert(0, option)
+
+        self.widgets[index]['values'] = new_values
+
+
 
     def activate(self, num=None):
 
@@ -793,12 +802,13 @@ class CharacterCreator:
                                                                  master=self.race_base_info,
                                                                  num_choosers=1,
                                                                  variable_name="Race Language",
-                                                                 values=["None"] + glossary.all_languages,
+                                                                 values=glossary.all_languages,
                                                                  value_tab=Tabs.race,
                                                                  value_type=AspectTypes.language,
                                                                  default_value="Choose language: ",
                                                                  grid=dict(row=3, column=2, sticky="NW"),
-                                                                 check_global=True)
+                                                                 check_global=True,
+                                                                 universal=["None"])
 
             race_size_label.grid(row=0, column=0, sticky="E")
             race_size_value.grid(row=0, column=2, sticky="W")
@@ -880,10 +890,9 @@ class CharacterCreator:
             if num_language_choice:
                 self.character_race_language.activate(num_language_choice)
                 self.character_race_language.invalid_options = default_languages
-
-                if hasattr(self, "current_background"):
-                    background_languages = [lang for lang in self.current_background.languages if isinstance(lang, str)]
-                    self.character_race_language.invalid_options += background_languages
+                # if hasattr(self, "current_background"):
+                #     background_languages = [lang for lang in self.current_background.languages if isinstance(lang, str) and lang != "None"]
+                #     self.character_race_language.invalid_options += background_languages
             else:
                 self.character_race_language.deactivate()
 
@@ -1139,8 +1148,8 @@ class CharacterCreator:
 
                 feature_list = []
 
-                if instance.Features:
-                    feature_list.extend(feature_splitter(instance.Features.all, name, origin))
+                if instance.features:
+                    feature_list.extend(feature_splitter(instance.features.all, name, origin))
                     # if hasattr(instance, Ftype.choice):
                     #     origin += " choice"
                     #     feature_list.extend(feature_splitter(instance.choice_features, name, origin))
@@ -1297,7 +1306,7 @@ class CharacterCreator:
                 features_origin = " ".join([self.race_instance.race_name, self.subrace_instance.subrace_name])
                 self.subrace_features_frame.grid_forget()
                 levels = ['subrace']
-                if not self.race_instance.Features:
+                if not self.race_instance.features:
                     self.race_features_frame.grid_forget()
                     levels.append('race')
 
@@ -1313,7 +1322,7 @@ class CharacterCreator:
 
             # Add new
 
-            if instance.Features:
+            if instance.features:
 
                 self.divider_2.grid(row=3, column=1, sticky="NS", rowspan=8)
                 self.racial_features_frame.grid(row=3, column=2, sticky="N", padx=4)
@@ -1325,7 +1334,7 @@ class CharacterCreator:
                 else:
                     self.subrace_features_frame.grid(row=2)
 
-                for feature_name, feature_values in instance.Features.all.items():
+                for feature_name, feature_values in instance.features.all.items():
                     feature_entry = self.race_feature_widgets[(features_level, features_origin, feature_name)]
                     feature_entry['frame'].pack()
 

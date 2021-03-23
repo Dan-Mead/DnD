@@ -222,6 +222,7 @@ class Misc(Item):
 
 class Pack(Item):
     item_type = Item.Types.pack
+    #TODO: Make packs the same as containers in that they contain shit.
 
 
 class Container(Item):

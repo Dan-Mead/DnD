@@ -62,22 +62,23 @@ class FeatureTypes:
 class Feature:
 
     def add(self, char, name):
-        self.name = name
-        self.char = char
-
-        self.char.Features["All"][name] = self.desc
-
-        if hasattr(self, "effects"):
-
-            if not isinstance(self.effects[0], tuple):
-                self.effects = (self.effects),
-
-            for feature_effect in self.effects:
-                func, vals = feature_effect
-                func(self, vals)
-        else:
-            FeatureTypes.text_feature(self, self.desc)
-            print(F"{self.name} implementation incomplete.")
+        print("Adding feature, implementation incomplete!")
+        # self.name = name
+        # self.char = char
+        #
+        # self.char.Features["All"][name] = self.desc
+        #
+        # if hasattr(self, "effects"):
+        #
+        #     if not isinstance(self.effects[0], tuple):
+        #         self.effects = (self.effects),
+        #
+        #     for feature_effect in self.effects:
+        #         func, vals = feature_effect
+        #         func(self, vals)
+        # else:
+        #     FeatureTypes.text_feature(self, self.desc)
+        #     print(F"{self.name} implementation incomplete.")
 
 
 class Darkvision(Feature):

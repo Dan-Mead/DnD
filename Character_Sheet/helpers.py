@@ -56,3 +56,9 @@ def simple_print_dict(dict):
 def simple_print_dict_sep(dict):
     for key, value in dict.items():
         print(key, "|", value)
+
+def list_as_keys(dict, list):
+    output = dict
+    for value in list:
+        output = output[value]
+    return output

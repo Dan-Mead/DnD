@@ -67,12 +67,6 @@ class All:
 
 class Character:
 
-    # class Updatable:
-    #     values = []
-    #
-    #     @classmethod
-    #     def update_all(cls):
-
     def load(self):
         pass
 
@@ -237,6 +231,12 @@ class Character:
                     feature_type = feature_vals[0]
                     feature_val = feature_vals[1]
                     feature_switcher(feature_name, feature_type, feature_val)
+
+            # Size and Speed
+            self.data["stats"]["size"] = {"base": race_instance.size,
+                                          "temp": {}}
+            self.data["stats"]["speed"] = {"base": race_instance.speed,
+                                           "temp": {}}
 
         scrape_race()
 
@@ -448,8 +448,14 @@ class Character:
             skill_dict = glossary.skills_dict
             all_attrs = glossary.attrs
 
-            char.data["stats"] = {"size": {"base": ""},
-                                  "speed": {"base": ""}}
+            char.data["stats"] = {"size": {"base": "",
+                                           "current": "",
+                                           "temp": None},
+                                  "speed": {"base": "",
+                                            "current": "",
+                                            "temp": None,
+                                            "mods": {}},
+                                  "level": None}
 
             char.data["ability scores"] = {attr: {"base": None, "mods": {}, "override": {}} for attr in all_attrs}
             char.data["saving throws"] = {attr: {"prof": [], "mods": {}, "override": {},
@@ -460,6 +466,11 @@ class Character:
 
         @staticmethod
         def update(char):
+            # Level
+
+            char.data["stats"]["level"] = sum([lvl for lvl in char.data["class"]["classes"].values()])
+
+            # Ability Scores
             for attr, values in char.data["ability scores"].items():
                 if not values["override"]:
                     values["total"] = int(values["base"])
@@ -470,6 +481,18 @@ class Character:
                     values["total"] = values["override"]
 
                 values["mod_val"] = math.floor((values["total"] - 10) / 2)
+
+            # Size and speed
+
+            if not char.data["stats"]["size"]["temp"]:
+                char.data["stats"]["size"]["current"] = char.data["stats"]["size"]["base"]
+            else:
+                char.data["stats"]["size"]["current"] = char.data["stats"]["size"]["temp"]
+
+            if not char.data["stats"]["speed"]["temp"]:
+                char.data["stats"]["speed"]["current"] = char.data["stats"]["speed"]["base"]
+            else:
+                char.data["stats"]["speed"]["current"] = char.data["stats"]["speed"]["temp"]
 
     class CharClass:
         def __init__(self, char):
@@ -525,6 +548,17 @@ class Character:
 
             char.data["HP"]["max"] = 0
             char.data["HP"]["max"] += class_instance.hit_die
+
+            for class_name, lvl in char.data["class"]["classes"].items():
+                class_instance = classes.class_list[class_name]
+                if class_name == char.data["class"]["starting class"]:
+                    lvl -= 1
+                char.data["HP"]["max"] += lvl * class_instance.lvl_up_hp
+
+            char.Stats.update(char)
+
+            char.data["HP"]["max"] += char.data["stats"]["level"] * char.data["ability scores"]["CON"]["mod_val"]
+
 
     class Inventory:
         def __init__(self, char):

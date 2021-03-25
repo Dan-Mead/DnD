@@ -16,6 +16,7 @@ from Character_Sheet.reference.items import *
 import Character_Sheet.helpers as helpers
 import Character_Sheet.reference.skills_and_attributes as skills
 import Character_Sheet.reference.glossary as glossary
+import Character_Sheet.character_manager as cm
 
 default_font = "Verdana"
 
@@ -87,179 +88,6 @@ class Info_Value_Pair:
         # print(char.info["name"].textvariable)
         # self.set(update_text)
 
-class CharacterManager:
-    """Converts a character data format into tkinter variables for use by
-    the character sheet. Should eventually work both ways, allowing editing of values."""
-
-    class DisplayValue:
-
-        def __init__(self):
-            self.add_display_value()
-
-        def add_display_value(self):
-            self.disp = tk.StringVar()
-            self.disp.set(self.val)
-
-        def get(self):
-            pass
-
-        def set(self):
-            pass
-
-    class SingleSourceValue(DisplayValue):
-        def __init__(self, char):
-            self.val = helpers.list_as_keys(char.data, self.source)
-            super().__init__()
-
-    ### Actual Aspects
-    """Updatable defines if something is a base value or not, hence if it can 
-    be updated or set without worrying about breaking something.
-    Source points to the relevant location(s) in the character data dictionary"""
-
-    class Name(SingleSourceValue):
-        updatable = True
-        source = ["info", "name"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Race(DisplayValue):
-        updatable = False
-        source = (["info", "race"],
-                  ["info", "subrace"])
-        def __init__(self, char):
-            values = []
-            for source in self.source:
-                values.append(helpers.list_as_keys(char.data, source))
-            values[-1] = f"({values[-1]})"
-            self.val = " ".join(values)
-            super().__init__()
-
-    class Level(SingleSourceValue):
-        updatable = False
-        source = ["stats", "level"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Alignment(DisplayValue):
-        updatable = True
-        source = (["info", "ethics"],
-                  ["info", "morality"])
-        def __init__(self, char):
-            values = []
-            for source in self.source:
-                values.append(helpers.list_as_keys(char.data, source))
-            self.val = " ".join(values)
-            super().__init__()
-
-    class Size(SingleSourceValue):
-        updatable = False
-        source = ["stats", "size", "current"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Speed(SingleSourceValue):
-        updatable = False
-        source = ["stats", "speed", "current"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Faith(SingleSourceValue):
-        updatable = True
-        source = ["info", "faith"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Skin(SingleSourceValue):
-        updatable = True
-        source = ["info", "skin colour"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Hair(SingleSourceValue):
-        updatable = True
-        source = ["info", "hair colour"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Eyes(SingleSourceValue):
-        updatable = True
-        source = ["info", "eye colour"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Height(SingleSourceValue):
-        updatable = True
-        source = ["info", "height"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Weight(SingleSourceValue):
-        updatable = True
-        source = ["info", "weight"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Build(SingleSourceValue):
-        updatable = True
-        source = ["info", "build"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Age(SingleSourceValue):
-        updatable = True
-        source = ["info", "age"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    class Gender(SingleSourceValue):
-        updatable = True
-        source = ["info", "gender"]
-        def __init__(self, char):
-            super().__init__(char)
-
-    aspects = {"name": Name,
-               "race": Race,
-               "level": Level,
-               "alignment": Alignment,
-               "size": Size,
-               "speed": Speed,
-               "faith": Faith,
-               "skin": Skin,
-               "hair": Hair,
-               "eyes": Eyes,
-               "height": Height,
-               "weight": Weight,
-               "build": Build,
-               "age": Age,
-               "gender": Gender,
-               }
-
-    class Attr:
-        source = ["ability scores"]
-        def __init__(self, attr, char):
-            pass
-
-    # Should probably make this better at just being automatically updated
-
-    def __init__(self, char):
-
-        self.char = char
-
-        for aspect, object in self.aspects.items():
-            setattr(self, aspect, object(char))
-
-        for attr in glossary.attrs:
-            setattr(self, attr, self.Attr(attr, char))
-
-        # for aspect in self.aspects.keys():
-        #     # try:
-        #     getattr(self, aspect).disp.get()
-            # except AttributeError:
-            #     print(F"{aspect.capitalize()} not fully implemented in converter.")
-
-        # pass
-
-
 
 class CharacterSheet:
 
@@ -268,7 +96,7 @@ class CharacterSheet:
         window.title("Character Sheet")
 
         character = Character()
-        self.char = CharacterManager(character)
+        self.char = cm.CharacterManager(character)
         # Utility Functions
 
         self.create_title()

@@ -54,7 +54,7 @@ class Class:
                         if item[0] in char.equipment:
                             char.equipment[item[0]].add_number(item[1])
                         else:
-                            char.equipment.update(
+                            char.equipment.process(
                                 {item[0]: get_item(item[0], item[1])})
 
                 elif trait not in ['class_name', 'hit_dice', 'hit_points',

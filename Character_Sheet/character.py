@@ -422,7 +422,8 @@ class Character:
                                         "current": "",
                                         "temp": None,
                                         "mods": {}},
-                              "level": None}
+                              "level": None,
+                              "prof": None}
 
         self.data["ability scores"] = {attr: {"base": None, "mods": {}, "override": {}} for attr in all_attrs}
         self.data["saving throws"] = {attr: {"prof": [], "mods": {}, "override": {},

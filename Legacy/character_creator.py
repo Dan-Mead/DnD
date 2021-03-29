@@ -49,12 +49,12 @@ def update_character_info():
             character_data[name] = {}
             for key, value in item.items():
                 if not isinstance(value[0], (list, tuple)):
-                    character_data[name][key] = [val.get() for val in value]
+                    character_data[name][key] = [val.update() for val in value]
                 else:
-                    character_data[name][key] = [[v.get() for v in val] for val
+                    character_data[name][key] = [[v.update() for v in val] for val
                                                  in value]
         else:
-            character_data[name] = item.get()
+            character_data[name] = item.update()
 
     return character_data
 
@@ -147,7 +147,7 @@ def exit():
 # Helper Functions
 
 def get_chosen_skills(character):
-    return [character[choice].get() for choice in character.keys() if
+    return [character[choice].update() for choice in character.keys() if
             "Skill" in choice]
 
 

@@ -267,8 +267,8 @@ class CharacterSheet:
         #
         # self.defences_section(front_page_column_1).grid(row=2, column=0, columnspan=3, pady=4, padx=4, sticky="NEW")
         #
-        # self.scores_section(front_page_column_1).grid(row=3, column=0, pady=4, padx=4, sticky="NSW")
-        # self.saves_section(front_page_column_1).grid(row=3, column=1, pady=4, padx=4, sticky="NSW")
+        self.scores_section(front_page_column_1).grid(row=3, column=0, pady=4, padx=4, sticky="NSW")
+        self.saves_section(front_page_column_1).grid(row=3, column=1, pady=4, padx=4, sticky="NSW")
         # self.other_skills_section(front_page_column_1).grid(row=3, column=2, pady=4, padx=4, sticky="NW")
         #
         # self.skills_section(front_page_column_1).grid(row=4, column=0, columnspan=3, pady=4, padx=4, sticky="NSEW")
@@ -389,7 +389,7 @@ class CharacterSheet:
 
             # n = 0
             tk.Button(self.scores_frame,
-                      textvariable=cm.ability_scores[attr].raw,
+                      textvariable=getattr(self.aspects, attr)["raw"].tkVar,
                       relief=tk.FLAT,
                       borderwidth=1,
                       font=default_font + " 10",
@@ -399,7 +399,7 @@ class CharacterSheet:
             # ttk.Separator(button_frame, orient=tk.HORIZONTAL).grid(row=3, column=n, columnspan=1, sticky="ew")
 
             tk.Button(self.scores_frame,
-                      textvariable=cm.ability_scores[attr].mod,
+                      textvariable=getattr(self.aspects, attr)["mod"].tkVar,
                       font=default_font + " 10 bold",
                       relief=tk.FLAT,
                       borderwidth=1,
@@ -409,6 +409,49 @@ class CharacterSheet:
         ttk.Separator(self.scores_frame, orient=tk.HORIZONTAL).grid(row=1, column=0, columnspan=6, sticky="NEW")
 
         return self.scores_frame
+
+    def saves_section(self, master_frame):
+
+        self.saves_frame = tk.Frame(master_frame,
+                                    relief=tk.GROOVE,
+                                    borderwidth=2)
+
+        tk.Label(self.saves_frame,
+                 text="Saving Throws",
+                 font=default_font + " 11 bold").grid(row=0, columnspan=2)
+
+        self.ability_scores_raw = {}
+
+        for n, attr in enumerate(glossary.attrs):
+            n = n + 1
+            # tk.Label(self.saves_frame,
+            #          text=attr,
+            #          font=default_font + " 10 bold").grid(row=n, column=0, padx=4, pady=0)
+
+            object_name = f"ability_score_raw_{attr.lower()}"
+
+            def toggle(cb):
+                cb.toggle()
+
+            cb = tk.Checkbutton(self.saves_frame,
+                                variable=getattr(self.aspects, attr)["save prof"].tkVar,
+                                text=attr,
+                                font=default_font + " 10 bold")
+
+            cb.config(command=partial(toggle, cb))
+
+            cb.grid(row=n, column=0, sticky="W")
+
+            tk.Button(self.saves_frame,
+                      textvariable=getattr(self.aspects, attr)["save val"].tkVar,  # Must make save separate
+                      relief=tk.FLAT,
+                      borderwidth=2,
+                      font=default_font + " 9 bold",
+                      width=3).grid(row=n, column=1)
+
+        ttk.Separator(self.saves_frame, orient=tk.HORIZONTAL).grid(row=1, column=0, columnspan=10, sticky="NEW")
+
+        return self.saves_frame
 
 
 def startup(load=None):

@@ -71,7 +71,7 @@ def set_stats():
 def add_other():
     from items import get_item
 
-    char.equipment.update(
+    char.equipment.process(
         {'Cloak of Protection': get_item('Cloak of Protection', 1)})
 
     char.update()
@@ -87,7 +87,7 @@ def first_equip():
 
 def export_info(name, info_object):
     try:
-        info_object.update()
+        info_object.process()
     except:
         print('Failed to update on export')
 
@@ -116,7 +116,7 @@ def import_info(name=None):
     file.close()
 
     try:
-        info.update()
+        info.process()
     except:
         print('Failed to update on import')
 

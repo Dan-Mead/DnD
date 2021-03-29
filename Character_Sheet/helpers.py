@@ -64,3 +64,11 @@ def list_to_keys(dict, list):
     for value in list:
         output = output[value]
     return output
+
+def get_nested_object(base, list):
+    output = base
+
+    for item in list:
+        output = getattr(output, item)
+
+    return output

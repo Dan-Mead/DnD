@@ -143,7 +143,7 @@ class CharacterSheet:
 
     def save(self):
 
-        name = char.info["name"].get()
+        name = char.info["name"].update()
 
         if name == "":
             name = "Empty_Character"
@@ -197,7 +197,7 @@ class CharacterSheet:
 
         for ID, object in self.updatables.items():
             try:
-                object.update()
+                object.process()
             except AttributeError:
                 print(f"Error updating {ID} as it has no update method.")
 
@@ -665,11 +665,11 @@ class CharacterSheet:
 
             def heal(self, val):
 
-                current_hp = self.char_hp.current_hp.get()
-                change = val.get()
+                current_hp = self.char_hp.current_hp.update()
+                change = val.update()
                 new_current = current_hp + change
-                if new_current > self.char_hp.max_hp.get():
-                    new_current = self.char_hp.max_hp.get()
+                if new_current > self.char_hp.max_hp.update():
+                    new_current = self.char_hp.max_hp.update()
                 if new_current > 0:
                     self.deactivate()
                 self.char_hp.current_hp.set(new_current)
@@ -677,9 +677,9 @@ class CharacterSheet:
 
             def harm(self, val):
 
-                current_hp = self.char_hp.current_hp.get()
-                temp_hp = self.char_hp.temp_hp.get()
-                change = val.get()
+                current_hp = self.char_hp.current_hp.update()
+                temp_hp = self.char_hp.temp_hp.update()
+                change = val.update()
                 if temp_hp > 0:
                     new_temp = temp_hp - change
                     if new_temp > 0:
@@ -691,7 +691,7 @@ class CharacterSheet:
                 new_current = current_hp - change
                 if new_current <= 0:
                     new_current = 0
-                    if change >= current_hp + self.char_hp.max_hp.get():
+                    if change >= current_hp + self.char_hp.max_hp.update():
                         self.activate(instant_death=True)
                     else:
                         self.activate(instant_death=False)
@@ -703,8 +703,8 @@ class CharacterSheet:
                 passes = death_save_vals.passes
                 fails = death_save_vals.fails
 
-                num_passes = sum([val.get() for val in passes])
-                num_fails = sum([val.get() for val in fails])
+                num_passes = sum([val.update() for val in passes])
+                num_fails = sum([val.update() for val in fails])
 
                 lookup_dict = {2: ":D",
                                1: ":)",
@@ -746,14 +746,14 @@ class CharacterSheet:
                 else:
                     text = "Oh no! You have failed 3 death saving throws and have died!"
 
-                text += f"\n\nIf your party cannot find a way to revive you, unfortunately this is the end for {char.info['name'].get()}.\nWhile this is naturally very sad, it does mean you have a chance to create a whole new character, with new hopes and dreams and skills. Maybe try to take better care of this one.\n\n Happy adventuring!"
+                text += f"\n\nIf your party cannot find a way to revive you, unfortunately this is the end for {char.info['name'].update()}.\nWhile this is naturally very sad, it does mean you have a chance to create a whole new character, with new hopes and dreams and skills. Maybe try to take better care of this one.\n\n Happy adventuring!"
 
                 tk.Label(death_window,
                          text=text,
                          wraplength=420).pack(pady=8, padx=8)
 
             def check(self, *_):
-                current_hp = self.char_hp.current_hp.get()
+                current_hp = self.char_hp.current_hp.update()
 
                 if current_hp <= 0 and self.active == False:
                     self.activate()
@@ -1067,7 +1067,7 @@ class CharacterSheet:
         for prof_type in ["Tools", "Languages"]:
             j = 0
             for name, prof in char.proficiencies[prof_type].items():
-                if prof.get():
+                if prof.update():
                     tk.Label(prof_frames_dict[prof_type],
                              text=name,
                              font=default_font + " 9").grid(row=j, column=0)

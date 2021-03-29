@@ -58,7 +58,7 @@ class Updatable:
     @classmethod
     def update_all(cls, char):
         for object in cls.values:
-            object.update(char)
+            object.process(char)
 
 
 class ExportDict:
@@ -68,7 +68,7 @@ class ExportDict:
     def export(cls):
         dict = {}
         for key, item in cls.values.items():
-            dict[key] = item.get()
+            dict[key] = item.update()
         return dict
 
     def import_data(cls):
@@ -122,7 +122,7 @@ class CompositeValues:
             self.morality = morality_target
 
         def update(self, char):
-            text = F"{self.ethics.get()} {self.morality.get()}"
+            text = F"{self.ethics.update()} {self.morality.update()}"
             self.set(text)
 
     class Race(SimpleValue):
@@ -133,8 +133,8 @@ class CompositeValues:
             self.subrace = subrace_target
 
         def update(self, char):
-            race_name = self.race.get()
-            subrace_name = self.subrace.get()
+            race_name = self.race.update()
+            subrace_name = self.subrace.update()
 
             race_val = {race.race_name: race for race in races.Race.__subclasses__()}[race_name]
             subrace_opts = [subrace.subrace_name for subrace in race_val.__subclasses__()]
@@ -176,7 +176,7 @@ class ComplexValues:
 
         def update(self, *_):
             if not self.override:
-                self.set(races.race_list[self.race_name.get()].size)
+                self.set(races.race_list[self.race_name.update()].size)
 
     class Speed(SimpleValue):
         def __init__(self, race_name):
@@ -188,7 +188,7 @@ class ComplexValues:
 
         def update(self, *_):
             if not any(self.override.values()):
-                value = races.race_list[self.race_name.get()].speed
+                value = races.race_list[self.race_name.update()].speed
             else:
                 if self.override["temp"]:
                     value = max(self.override["temp"])
@@ -203,8 +203,8 @@ class ComplexValues:
             self.mod = My.StringVar("prof_bonus")
 
         def update(self, char):
-            char.level.update(char)
-            mod = math.floor(char.level.get() / 4) + 2
+            char.level.process(char)
+            mod = math.floor(char.level.update() / 4) + 2
             self.mod.set(F"{mod:+}")
 
     class Level(SimpleValue):
@@ -232,17 +232,17 @@ class ComplexValues:
             self.temp_hp = My.IntVar("temp_hp")
 
         def update(self, char):
-            char.ability_scores["CON"].update()
-            con_mod = char.ability_scores["CON"].mod.get()
+            char.ability_scores["CON"].process()
+            con_mod = char.ability_scores["CON"].mod.update()
             if con_mod:
                 con_mod = int(con_mod)
             else:
                 con_mod = 0
 
-            max_hp = classes.class_list[char.starting_class.get()].hit_die - \
-                     classes.class_list[char.starting_class.get()].lvl_up_hp
+            max_hp = classes.class_list[char.starting_class.update()].hit_die - \
+                     classes.class_list[char.starting_class.update()].lvl_up_hp
 
-            max_hp += char.level.get() * con_mod
+            max_hp += char.level.update() * con_mod
 
             for class_name, lvl in char.classes.items():
                 max_hp += lvl * classes.class_list[class_name].lvl_up_hp
@@ -265,12 +265,12 @@ class ComplexValues:
             inventory = {item.name: item for item in char.Inventory["items"]}
 
             try:
-                worn = inventory[char.Inventory["worn"].get()]
+                worn = inventory[char.Inventory["worn"].update()]
                 self.state = self.armoured
             except KeyError:
                 self.state = self.unarmoured
 
-            dex_mod = char.ability_scores["DEX"].mod.get()
+            dex_mod = char.ability_scores["DEX"].mod.update()
             if self.state == self.unarmoured:
                 new_val = 10 + int(dex_mod)
             elif self.state == self.armoured:
@@ -284,7 +284,7 @@ class ComplexValues:
 
             # Check for shields
             self.shield = False
-            wielded_names = [name.get() for name in char.Inventory["wielded"].values()]
+            wielded_names = [name.update() for name in char.Inventory["wielded"].values()]
             for wielded in wielded_names:
                 if wielded in inventory.keys():
                     wielded_item = inventory[wielded]
@@ -456,15 +456,15 @@ class Character:
             def update(self, char):
 
                 val = 0
-                char.ability_scores[self.attr].update(char)
+                char.ability_scores[self.attr].process(char)
                 ability_score_mod = char.ability_scores[self.attr].mod
                 # self.ability_scores[attr].mod
 
-                val += int(ability_score_mod.get())
+                val += int(ability_score_mod.update())
 
-                char.prof_bonus.update(char)
+                char.prof_bonus.process(char)
 
-                val += self.prof.get() * int(char.prof_bonus.mod.get())
+                val += self.prof.get() * int(char.prof_bonus.mod.update())
 
                 self.mod.set(F"{val:+}")
 
@@ -489,8 +489,8 @@ class Character:
             def update(self, char):
                 val = 0
 
-                val += int(self.prof.get()) * int(char.prof_bonus.mod.get())
-                val += int(char.ability_scores[self.attr.__name__].mod.get())
+                val += int(self.prof.get()) * int(char.prof_bonus.mod.update())
+                val += int(char.ability_scores[self.attr.__name__].mod.update())
 
                 self.mod = val
                 self.display.set(F"{val:^+}")
@@ -520,7 +520,7 @@ class Character:
 
             def update(self, *_):
                 for skill in self.updatables:
-                    skill.update()
+                    skill.process()
 
         passives = ["Perception", "Investigation", "Insight"]
         passives = [self.skills[skill] for skill in passives]

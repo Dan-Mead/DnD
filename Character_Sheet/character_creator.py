@@ -245,7 +245,7 @@ class ValueChooserGenerator:
             for aspect in aspects_list.values():
                 if aspect.type == self.value_type and aspect.active == True:
                     if len(self.widgets) > 1 or self.aspects[index] != aspect:
-                        chosen_global.append(aspect.variable.get())
+                        chosen_global.append(aspect.variable.update())
 
         chosen_all = chosen_local + chosen_global
 
@@ -325,7 +325,7 @@ class CharacterCreator:
         for aspect_id, aspect in self.aspects.items():
             if aspect.active:
                 # Currently only works for individual values for get(), will need to adjust.
-                character_export_dict[aspect_id] = (aspect.variable.get())
+                character_export_dict[aspect_id] = (aspect.variable.update())
 
         export_data(character_export_dict)
 
@@ -401,7 +401,7 @@ class CharacterCreator:
         for aspect_id, aspect in self.aspects.items():
             if aspect.active:
                 # Currently only works for individual values for get(), will need to adjust.
-                character_export_dict[aspect_id] = (aspect.variable.get())
+                character_export_dict[aspect_id] = (aspect.variable.update())
         character_import_dict = character_export_dict
 
         num_layers = max([aspect.order for aspect in self.aspects.values()]) + 1
@@ -653,15 +653,15 @@ class CharacterCreator:
 
         def race_changed(*args):
 
-            if self.character_race.get() != self.race_choice_prompt:
+            if self.character_race.update() != self.race_choice_prompt:
 
-                self.race_instance = races.race_list[self.character_race.get()]
+                self.race_instance = races.race_list[self.character_race.update()]
 
                 if self.race_instance.__subclasses__():
 
                     self.subrace_chooser.grid(row=2, columnspan=3, pady=2)
                     subraces_list = [subrace.subrace_name for subrace in self.race_instance.__subclasses__()]
-                    if self.character_subrace.get() not in subraces_list:
+                    if self.character_subrace.update() not in subraces_list:
                         self.character_subrace.set(self.subrace_choice_prompt)
 
 
@@ -691,7 +691,7 @@ class CharacterCreator:
                 self.racial_features_frame.grid_forget()
 
                 self.resize_tabs()
-                self.master.update()
+                self.master.process()
                 self.tab_manager.config(width=self.master.winfo_width())
 
         def subrace_choice_config():
@@ -720,10 +720,10 @@ class CharacterCreator:
 
         def subrace_changed(*args):
 
-            if self.character_subrace.get() != self.subrace_choice_prompt:
+            if self.character_subrace.update() != self.subrace_choice_prompt:
                 self.subrace_instance = \
                     {subrace.subrace_name: subrace for subrace in self.race_instance.__subclasses__()}[
-                        self.character_subrace.get()]
+                        self.character_subrace.update()]
 
                 feature_constructor(self.subrace_instance)
             else:
@@ -1354,7 +1354,7 @@ class CharacterCreator:
             Ftype = races.FeatureType
             activatable_widgets = [Ftype.choice, Ftype.skills, Ftype.proficiencies]
 
-            choice_name = choice.get()
+            choice_name = choice.update()
 
             for choice, choice_values in choice_options.items():
                 if choice_values['type'] in activatable_widgets:
@@ -1625,7 +1625,7 @@ class CharacterCreator:
 
                 def chooser_checker(self):
                     for keys, values in self.selectors.items():
-                        current_choice = values["current_choice"].get()
+                        current_choice = values["current_choice"].update()
                         for keys_2, values_2 in values["choosers"].items():
                             widgets = values_2[0]
                             for widget in widgets:
@@ -1670,9 +1670,9 @@ class CharacterCreator:
                     chosen = []
 
                     for index, vals in self.selectors.items():
-                        selected.append(vals["current_choice"].get())
+                        selected.append(vals["current_choice"].update())
                         for key, vals2 in vals["choosers"].items():
-                            chosen.append([widget.get() for widget in vals2[0]])
+                            chosen.append([widget.update() for widget in vals2[0]])
 
                     values = {"selected": selected,
                               "chosen": chosen}
@@ -1718,10 +1718,10 @@ class CharacterCreator:
         def class_changed(*args):
             self.class_features_frame.grid_forget()
 
-            if self.character_class.get() != self.class_choice_prompt:
+            if self.character_class.update() != self.class_choice_prompt:
 
                 self.class_instance = {c.class_name: c for c in classes.CharacterClass.__subclasses__()}[
-                    self.character_class.get()]
+                    self.character_class.update()]
 
                 self.class_desc['text'] = self.class_instance.desc
                 self.class_rpgbot['text'] = self.class_instance.rpgbot
@@ -1766,7 +1766,7 @@ class CharacterCreator:
                 self.class_skills_chooser.activate(self.class_instance.num_skills)
 
                 # Equipment
-                self.class_equipment_chooser.update(self, self.class_instance.equipment)
+                self.class_equipment_chooser.process(self, self.class_instance.equipment)
 
                 self.class_features_frame.grid(row=2, padx=8)
 
@@ -1822,11 +1822,11 @@ class CharacterCreator:
             self.background_info_frame.grid_forget()
             self.background_proficiencies_frame.grid_forget()
 
-            if self.character_background.get() != self.background_choice_prompt:
+            if self.character_background.update() != self.background_choice_prompt:
 
                 self.current_background = {background.name: background
                                            for background in backgrounds.Background.__subclasses__()}[
-                    self.character_background.get()]
+                    self.character_background.update()]
 
                 self.background_info_frame.grid(row=2, pady=4)
 
@@ -2298,7 +2298,7 @@ class CharacterCreator:
             # Name
 
             def final_name_change(*args):
-                char_name = self.aspects["Name"].variable.get()
+                char_name = self.aspects["Name"].variable.update()
                 self.final_name_text_var.set(char_name)
 
                 self.character_image.config(image=tk.PhotoImage(),
@@ -2317,9 +2317,9 @@ class CharacterCreator:
             # Race and Class
 
             def final_race_change(*args):
-                race = self.aspects["Race"].variable.get()
-                subrace = self.aspects["Subrace"].variable.get()
-                class_text = self.aspects["Class"].variable.get()
+                race = self.aspects["Race"].variable.update()
+                subrace = self.aspects["Subrace"].variable.update()
+                class_text = self.aspects["Class"].variable.update()
 
                 self.big3 = (race, subrace, class_text)
 
@@ -2375,7 +2375,7 @@ class CharacterCreator:
             # Background
 
             def final_bg_change(*args):
-                bg = self.aspects["Background"].variable.get()
+                bg = self.aspects["Background"].variable.update()
                 self.final_bg_text_var.set(bg)
 
             self.final_bg_text_var = tk.StringVar()
@@ -2523,8 +2523,8 @@ class CharacterCreator:
 
             # Getting race and subrace asi's
 
-            race_name = self.aspects["Race"].variable.get()
-            subrace_name = self.aspects["Subrace"].variable.get()
+            race_name = self.aspects["Race"].variable.update()
+            subrace_name = self.aspects["Subrace"].variable.update()
             race = {race.race_name: race for race in races.Race.__subclasses__()}[race_name]
 
             choosers = False
@@ -2560,7 +2560,7 @@ class CharacterCreator:
 
             if choosers:
                 for var in self.race_asi_choice.variables:
-                    attr = var.get()
+                    attr = var.update()
                     if attr:
                         self.asi_mods[attr] += 1
 
@@ -2573,12 +2573,12 @@ class CharacterCreator:
 
             for attr in glossary.attrs:
                 try:
-                    chosen_val = int(self.final_asi_choices[attr].get())
+                    chosen_val = int(self.final_asi_choices[attr].update())
                 except ValueError:
                     chosen_val = 0
 
                 try:
-                    extra_val = int(self.final_asi_mods[attr].get())
+                    extra_val = int(self.final_asi_mods[attr].update())
                 except ValueError:
                     extra_val = 0
 

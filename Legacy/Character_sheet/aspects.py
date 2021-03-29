@@ -147,7 +147,7 @@ class character:
                                 "Choose a different option? Y/N").lower()
 
                             if choose_again in 'no':
-                                self.penalties.update({eq: list(penalties)})
+                                self.penalties.process({eq: list(penalties)})
                                 final_choice = True
                             else:
                                 pass
@@ -267,14 +267,14 @@ class character:
                             "Choose a different option? Y/N").lower()
 
                         if choose_again in 'no':
-                            self.penalties.update(
+                            self.penalties.process(
                                 {equipment[choice]: ('Armor Prof')})
                             handed = 1
                         else:
                             continue
 
                 equippable[choice][-1] -= 1
-                self.wielded.update(Dict({choice: {'handed': handed,
+                self.wielded.process(Dict({choice: {'handed': handed,
                                                    'obj': equipment[choice]}}))
             else:
                 handed = 1
@@ -527,11 +527,11 @@ class character:
         def attack_objects():
 
             self.actions.attacks = Dict()
-            self.actions.attacks.update(
+            self.actions.attacks.process(
                 {'Unarmed Strike': unarmed_strike(self)})
             for wielded, stats in self.wielded.items():
                 if isclasstype(stats['obj'], 'Weapon'):
-                    self.actions.attacks.update(
+                    self.actions.attacks.process(
                         {wielded: atk_option(self, stats['obj'])})
 
         def penalties():

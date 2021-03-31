@@ -7,11 +7,17 @@ from Character_Sheet.character import Character
 from Character_Sheet.reference.items import *
 import Character_Sheet.helpers as helpers
 import Character_Sheet.reference.skills_and_attributes as skills
+import Character_Sheet.reference.classes as classes
 import Character_Sheet.reference.glossary as glossary
 
 
 class Aspect:
-    def __init__(self):
+    def __init__(self, name):
+
+        if name in Aspects.all:
+            print(name, "repeated")
+
+        Aspects.all[name] = self
 
         if self.type == str:
             self.tkVar = tk.StringVar()
@@ -82,8 +88,8 @@ class Name(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Race(Aspect):
@@ -92,8 +98,8 @@ class Race(Aspect):
     type = str
     protected = True
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def pull(self):
         race_name = self.get_value(self.source["Race"])
@@ -108,8 +114,8 @@ class Level(Aspect):
     type = int
     protected = True
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def process(self):
         char.data["stats"]["level"] = sum([lvl for lvl in char.data["class"]["classes"].values()])
@@ -121,8 +127,8 @@ class Alignment(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def pull(self):
         ethics = self.get_value(self.source["Ethics"])
@@ -137,8 +143,8 @@ class Size(Aspect):
     type = str
     protected = True
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def process(self):
 
@@ -153,8 +159,8 @@ class Speed(Aspect):
     type = str
     protected = True
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def pull(self):
         value = self.get_value(self.source["Speed"])
@@ -174,8 +180,8 @@ class Faith(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Skin(Aspect):
@@ -183,8 +189,8 @@ class Skin(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Eyes(Aspect):
@@ -192,8 +198,8 @@ class Eyes(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Hair(Aspect):
@@ -201,8 +207,8 @@ class Hair(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Height(Aspect):
@@ -210,8 +216,8 @@ class Height(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Weight(Aspect):
@@ -219,8 +225,8 @@ class Weight(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Build(Aspect):
@@ -228,8 +234,8 @@ class Build(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Age(Aspect):
@@ -237,8 +243,8 @@ class Age(Aspect):
     type = int
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class Gender(Aspect):
@@ -246,18 +252,18 @@ class Gender(Aspect):
     type = str
     protected = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class AbilityRaw(Aspect):
     type = int
     protected = True
 
-    def __init__(self, attr):
+    def __init__(self, name, attr):
         self.attr = attr
         self.source = {f"{attr} Raw": ("ability scores", attr, "raw")}
-        super().__init__()
+        super().__init__(name)
 
     def process(self):
 
@@ -277,10 +283,10 @@ class AbilityMod(Aspect):
     type = str
     protected = True
 
-    def __init__(self, attr):
+    def __init__(self, name, attr):
         self.attr = attr
         self.source = {f"{attr} Mod": ("ability scores", attr, "mod")}
-        super().__init__()
+        super().__init__(name)
 
     def pull(self):
         source = list(self.source.values())[0]
@@ -299,8 +305,8 @@ class ProficiencyBonus(Aspect):
     protected = True
     source = {"Level": ("stats", "prof")}
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     def process(self):
         Aspects.level.update()
@@ -313,10 +319,10 @@ class SavingThrowProf(Aspect):
     type = bool
     protected = True
 
-    def __init__(self, attr):
+    def __init__(self, name, attr):
         self.attr = attr
         self.source = {f"{attr} Save Prof": ("saving throws", attr, "prof")}
-        super().__init__()
+        super().__init__(name)
 
     def pull(self):
         source = list(self.source.values())[0]
@@ -332,10 +338,10 @@ class SavingThrowVal(Aspect):
     type = str
     protected = True
 
-    def __init__(self, attr):
+    def __init__(self, name, attr):
         self.attr = attr
-        self.source = {f"{attr} Save Val": ("saving throws", attr, "mod_val")}
-        super().__init__()
+        self.source = {f"{attr} Save Val": ("saving throws", attr, "mod")}
+        super().__init__(name)
 
     def pull(self):
         source = list(self.source.values())[0]
@@ -357,7 +363,6 @@ class SavingThrowVal(Aspect):
 
             if profs:
                 output_val += char.data["stats"]["prof"]
-                #TODO: Expertise etc
             if mods:
                 for origin, mod_val in mods:
                     output_val += mod_val
@@ -365,12 +370,156 @@ class SavingThrowVal(Aspect):
         else:
             output_val = override
 
-        char.data["saving throws"][self.attr]["mod_val"] = output_val
+        char.data["saving throws"][self.attr]["mod"] = output_val
+
+
+class SkillProf(Aspect):
+    type = bool
+    protected = True
+
+    def __init__(self, name, skill):
+        self.skill = skill
+        self.source = {f"{skill} Prof": ("skills", skill, "prof"),
+                       f"{skill} Expertise": ("skills", skill, "expertise")}
+        super().__init__(name)
+
+    def pull(self):
+        profs = self.get_value(self.source[f"{self.skill} Prof"])
+        expertise = self.get_value(self.source[f"{self.skill} Expertise"])
+
+        if profs:
+            self.type = "proficient"
+            if expertise:
+                self.type = "expertise"
+
+        # Else jack of all trades etc here.
+        if profs or expertise:
+            self.set(True)
+        else:
+            self.set(False)
+
+
+class SkillVal(Aspect):
+    type = str
+    protected = True
+
+    def __init__(self, name, skill):
+        self.skill = skill
+        self.source = {f"{skill} Val": ("skills", skill, "mod")}
+        super().__init__(name)
+
+    def pull(self):
+
+        value = self.get_value(list(self.source.values())[0])
+        self.val = value
+        self.set(F"{value:+}")
+
+    def process(self):
+        attr = char.data["skills"][self.skill]["attr"]
+        Aspects.proficiency_bonus.update()
+        getattr(Aspects, attr)["mod"].update()
+
+        prof_aspect = getattr(Aspects, self.skill)["prof"]
+        prof_aspect.update()
+
+        mod_val = char.data["ability scores"][attr]["mod"]
+
+        if prof_aspect.type == "proficient":
+            mod_val += char.data["stats"]["prof"]
+        elif prof_aspect.type == "expertise":
+            mod_val += 2 * char.data["stats"]["prof"]
+        # Else jack of all trades etc.
+
+        char.data["skills"][self.skill]["mod"] = mod_val
+
+
+class PassiveWis(Aspect):
+    type = int
+    protected = True
+    source = {"Wisdom Mod": ("ability scores", "WIS", "mod")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def pull(self):
+        value = self.get_value(list(self.source.values())[0])
+        self.set(10 + value)
+
+    def process(self):
+        Aspects.WIS["mod"].update()
+
+
+
+class PassiveInt(Aspect):
+    type = int
+    protected = True
+    source = {"Intelligence Mod": ("ability scores", "INT", "mod")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def pull(self):
+        value = self.get_value(list(self.source.values())[0])
+        self.set(10 + value)
+
+    def process(self):
+        Aspects.INT["mod"].update()
+
+
+class MaxHP(Aspect):
+    type = int
+    protected = True
+    source = {"Max HP": ("HP", "max")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def process(self):
+
+        starting_class = char.data["class"]["starting class"]
+        class_instance = classes.class_list[starting_class]
+
+        max_hp = 0
+        max_hp += class_instance.hit_die
+
+        for class_name, lvl in char.data["class"]["classes"].items():
+            class_instance = classes.class_list[class_name]
+            if class_name == char.data["class"]["starting class"]:
+                lvl -= 1
+            max_hp += lvl * class_instance.lvl_up_hp
+
+        max_hp += char.data["stats"]["level"] * char.data["ability scores"]["CON"]["mod"]
+        char.data["HP"]["max"] = max_hp
+
+class CurrentHP(Aspect):
+    type = int
+    protected = False,
+    source = {"Current HP": ("HP", "current")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def change_value(self, new_value):
+        source_path = self.source["Current HP"]
+        char.change_value(source_path, new_value)
+
+class TempHP(Aspect):
+    type = int
+    protected = False,
+    source = {"Temp HP": ("HP", "temp")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def change_value(self, new_value):
+        source_path = self.source["Temp HP"]
+        char.change_value(source_path, new_value)
+
 
 class Aspects:
     all = {}
-
-    aspects = {
+    
+    raw_aspects = {
         "name": Name,
         "race": Race,
         "level": Level,
@@ -386,7 +535,18 @@ class Aspects:
         "build": Build,
         "age": Age,
         "gender": Gender,
-        "proficiency_bonus": ProficiencyBonus
+        "proficiency_bonus": ProficiencyBonus,
+        "current_HP": CurrentHP,
+        "temp_HP": TempHP
+
+    }
+
+    ability_dependent_aspects = {
+        "passive_perception": PassiveWis,
+        "passive_investigation": PassiveInt,
+        "passive_insight": PassiveWis,
+        "max_HP": MaxHP,
+
     }
 
     # grouped_aspects = [([attr for attr in glossary.attrs], [""]
@@ -396,22 +556,30 @@ class Aspects:
 
     @classmethod
     def add_all(cls):
-        for aspect, object in cls.aspects.items():
-            setattr(cls, aspect, object())
+        for aspect, object in cls.raw_aspects.items():
+            setattr(cls, aspect, object(aspect))
 
         for attr in glossary.attrs:
             setattr(cls, attr, {})
-            getattr(cls, attr)["raw"] = AbilityRaw(attr)
-            getattr(cls, attr)["mod"] = AbilityMod(attr)
-            getattr(cls, attr)["save prof"] = SavingThrowProf(attr)
-            getattr(cls, attr)["save val"] = SavingThrowVal(attr)
+            getattr(cls, attr)["raw"] = AbilityRaw(f"{attr} raw", attr)
+            getattr(cls, attr)["mod"] = AbilityMod(f"{attr} mod", attr)
+            getattr(cls, attr)["save prof"] = SavingThrowProf(f"{attr} save prof", attr)
+            getattr(cls, attr)["save val"] = SavingThrowVal(f"{attr} save val", attr)
+
+        for skill in char.data["skills"].keys():
+            setattr(cls, skill, {})
+            getattr(cls, skill)["prof"] = SkillProf(f"{skill} prof", skill)
+            getattr(cls, skill)["val"] = SkillVal(f"{skill} val", skill)
+
+        for aspect, object in cls.ability_dependent_aspects.items():
+            setattr(cls, aspect, object(aspect))
 
     @classmethod
     def update_all(cls):
 
         char.data["class"]["classes"]["Paladin"] = 2
 
-        for aspect, object in cls.aspects.items():
+        for aspect, object in cls.all.items():
             getattr(cls, aspect).update()
 
 

@@ -429,8 +429,8 @@ class Character:
         self.data["saving throws"] = {attr: {"prof": [], "mods": {}, "override": {},
                                              "notes": {}, "adv": {}, "disadv": {}} for attr in all_attrs}
         self.data["skills"] = {skill.replace("_", " "): {"prof": [], "expertise": [], "mods": {}, "override": {},
-                                                         "notes": {}, "adv": {}, "disadv": {}} for skill in
-                               skill_dict}
+                                                         "notes": {}, "adv": {}, "disadv": {},
+                                                         "attr":values[1]} for skill, values in skill_dict.items()}
 
         self.data["class"] = {"starting class": None,
                               "classes": {}}
@@ -468,8 +468,8 @@ class Character:
                            "max": 0,
                            "temp": 0,
                            "death_saves": False,
-                           "death_saves_passed": 0,
-                           "death_saves_failed": 0}
+                           "death_saves_passed": [0 for i in range(3)],
+                           "death_saves_failed": [0 for i in range(3)]}
 
         self.data["inventory"] = {"currency": {"gp": 0,
                                                "sp": 0,

@@ -617,13 +617,14 @@ class CharacterSheet:
                  ).grid(row=2, column=1, sticky="N")
 
         class DeathSavesManager:
-            def __init__(self, HP, widgets, cv_pack):
+            def __init__(self, HP, widgets, cv_pack, name):
                 self.widgets = widgets
                 cv, cvtext = cv_pack
                 self.cv = cv
                 self.cvtext = cvtext
-                self.char_hp = HP
+                self.current_hp, self.max_hp, self.temp_hp = HP
                 self.active = False
+                self.name = name
 
             def activate(self, instant_death=False):
 
@@ -633,12 +634,12 @@ class CharacterSheet:
                 if instant_death:
                     cv.itemconfigure(cvtext, text="X(")
                     self.death(instant=True)
+                    self.deactivate()
                 else:
                     cv.itemconfigure(cvtext, text=":|")
+                    self.active = True
 
                 cv.itemconfigure(cvtext, state=tk.NORMAL)
-
-                self.active = True
 
             def deactivate(self):
 
@@ -651,46 +652,50 @@ class CharacterSheet:
 
             def heal(self, val):
 
-                current_hp = self.char_hp.current_hp.update()
-                change = val.update()
+                current_hp = self.current_hp.update().tkVar.get()
+                max_hp = self.max_hp.update().tkVar.get()
+                change = val.get()
                 new_current = current_hp + change
-                if new_current > self.char_hp.max_hp.update():
-                    new_current = self.char_hp.max_hp.update()
+                if new_current > max_hp:
+                    new_current = max_hp
                 if new_current > 0:
                     self.deactivate()
-                self.char_hp.current_hp.set(new_current)
+                self.current_hp.change_value(new_current)
                 val.set(0)
 
             def harm(self, val):
 
-                current_hp = self.char_hp.current_hp.update()
-                temp_hp = self.char_hp.temp_hp.update()
-                change = val.update()
+                current_hp = self.current_hp.update().tkVar.get()
+                temp_hp = self.temp_hp.update().tkVar.get()
+                change = val.get()
                 if temp_hp > 0:
                     new_temp = temp_hp - change
                     if new_temp > 0:
-                        self.char_hp.temp_hp.set(new_temp)
+                        self.temp_hp.change_value(new_temp)
                         change = 0
                     else:
-                        self.char_hp.temp_hp.set(0)
+                        self.temp_hp.change_value(0)
                         change = abs(new_temp)
                 new_current = current_hp - change
+                self.current_hp.change_value(new_current)
+                val.set(0)
+
+                # Saving throw / Deaths
                 if new_current <= 0:
                     new_current = 0
-                    if change >= current_hp + self.char_hp.max_hp.update():
+                    self.current_hp.change_value(new_current)
+                    if change >= current_hp + self.max_hp.update().tkVar.get():
                         self.activate(instant_death=True)
                     else:
                         self.activate(instant_death=False)
-                self.char_hp.current_hp.set(new_current)
-                val.set(0)
 
             def death_save_change(self, death_save_vals):
 
-                passes = death_save_vals.passes
-                fails = death_save_vals.fails
+                passes = death_save_vals["passed"]
+                fails = death_save_vals["failed"]
 
-                num_passes = sum([val.update() for val in passes])
-                num_fails = sum([val.update() for val in fails])
+                num_passes = sum([val.tkVar.get() for val in passes.values()])
+                num_fails = sum([val.tkVar.get() for val in fails.values()])
 
                 lookup_dict = {2: ":D",
                                1: ":)",
@@ -732,14 +737,14 @@ class CharacterSheet:
                 else:
                     text = "Oh no! You have failed 3 death saving throws and have died!"
 
-                text += f"\n\nIf your party cannot find a way to revive you, unfortunately this is the end for {char.info['name'].update()}.\nWhile this is naturally very sad, it does mean you have a chance to create a whole new character, with new hopes and dreams and skills. Maybe try to take better care of this one.\n\n Happy adventuring!"
+                text += f"\n\nIf your party cannot find a way to revive you, unfortunately this is the end for {self.name.tkVar.get()}.\nWhile this is naturally very sad, it does mean you have a chance to create a whole new character, with new hopes and dreams and skills. Maybe try to take better care of this one.\n\n Happy adventuring!"
 
                 tk.Label(death_window,
                          text=text,
                          wraplength=420).pack(pady=8, padx=8)
 
             def check(self, *_):
-                current_hp = self.char_hp.current_hp.update()
+                current_hp = self.current_hp.update().tkVar.get()
 
                 if current_hp <= 0 and self.active == False:
                     self.activate()
@@ -748,20 +753,26 @@ class CharacterSheet:
 
         self.death_save_widgets = []
 
-        death_saves_mgmt = DeathSavesManager(char.HP, self.death_save_widgets, (cv, cvtext))
+        hp_set = (
+            self.aspects.current_HP,
+            self.aspects.max_HP,
+            self.aspects.temp_HP
+        )
+
+        death_saves_mgmt = DeathSavesManager(hp_set, self.death_save_widgets, (cv, cvtext), self.aspects.name)
 
         for row in [1, 2]:
             for n, column in enumerate([2, 3, 4]):
                 if row == 1:
                     s = "S"
-                    origin = char.death_saves.passes
+                    origin = self.aspects.death_saves["passed"]
                 if row == 2:
                     s = "N"
-                    origin = char.death_saves.fails
+                    origin = self.aspects.death_saves["failed"]
 
                 cb = tk.Checkbutton(self.health_frame,
-                                    command=partial(death_saves_mgmt.death_save_change, char.death_saves),
-                                    variable=origin[n],
+                                    command=partial(death_saves_mgmt.death_save_change, self.aspects.death_saves),
+                                    variable=origin[n].tkVar,
                                     state=tk.DISABLED)
 
                 cb.grid(row=row, column=column, sticky=s)
@@ -786,7 +797,7 @@ class CharacterSheet:
         hp_frame.grid(row=1, column=frame_width, rowspan=2, padx=4, pady=4)
 
         tk.Label(hp_frame,
-                 textvariable=self.aspects.current_hp.tkVar,
+                 textvariable=self.aspects.current_HP.tkVar,
                  font=default_font + " 12 bold").grid(row=0, column=0)
 
         ttk.Separator(hp_frame,
@@ -833,7 +844,7 @@ class CharacterSheet:
         rest_frame = tk.Frame(self.health_frame)
         rest_frame.grid(row=0, column=frame_width + 3, rowspan=3, padx=4, pady=4)
 
-        self.aspects.current_hp.tkVar.trace_add("write", death_saves_mgmt.check)
+        self.aspects.current_HP.tkVar.trace_add("write", death_saves_mgmt.check)
 
         lr_text = "Long Rest"
         sr_text = "Short Rest"
@@ -856,7 +867,7 @@ class CharacterSheet:
                  font=default_font + " 9").grid(row=2, column=0, pady=4)
         tk.Entry(rest_frame,
                  font=default_font + " 9",
-                 textvariable=self.aspects.temp_hp.tkVar,
+                 textvariable=self.aspects.temp_HP.tkVar,
                  width=3,
                  justify=tk.CENTER).grid(row=2, column=1)
 

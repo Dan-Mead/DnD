@@ -464,7 +464,7 @@ class Character:
 
         self.data["flavour"] = dict.fromkeys(flavour_keys)
 
-        self.data["HP"] = {"current": 0,
+        self.data["HP"] = {"current": math.nan,
                            "max": 0,
                            "temp": 0,
                            "death_saves": False,

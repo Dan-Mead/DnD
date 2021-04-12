@@ -31,6 +31,7 @@ class Aspect:
     def update(self):
         self.process()
         self.pull()
+        return self
 
     def pull(self):
         source = list(self.source.values())[0]
@@ -449,7 +450,6 @@ class PassiveWis(Aspect):
         Aspects.WIS["mod"].update()
 
 
-
 class PassiveInt(Aspect):
     type = int
     protected = True
@@ -491,6 +491,7 @@ class MaxHP(Aspect):
         max_hp += char.data["stats"]["level"] * char.data["ability scores"]["CON"]["mod"]
         char.data["HP"]["max"] = max_hp
 
+
 class CurrentHP(Aspect):
     type = int
     protected = False,
@@ -499,9 +500,19 @@ class CurrentHP(Aspect):
     def __init__(self, name):
         super().__init__(name)
 
+    def pull(self):
+        source = list(self.source.values())[0]
+        value = self.get_value(source)
+        if math.isnan(value):
+            value = self.get_value(("HP", "max"))
+        self.set(value)
+
+
     def change_value(self, new_value):
         source_path = self.source["Current HP"]
         char.change_value(source_path, new_value)
+        self.update()
+
 
 class TempHP(Aspect):
     type = int
@@ -514,11 +525,28 @@ class TempHP(Aspect):
     def change_value(self, new_value):
         source_path = self.source["Temp HP"]
         char.change_value(source_path, new_value)
+        self.update()
+
+
+class DeathSave(Aspect):
+    type = bool
+    protected = False
+
+    def __init__(self, name, p_f, i):
+        self.index = i
+        self.pass_fail = p_f
+        self.source = {"Death Save": ("HP", f"death_saves_{p_f}")}
+        super().__init__(name)
+
+    def pull(self):
+        saves = self.get_value(self.source["Death Save"])
+        value = saves[self.index]
+        self.set(value)
 
 
 class Aspects:
     all = {}
-    
+
     raw_aspects = {
         "name": Name,
         "race": Race,
@@ -536,9 +564,7 @@ class Aspects:
         "age": Age,
         "gender": Gender,
         "proficiency_bonus": ProficiencyBonus,
-        "current_HP": CurrentHP,
         "temp_HP": TempHP
-
     }
 
     ability_dependent_aspects = {
@@ -546,6 +572,7 @@ class Aspects:
         "passive_investigation": PassiveInt,
         "passive_insight": PassiveWis,
         "max_HP": MaxHP,
+        "current_HP": CurrentHP,
 
     }
 
@@ -574,13 +601,21 @@ class Aspects:
         for aspect, object in cls.ability_dependent_aspects.items():
             setattr(cls, aspect, object(aspect))
 
+        setattr(cls, "death_saves", {})
+
+        for p_f in ["passed", "failed"]:
+            getattr(cls, "death_saves")[p_f] = {}
+            for i in range(3):
+                getattr(cls, "death_saves")[p_f][i] = DeathSave(f"death_saves_{p_f}_{i}", p_f, i)
+
+
     @classmethod
     def update_all(cls):
 
         char.data["class"]["classes"]["Paladin"] = 2
 
         for aspect, object in cls.all.items():
-            getattr(cls, aspect).update()
+            object.update()
 
 
 char = Character()

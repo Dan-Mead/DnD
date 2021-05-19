@@ -204,7 +204,7 @@ class Eyes(Aspect):
 
 
 class Hair(Aspect):
-    source = {"Faith": ("info", "hair colour")}
+    source = {"Hair Colour": ("info", "hair colour")}
     type = str
     protected = False
 
@@ -213,7 +213,7 @@ class Hair(Aspect):
 
 
 class Height(Aspect):
-    source = {"Faith": ("info", "height")}
+    source = {"Height": ("info", "height")}
     type = str
     protected = False
 
@@ -222,7 +222,7 @@ class Height(Aspect):
 
 
 class Weight(Aspect):
-    source = {"Faith": ("info", "weight")}
+    source = {"Weight": ("info", "weight")}
     type = str
     protected = False
 
@@ -231,7 +231,7 @@ class Weight(Aspect):
 
 
 class Build(Aspect):
-    source = {"Faith": ("info", "build")}
+    source = {"Build": ("info", "build")}
     type = str
     protected = False
 
@@ -240,7 +240,7 @@ class Build(Aspect):
 
 
 class Age(Aspect):
-    source = {"Faith": ("info", "age")}
+    source = {"Age": ("info", "age")}
     type = int
     protected = False
 
@@ -249,7 +249,7 @@ class Age(Aspect):
 
 
 class Gender(Aspect):
-    source = {"Faith": ("info", "gender")}
+    source = {"Gender": ("info", "gender")}
     type = str
     protected = False
 
@@ -507,7 +507,6 @@ class CurrentHP(Aspect):
             value = self.get_value(("HP", "max"))
         self.set(value)
 
-
     def change_value(self, new_value):
         source_path = self.source["Current HP"]
         char.change_value(source_path, new_value)
@@ -523,6 +522,8 @@ class TempHP(Aspect):
         super().__init__(name)
 
     def change_value(self, new_value):
+        if not new_value:
+            new_value = 0
         source_path = self.source["Temp HP"]
         char.change_value(source_path, new_value)
         self.update()
@@ -542,6 +543,107 @@ class DeathSave(Aspect):
         saves = self.get_value(self.source["Death Save"])
         value = saves[self.index]
         self.set(value)
+
+
+class ArmourWorn(Aspect):
+    type = str
+    protected = True
+    source = {"Worn Armour": ("inventory", "equipped", "armour")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def process(self):
+        source_path = self.source["Worn Armour"]
+        current_value = self.tkVar.get()
+        if not current_value:
+            current_value = "None"
+        char.change_value(source_path, current_value)
+
+
+class AC(Aspect):
+    type = int
+    protected = True
+    source = {"AC": ("health", "AC", "current")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def process(self):
+        getattr(Aspects, "DEX").update()
+
+        basic_ac = 10 + char.data["ability scores"]["DEX"]["mod"]
+
+        AC_values = {"Base": basic_ac}
+
+        getattr(Aspects, "armour_worn").update()
+        armour_worn = char.data["inventory"]["equipped"]["armour"]
+        all_items = {item.name: item for item in char.data['inventory']['all']}
+
+        if armour_worn != "None":
+            armour_worn_instance = all_items[armour_worn]
+            worn_ac = armour_worn_instance.AC
+
+            AC_values["Armoured"] = (worn_ac)
+
+        max_AC = max(list(AC_values.values()))
+
+        path = self.source["AC"]
+
+        char.change_value(path, max_AC)
+
+        # TODO: Check for shields
+        # TODO: Check for other effects
+
+
+class Defences(Aspect):
+    type = str
+    protected = True
+    source = {"Defences": ("health", "defences"),
+              "Immunities": ("health", "immunities")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def pull(self):
+
+        all_defences = []
+        for source in self.source.values():
+            list_vals = list(self.get_value(source).values())
+            all_defences.extend(list_vals)
+
+        min_height = 3
+
+        vals = []
+        for vals_set in all_defences:
+            vals.extend([val for val in vals_set if val])
+        string = "\n".join(vals)
+        string += "\n" * (max((min_height - string.count("\n") - 1), 0))
+
+        self.set(string)
+
+
+class Conditions(Aspect):
+    type = str
+    protected = True
+    source = {"Conditions": ("health", "conditions")}
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def pull(self):
+        source = self.source["Conditions"]
+        conditions = list(self.get_value(source).values())
+
+        min_height = 3
+
+        vals = []
+        for vals_set in conditions:
+            vals.extend([val for val in vals_set if val])
+        string = "\n".join(vals)
+        string += "\n" * (max((min_height - string.count("\n") - 1), 0))
+
+        self.set(string)
 
 
 class Aspects:
@@ -564,7 +666,10 @@ class Aspects:
         "age": Age,
         "gender": Gender,
         "proficiency_bonus": ProficiencyBonus,
-        "temp_HP": TempHP
+        "temp_HP": TempHP,
+        "armour_worn": ArmourWorn,
+        "defences": Defences,
+        "conditions": Conditions,
     }
 
     ability_dependent_aspects = {
@@ -573,7 +678,7 @@ class Aspects:
         "passive_insight": PassiveWis,
         "max_HP": MaxHP,
         "current_HP": CurrentHP,
-
+        "AC": AC
     }
 
     # grouped_aspects = [([attr for attr in glossary.attrs], [""]
@@ -607,7 +712,6 @@ class Aspects:
             getattr(cls, "death_saves")[p_f] = {}
             for i in range(3):
                 getattr(cls, "death_saves")[p_f][i] = DeathSave(f"death_saves_{p_f}_{i}", p_f, i)
-
 
     @classmethod
     def update_all(cls):

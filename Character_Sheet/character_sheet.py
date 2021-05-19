@@ -265,7 +265,7 @@ class CharacterSheet:
 
         self.health_section(front_page_column_1).grid(row=1, column=0, columnspan=3, pady=4, padx=4, sticky="NEW")
 
-        # self.defences_section(front_page_column_1).grid(row=2, column=0, columnspan=3, pady=4, padx=4, sticky="NEW")
+        self.defences_section(front_page_column_1).grid(row=2, column=0, columnspan=3, pady=4, padx=4, sticky="NEW")
 
         self.scores_section(front_page_column_1).grid(row=3, column=0, pady=4, padx=4, sticky="NSW")
         self.saves_section(front_page_column_1).grid(row=3, column=1, pady=4, padx=4, sticky="NSW")
@@ -664,30 +664,33 @@ class CharacterSheet:
                 val.set(0)
 
             def harm(self, val):
-
-                current_hp = self.current_hp.update().tkVar.get()
-                temp_hp = self.temp_hp.update().tkVar.get()
-                change = val.get()
-                if temp_hp > 0:
-                    new_temp = temp_hp - change
-                    if new_temp > 0:
-                        self.temp_hp.change_value(new_temp)
-                        change = 0
-                    else:
-                        self.temp_hp.change_value(0)
-                        change = abs(new_temp)
-                new_current = current_hp - change
-                self.current_hp.change_value(new_current)
-                val.set(0)
-
-                # Saving throw / Deaths
-                if new_current <= 0:
-                    new_current = 0
+                if val.get() != 0:
+                    current_hp = self.current_hp.update().tkVar.get()
+                    temp_hp = self.temp_hp.update().tkVar.get()
+                    change = val.get()
+                    if temp_hp > 0:
+                        new_temp = temp_hp - change
+                        if new_temp > 0:
+                            self.temp_hp.change_value(new_temp)
+                            print(new_temp)
+                            self.temp_hp.update()
+                            print(self.temp_hp.tkVar.get())
+                            change = 0
+                        else:
+                            self.temp_hp.change_value(0)
+                            change = abs(new_temp)
+                    new_current = current_hp - change
                     self.current_hp.change_value(new_current)
-                    if change >= current_hp + self.max_hp.update().tkVar.get():
-                        self.activate(instant_death=True)
-                    else:
-                        self.activate(instant_death=False)
+                    val.set(0)
+
+                    # Saving throw / Deaths
+                    if new_current <= 0:
+                        new_current = 0
+                        self.current_hp.change_value(new_current)
+                        if change >= current_hp + self.max_hp.update().tkVar.get():
+                            self.activate(instant_death=True)
+                        else:
+                            self.activate(instant_death=False)
 
             def death_save_change(self, death_save_vals):
 
@@ -865,11 +868,31 @@ class CharacterSheet:
         tk.Label(rest_frame,
                  text="Temp HP:",
                  font=default_font + " 9").grid(row=2, column=0, pady=4)
+
+        temp_hp_int_var = tk.StringVar()
+
         tk.Entry(rest_frame,
                  font=default_font + " 9",
-                 textvariable=self.aspects.temp_HP.tkVar,
+                 textvariable=temp_hp_int_var,
                  width=3,
                  justify=tk.CENTER).grid(row=2, column=1)
+
+        def temp_hp_widget_change(*_args):
+            value = temp_hp_int_var.get()
+            if not value:
+                value = 0
+            self.aspects.temp_HP.change_value(value)
+            self.aspects.temp_HP.update()
+
+        temp_hp_int_var.trace_add("write", temp_hp_widget_change)
+
+        def temp_hp_central_change(*_args):
+            new_temp_hp = self.aspects.temp_HP.tkVar.get()
+            if new_temp_hp == 0:
+                new_temp_hp = ""
+            temp_hp_int_var.set(new_temp_hp)
+
+        self.aspects.temp_HP.tkVar.trace_add("write", temp_hp_central_change)
 
         helpers.weight_frame(self.health_frame)
 
@@ -898,7 +921,7 @@ class CharacterSheet:
         self.shield_im = ImageTk.PhotoImage(shield_im.convert('RGBA'))
 
         tk.Button(ac_frame,
-                  textvariable=char.AC.val,
+                  textvariable=self.aspects.AC.tkVar,
                   relief=tk.FLAT,
                   # width=2,
                   # height=1,
@@ -908,7 +931,7 @@ class CharacterSheet:
 
         def get_armours():
             wearable = ["None"]
-            for item in char.inventory["items"]:
+            for item in self.char.data['inventory']['all']:
                 if isinstance(item, (Light, Medium, Heavy)):
                     wearable.append(item.name)
 
@@ -918,17 +941,19 @@ class CharacterSheet:
                                      state="readonly",
                                      postcommand=get_armours,
                                      width=16,
-                                     textvariable=char.inventory["worn"],
+                                     textvariable=self.aspects.armour_worn.tkVar,
                                      font=default_font + " 10",
                                      justify=tk.CENTER)
         armour_choice.grid(row=2, column=0, padx=4, pady=(0, 4))
 
         def armour_chosen(*_):
-            char.update_all()
+            self.aspects.armour_worn.update()
+            self.aspects.AC.update()
+            # TODO: Update for other effects
 
-        char.inventory["worn"].trace_add("write", armour_chosen)
+        self.aspects.armour_worn.tkVar.trace_add("write", armour_chosen)
 
-        ### Defences and Conditions Frame
+        ## Defences and Conditions Frame
 
         defences_and_conditions_frame = tk.Frame(defences_frame,
                                                  relief=tk.GROOVE,
@@ -955,7 +980,7 @@ class CharacterSheet:
 
         defences = tk.Frame(defences_and_conditions_frame)
         tk.Label(defences,
-                 textvariable=char.defence_string.string,
+                 textvariable=self.aspects.defences.tkVar,
                  font=default_font + " 9",
                  anchor=tk.CENTER,
                  justify=tk.CENTER).pack()
@@ -963,7 +988,7 @@ class CharacterSheet:
 
         conditions = tk.Frame(defences_and_conditions_frame)
         tk.Label(conditions,
-                 textvariable=char.conditions_string.string,
+                 textvariable=self.aspects.conditions.tkVar,
                  font=default_font + " 9",
                  anchor=tk.CENTER,
                  justify=tk.CENTER).pack()

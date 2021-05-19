@@ -430,7 +430,7 @@ class Character:
                                              "notes": {}, "adv": {}, "disadv": {}} for attr in all_attrs}
         self.data["skills"] = {skill.replace("_", " "): {"prof": [], "expertise": [], "mods": {}, "override": {},
                                                          "notes": {}, "adv": {}, "disadv": {},
-                                                         "attr":values[1]} for skill, values in skill_dict.items()}
+                                                         "attr": values[1]} for skill, values in skill_dict.items()}
 
         self.data["class"] = {"starting class": None,
                               "classes": {}}
@@ -471,13 +471,21 @@ class Character:
                            "death_saves_passed": [0 for i in range(3)],
                            "death_saves_failed": [0 for i in range(3)]}
 
+        self.data["health"] = {"AC": {"current": 10,
+                                      "base": 10,
+                                      "modifiers": []},
+                               "defences": {},
+                               "immunities": {},
+                               "conditions": {}}
+
         self.data["inventory"] = {"currency": {"gp": 0,
                                                "sp": 0,
                                                "cp": 0},
                                   "all": [],
                                   "wieldable": {},
                                   "wearable": {},
-                                  "other": {}}
+                                  "other": {},
+                                  "equipped": {"armour": None}}
 
         # TODO: Categorise inventory
 
@@ -485,12 +493,10 @@ class Character:
 
         self.data["features"] = {}
 
-        self.data["defences"] = {}
-
         self.data["features_list"] = {}
 
     def change_value(self, path, value):
-        temp_dict = flatten(self.data)
+        temp_dict = flatten(self.data, keep_empty_types=(dict, list, tuple))
         temp_dict[path] = value
         self.data = unflatten(temp_dict)
 
